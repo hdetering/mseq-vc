@@ -1,0 +1,13 @@
+{
+  "__default__":
+  {
+    "nodes"     : 1,
+    "partition" : "-p shared --qos=shared_short",
+    "time"      : "1-00:00:00"
+  },
+  "bwa_mem":
+  {
+    "mem"    : "10G",
+    "ntasks" : 10
+  }
+}

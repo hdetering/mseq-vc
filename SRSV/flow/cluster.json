@@ -1,0 +1,15 @@
+{
+  "__default__":
+  {
+    "nodes"     : 1,
+    "ntasks"    : 1,
+    "partition" : "--qos=urgent",
+    "time"      : "2:00:00",
+    "mem"       : "4G"
+  },
+  "bwa_mem":
+  {
+    "mem"    : "10G",
+    "ntasks" : 10
+  }
+}
