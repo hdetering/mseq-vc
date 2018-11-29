@@ -1,4 +1,4 @@
-# Benchmarking somatic variant calling from multi-regional sequencing data
+# Benchmarking somatic variant calling using multi-regional sequencing data
 
 This repository contains workflow and analysis scripts pertaining to a simulation study that aims to assess the performance of several popular somatic variant calling methods.
 
