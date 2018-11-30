@@ -13,8 +13,7 @@ rule caveman_setup:
     params:
         dir="caveman/{sample}"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        "log/{sample}.caveman.out"
     threads: 1
     group:  "caveman"
     shell:
@@ -38,7 +37,7 @@ rule caveman_setup:
             --split-file {params.dir}/splitList \
             --alg-bean-file {params.dir}/alg_bean \
             --results-folder {params.dir}/results
-        ) 1>{log.out} 2>{log.err}
+        ) 1>{log} 2>&1
        """
 
 rule caveman_split:
@@ -49,8 +48,7 @@ rule caveman_split:
     params:
         dir="caveman/{sample}"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        "log/{sample}.caveman.out"
     threads: 1
     group:  "caveman"
     shell:
@@ -70,7 +68,7 @@ rule caveman_split:
         #  touch {params.dir}/segment.$jid.mstep.todo
         #  touch {params.dir}/segment.$jid.estep.todo
         #done
-        ) 1>>{log.out} 2>>{log.err}
+        ) 1>>{log} 2>&1
         """
 
 rule caveman_mstep:
@@ -79,8 +77,7 @@ rule caveman_mstep:
     output:
         "caveman/{sample}/caveman_mstep.done"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        "log/{sample}.caveman.out"
     params:
         cfg="caveman/{sample}/caveman.cfg.ini"
     threads: 10
@@ -95,7 +92,7 @@ rule caveman_mstep:
           caveman mstep \
             --config-file {params.cfg} \
             --index {{}}
-        ) 1>>{log.out} 2>>{log.err}
+        ) 1>>{log} 2>&1
         
         touch {output}
         """
@@ -107,8 +104,7 @@ rule caveman_merge:
         covs="caveman/{sample}/covs_arr",
         probs="caveman/{sample}/probs_arr"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        "log/{sample}.caveman.log"
     params:
         cfg="caveman/{sample}/caveman.cfg.ini"
     threads: 1
@@ -122,7 +118,7 @@ rule caveman_merge:
             --config-file {params.cfg} \
             --covariate-file {output.covs} \
             --probabilities-file {output.probs}
-        ) 1>>{log.out} 2>>{log.err}
+        ) 1>>{log} 2>&1
         """
 
 rule caveman_estep:
@@ -132,8 +128,7 @@ rule caveman_estep:
     output:
         "caveman/{sample}/caveman_estep.done"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        "log/{sample}.caveman.log"
     params:
         cfg="caveman/{sample}/caveman.cfg.ini",
         lst="caveman/{sample}/splitList"
@@ -141,6 +136,10 @@ rule caveman_estep:
     group:  "caveman"
     shell:
         """
+        # NOTE: default values for normal-contamination, tumour-copy-number have been chosen
+        #       according to recommendations in the GitHub README:
+        #       https://github.com/cancerit/CaVEMan#default-settings
+ 
         time(
         echo "*** CaVEMan EStep ***"
         module load caveman/1.13.8 parallel/20180922
@@ -155,7 +154,7 @@ rule caveman_estep:
             --tumour-copy-number 5 \
             --species Homo_syntheticus \
             --species-assembly simulation
-        ) 1>>{log.out} 2>>{log.err}
+        ) 1>>{log} 2>&1
        
         touch {output}
         """
@@ -168,8 +167,7 @@ rule caveman:
         snps="caveman/{sample}.snps.vcf",
         vcf="caveman/{sample}.vcf"
     log:
-        out="log/{sample}.caveman.out",
-        err="log/{sample}.caveman.err"
+        out="log/{sample}.caveman.out"
     params:
         res="caveman/{sample}/results"
     threads: 1
@@ -199,7 +197,7 @@ rule caveman:
 
         # copy somatic mutations VCF to comply with naming convention
         cp {output.muts} {output.vcf}
-        ) 1>>{log.out} 2>>{log.err}
+        ) 1>>{log} 2>>&1
 
         # compress intermediate files (reduce number of files / disk space)
         tar -zcf caveman/{wildcards.sample}.tar.gz caveman/{wildcards.sample} && rm -r caveman/{wildcards.sample}
