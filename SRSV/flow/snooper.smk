@@ -26,9 +26,10 @@ rule snooper:
     threads: 1
     shell:
         """
-        #export PERL5LIB=/home/uvi/be/hde/lustre/m-seq_varcall/src/SNooPer_v0.03/lib:$PERL5LIB
-
         time (
+        module load gcc/6.4.0 snooper/0.03
+        module load bcftools/1.9
+
         # create workdir for sample
         if [[ -d {params.workdir} ]]; then
           rm -r {params.workdir}
@@ -39,7 +40,6 @@ rule snooper:
         ln -s ../RN.pu tset_N_{wildcards.sample}.pu 
         cd -
 
-        module load gcc/6.4.0 snooper/0.03
         SNooPer.pl \
             -i {params.workdir} \
             -o {params.workdir} \
@@ -48,9 +48,17 @@ rule snooper:
             -m {params.model} \
             -w $EBROOTWEKA/weka.jar \
             -id 0
-        ) >{log} 2>&1
 
-        cp {params.workdir}/*/SNooPer_0_classification.snp {output} && rm -r {params.workdir}
+        # rename samples in VCF header (SNooPer reports as SOMATIC)
+        bcftools reheader \
+          -s <(printf "%s\n" {wildcards.sample}) \
+          {params.workdir}/*/SNooPer_0_classification.snp \
+        | gunzip -c > {output}
+ 
+        # cleanup
+        rm -r {params.workdir}
+
+        ) >{log} 2>&1
         """
 
 rule snooper_pileup:
