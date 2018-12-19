@@ -22,51 +22,58 @@ include: "caveman.smk"
 include: "strelka.smk"
 include: "bcftools.smk"
 include: "somaticsniper.smk"
+include: "jointsnvmix.smk"
+include: "muse.smk"
+include: "shimmer.smk"
 
-# pdeudo-rule to run SomaticSniper variant caller
+# pseudo-rules to run variant callers
+# -----------------------------------------------------------------------------
+# Shimmer
+rule run_shimmer:
+    input:  "shimmer.vcf"
+# MusE
+rule run_muse:
+    input:  "muse.vcf"
+# JointSNVMix
+rule run_jointsnvmix:
+    input:  "jointsnvmix.vcf"
+# SomaticSniper
 rule run_somaticsniper:
     input:  "somaticsniper.vcf"
-
-# pseudo-rule to run Strelka1
+# Strelka1
 rule run_strelka1:
     input:  "strelka1.vcf"
-
-# pseudo-rule to run Strelka2
+# Strelka2
 rule run_strelka2:
     #input:  ["strelka/%s.vcf" % s for s in SAMPLES]
     input:  "strelka2.vcf"
-
-# pseudo-rule to run CaVEMan variant caller
+# CaVEMan
 rule run_caveman:
     input:  "caveman.vcf"
-
-# pseudo-rule to run MultiSNV variant caller
+# MultiSNV
 rule run_multisnv:
     input:  "multisnv.vcf"
     #input:  ["data/%s/multisnv.vcf" % rep for rep in REPS_ALL.rep_id]
-
-# pseudo-rule to run VarDict variant caller
+# SNooPer
 rule run_snooper:
     #input:  ["data/%s/snooper.vcf" % rep for rep in REPS_ALL.rep_id]
     input:  "snooper.vcf"
     #input:  "data/%s/snooper/out" % REPS
-
-# pseudo-rule to run VarDict variant caller
+# VarDict
 rule run_vardict:
     #input:  ["vardict.vcf" % rep for rep in REPS_ALL.rep_id]
     input:  "vardict.vcf"
     #input:  ["data/%s/%s.vardict.vcf" % (REPS, s) for s in SAMS_TUM.sample]
-
-# pseudo-rule to run MuTect1 variant caller
+# MuTect1
 rule run_mutect1:
     input:	"mutect1.vcf"
     #input:	["data/%s/%s.mutect1.vcf" % (REPS, s) for s in SAMS_TUM.sample]
     #input:  ["data/%s/mutect1.vcf" % rep for rep in REPS_ALL.rep_id]
-
-# pseudo-rule to run MuTect1 variant caller
+# MuTect2
 rule run_mutect2:
     #input:	["data/%s/%s.mutect2.vcf" % (REPS, s) for s in SAMS_TUM.sample]
     input:	"mutect2.vcf"
+#------------------------------------------------------------------------------
 
 # pseudo-rule to run read mapping
 rule run_bwa:

@@ -28,6 +28,7 @@ rule multisnv:
         echo "$NBAM tumor BAMs"
 
         # NOTE: adapt dmax, medianN, medianT according to replicate scenario
+        echo "Running MultiSNV with median depth {config[depth]}"
 
         multiSNV \
             --number $NBAM \
@@ -45,8 +46,8 @@ rule multisnv:
             --normal_contamination 0.03 \
             --minVariantReadsForTriallelicSite 2 \
             --flag-homopolymer 5 \
-            --medianN 50 \
-            --medianT 50 \
+            --medianN {config[depth]} \
+            --medianT {config[depth]} \
             --Rmdups 0 \
             --include-germline 1 \
             --include-LOH 1 \

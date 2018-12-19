@@ -10,7 +10,10 @@
     "strelka1_dir"   : "/mnt/netapp1/posadalab/APPS/strelka-1.0.15",
     "strelka1_conf"  : "/home/uvi/be/hde/lustre/m-seq_varcall/config/strelka1.config.ini",
     "strelka2_dir"   : "/mnt/netapp1/posadalab/APPS/strelka-2.9.6.centos6_x86_64",
-    "somaticsniper"  : "/mnt/netapp1/posadalab/APPS/somaticsniper-1.0.5.0/bam-somaticsniper"
+    "somaticsniper"  : "/mnt/netapp1/posadalab/APPS/somaticsniper-1.0.5.0/bam-somaticsniper",
+    "muse"           : "/home/uvi/be/hde/lustre/m-seq_varcall/src/MuSE/MuSE",
+    "shimmer"        : "/mnt/netapp1/posadalab/APPS/Shimmer/shimmer.pl",
+    "fasd"           : "/mnt/netapp1/posadalab/APPS/FaSD-somatic/soma"
   },
  "scripts" : "/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/scripts"
 }
