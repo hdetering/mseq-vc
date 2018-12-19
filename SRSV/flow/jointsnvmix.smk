@@ -79,6 +79,10 @@ rule jsm_tsv_to_vcf:
     shell:
         """
         time (
-        {config[scripts]}/jointsnvmix2vcf.py {input.tsv} {output}
+        {config[scripts]}/jointsnvmix2vcf.py \
+          --min_p 0.5 \
+          --id_sample {wildcards.sample} \
+          {input.tsv} \
+        > {output}
         ) 1>{log} 2>&1
         """

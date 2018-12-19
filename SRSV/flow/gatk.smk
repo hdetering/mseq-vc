@@ -122,8 +122,7 @@ rule merge_vcf:
     output: 
        "{tool,[^\./]+}.vcf"
     log:
-       out="log/{tool}.GATK_CombineVariants.out",
-       err="log/{tool}.GATK_CombineVariants.err"
+       "log/{tool}.GATK_CombineVariants.log"
     shell:
         """
         #module load jdk/8u171
@@ -138,7 +137,7 @@ rule merge_vcf:
              --variant {input.vcf5} \
              -o {output} \
              -genotypeMergeOptions UNIQUIFY
-        ) 1>{log.out} 2>{log.err}
+        ) 1>{log} 2>&1
         """
 
 # Add read group to BAM files (required by GATK tools)
