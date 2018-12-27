@@ -25,6 +25,8 @@ include: "somaticsniper.smk"
 include: "jointsnvmix.smk"
 include: "muse.smk"
 include: "shimmer.smk"
+include: "gatk.haplotypecaller.smk"
+include: "snv-ppilp.smk"
 
 # pseudo-rules to run variant callers
 # -----------------------------------------------------------------------------

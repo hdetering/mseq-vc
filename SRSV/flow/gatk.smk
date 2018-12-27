@@ -88,18 +88,16 @@ rule mutect1:
     output:
         "mutect1/{sam}.vcf"
     params:
-        #fastq="data/{rep}/{sam}.fq.gz",
-        #sam="data/{rep}/{sam.sam"
+        workdir="mutect1"
     log:
-        out="log/{sam}.mutect1.out",
-        err="log/{sam}.mutect1.err"
+        "log/{sam}.mutect1.log"
     threads: 1
     group:  "mutect1"
     shell:
         """
         time(
         #module load jdk/1.7.0
-        if [[ ! -d mutect1 ]]; then mkdir mutect1; fi
+        if [[ ! -d "{params.workdir}" ]]; then mkdir -p {params.workdir}; fi
 
         {config[tools][mutect1]} \
             --analysis_type MuTect \
@@ -107,7 +105,7 @@ rule mutect1:
             --input_file:tumor {input.tumor} \
             --input_file:normal {input.normal} \
             -vcf {output} \
-        ) 1>{log.out} 2>{log.err}
+        ) 1>{log} 2>&1
         """
 
 # Merge VCF files from multiple samples into single VCF

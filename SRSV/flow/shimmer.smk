@@ -20,6 +20,7 @@ rule shimmer:
         time (
         export PATH=/mnt/netapp1/posadalab/APPS/Shimmer/bin:$PATH
         module load gcc/6.4.0 samtools/1.9 R/3.5.1
+        module load bcftools/1.9
 
         # create output dir if necessary
         if [[ ! -d "{params.workdir}" ]]; then
@@ -38,5 +39,6 @@ rule shimmer:
           {params.out_dir}/somatic_diffs.vcf \
         > {output}
 
+        tar -czf {params.out_dir}.tar.gz {params.out_dir} && rm -r {params.out_dir}
        ) 1>{log} 2>&1
        """

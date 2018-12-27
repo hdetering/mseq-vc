@@ -12,17 +12,17 @@ rule jsm_train:
     log:
         "log/{sample}.jsm_train.log"
     params:
-        workdir="strelka2/{sample}",
-        result="strelka2/{sample}/results/variants/somatic.snvs.vcf.gz"
+        workdir="jointsnvmix"
     threads: 10
     shell:
         """
         time (
+        module load bcftools/1.9
         source activate $POSADALAB/APPS/JointSNVMix-0.8/env
 
         # create output dir if necessary
-        if [[ ! -d jointsnvmix ]]; then
-          mkdir jointsnvmix
+        if [[ ! -d "{params.workdir}" ]]; then
+          mkdir -p {params.workdir}
         fi
 
         jsm.py train \
@@ -32,11 +32,6 @@ rule jsm_train:
           {input.tumor} \
           {output}
 
-        # rename samples in VCF header (Strelka reports as NORMAL, TUMOR)
-        bcftools reheader \
-          -s <(printf "%s\n%s\n" RN {wildcards.sample}) \
-          {params.result} \
-        | gunzip -c > {output}
         ) 1>{log} 2>&1
         """
 
@@ -79,7 +74,7 @@ rule jsm_tsv_to_vcf:
     shell:
         """
         time (
-        {config[scripts]}/jointsnvmix2vcf.py \
+        python {config[scripts]}/jointsnvmix2vcf.py \
           --min_p 0.5 \
           --id_sample {wildcards.sample} \
           {input.tsv} \
