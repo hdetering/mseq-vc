@@ -14,8 +14,10 @@ REPS_ALL = glob_wildcards(os.path.join(ROOT, "sims/{rep_id}/output"))
 SAMPLES="R1 R2 R3 R4 R5 RN".split()
 
 include: "bwa.smk"
-include: "gatk.smk"
+include: "util.smk"
 include: "multisnv.smk"
+include: "mutect1.smk"
+include: "mutect2.smk"
 include: "vardict.smk"
 include: "snooper.smk"
 include: "caveman.smk"
@@ -25,7 +27,7 @@ include: "somaticsniper.smk"
 include: "jointsnvmix.smk"
 include: "muse.smk"
 include: "shimmer.smk"
-include: "gatk.haplotypecaller.smk"
+include: "haplotypecaller.smk"
 include: "snv-ppilp.smk"
 
 # pseudo-rules to run variant callers
