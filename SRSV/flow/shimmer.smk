@@ -10,7 +10,7 @@ rule shimmer:
     output:
         "shimmer/{sample}.vcf"
     log:
-        "log/{sample}.muse_call.log"
+        "log/{sample}.shimmer.log"
     params:
         workdir="shimmer",
         out_dir="shimmer/{sample}"
