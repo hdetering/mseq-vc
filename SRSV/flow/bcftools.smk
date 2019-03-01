@@ -1,21 +1,21 @@
 # vim: syntax=python tabstop=2 expandtab
 # coding: utf-8
-SAMPLE="R1 R2 R3 R4 R5 RN".split()
+SAMPLES_ALL="RN R1 R2 R3 R4 R5".split()
+SAMPLES_TUM=   "R1 R2 R3 R4 R5".split()
 
 rule bcftools_call:
   input:
     ref="ref.fa",
-    bam=["%s.bam" % s for s in SAMPLE]
+    bam=["%s.bam" % s for s in SAMPLES_ALL]
   output:
-    "bcftools.vcf"
+    "bcftools.raw.vcf"
   log:
-    "log/bcftools.log"
+    "log/bcftools.call.log"
   threads:  1
   shell:
     """
     time (
-    module purge
-    module load gcc/5.3.0 bcftools/1.4.1
+    module load bcftools/1.9
 
     bcftools mpileup \
       --output-type u \
@@ -24,29 +24,28 @@ rule bcftools_call:
       {input.bam} \
     | bcftools call \
       --variants-only \
-      --consensus-caller \
+      --multiallelic-caller \
       --output-type v \
       --output {output}
     ) >{log} 2>&1
     """
 
-rule bcftools_mfilt:
+rule bcftools_view:
   input:
-    "{caller}.vcf"
+    "bcftools.raw.vcf"
   output:
-    "{caller}.mfilt.vcf"
+    "bcftools.vcf"
   log:
-    "log/{caller}.mfilt.log"
+    "log/bcftools.view.log"
   threads:  1
   shell:
     """
     time (
-    module purge
-    module load gcc/5.3.0 bcftools/1.4.1
+    module load bcftools/1.9
 
     bcftools view \
-      --samples R1.variant,R2.variant2,R3.variant3,R4.variant4,R5.variant5 \
-      --include "INFO/AC > 1 || FMT/AF > 0.05" \
+      --samples R1,R2,R3,R4,R5 \
+      --include 'FMT/GT[0]="0/0"' \
     {input} > {output}
     ) >{log} 2>&1
     """

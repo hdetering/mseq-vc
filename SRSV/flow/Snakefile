@@ -29,6 +29,7 @@ include: "muse.smk"
 include: "shimmer.smk"
 include: "haplotypecaller.smk"
 include: "snv-ppilp.smk"
+include: "pyclone.smk"
 include: "muclone.smk"
 
 # pseudo-rules to run variant callers

@@ -3,7 +3,7 @@
 # coding: utf-8
 
 # usage: 
-#  awk -f muclone2vcf.awk somatic.vcf MuClone-sample-results.tsv > muclone.vcf
+#  awk -f mutect2muclone.awk mutect2.vcf MuClone-sample-results.tsv > muclone.vcf
 
 # global settings
 BEGIN {
@@ -12,10 +12,10 @@ BEGIN {
 }
 # store first seven fields for each variant from input VCF
 NR==FNR && !/^#/ {
-  var[$3] = $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7;
+  var[$1":"$2] = $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7;
   next;
 }
-# read region names from MuClone result header; print VCF header
+# read sample names from MuClone result header; print VCF header
 NR>FNR && FNR==1 {
   print "##fileformat=VCFv4.1";
   print "##INFO=<ID=NS,Number=1,Type=Integer,Description=\"Number of Samples with Data\">";
