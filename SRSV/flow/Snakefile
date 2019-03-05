@@ -31,6 +31,7 @@ include: "haplotypecaller.smk"
 include: "snv-ppilp.smk"
 include: "pyclone.smk"
 include: "muclone.smk"
+include: "varscan.smk"
 
 # pseudo-rules to run variant callers
 # -----------------------------------------------------------------------------

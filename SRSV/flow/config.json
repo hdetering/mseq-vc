@@ -15,7 +15,9 @@
     "shimmer"        : "/mnt/netapp1/posadalab/APPS/Shimmer/shimmer.pl",
     "fasd"           : "/mnt/netapp1/posadalab/APPS/FaSD-somatic/soma",
     "snv-ppilp"      : "/mnt/netapp1/posadalab/APPS/SNV-PPILP-v1.2/SNV-PPILP.py -ilp /mnt/netapp1/posadalab/APPS/SNV-PPILP-v1.2/lp_solve_5.5.2.0_exe_ux64/",
-    "muclone_dir"    : "/mnt/netapp1/posadalab/APPS/muclone"
+    "muclone_dir"    : "/mnt/netapp1/posadalab/APPS/muclone",
+    "varscan"        : "java -jar /mnt/netapp1/posadalab/APPS/varscan-2.4.3/VarScan.v2.4.3.jar",
+    "neusomatic"     : "/mnt/netapp1/posadalab/APPS/neusomatic/neusomatic/python"
   },
  "scripts" : "/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/scripts"
 }

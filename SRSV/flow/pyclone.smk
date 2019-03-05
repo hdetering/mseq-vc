@@ -13,7 +13,7 @@ rule pyclone_yaml:
   threads: 1
   shell:
     '''
-    python3 {config[scripts]}/mutect2pyclone.py {input} {output}
+    python3 {config[scripts]}/mutect2yaml.py {input} {output}
     '''
 
 rule pyclone_conf:

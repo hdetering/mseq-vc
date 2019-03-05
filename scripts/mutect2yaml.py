@@ -45,7 +45,7 @@ def main(fh_input, fh_output, id_sample=None, nofilt=False):
         'id': '%s:%d' % (rec.CHROM, rec.POS),
         'ref_counts': rc_ref,
         'var_counts': rc_alt,
-        'states': [{'g_n':'AA', 'g_r':'AA', 'g_v':x, 'prior_weight':1} for x in ['AA', 'AB']]
+        'states': [{'g_n':'AA', 'g_r':'AA', 'g_v':x, 'prior_weight':1} for x in ['AB', 'BB']]
       })
   data_out = {'mutations': muts}
   fh_output.write(yaml.dump(data_out))
