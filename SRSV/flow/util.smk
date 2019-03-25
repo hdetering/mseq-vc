@@ -40,7 +40,6 @@ rule merge_vcf:
        "log/{tool}.GATK_CombineVariants.log"
     shell:
         """
-        #module load jdk/8u171
         module load jdk/8u181
         time (
            {config[tools][gatk3]} -T CombineVariants \

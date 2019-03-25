@@ -2,22 +2,22 @@
 # vim: syntax=python tabstop=2 expandtab
 # coding: utf-8
 #------------------------------------------------------------------------------
-# Convert Mutect2 VCF output to PyClone/MuClone YAML input.
+# Convert Mutect2 VCF output to PyClone/MuClone TSV input.
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-02-08
+# modified : 2019-03-05
 #------------------------------------------------------------------------------
 
+from __future__ import division
 import os, sys
 import argparse
 import vcf
-import yaml
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Convert Mutect2 VCF output to PyClone YAML input.')
   parser.add_argument('infile', type=argparse.FileType(), help='Mutect2 VCF file.')
-  parser.add_argument('outfile', type=argparse.FileType('wt'), help='Output YAML file.')
+  parser.add_argument('outfile', type=argparse.FileType('wt'), help='Output TSV file.')
   parser.add_argument('--sample', help='Which sample\'s variants to extract (default: first sample).')
   parser.add_argument('--nofilt', action='store_true', help='Disable filtering; otherwise only "PASS" variants are output (default: off).')
 
@@ -26,7 +26,9 @@ def parse_args():
 
 def main(fh_input, fh_output, id_sample=None, nofilt=False):
   '''Extract filter-passing variants from VCF file.'''
-  muts = []
+
+  fh_output.write('mutation_id\tref_counts\tvar_counts\tnormal_cn\tminor_cn\tmajor_cn\ttotal_cn\tvar_freq\n')
+
   rdr = vcf.Reader(fh_input)
   for rec in rdr:
     if nofilt or rec.FILTER is None or len(rec.FILTER) == 0:
@@ -40,16 +42,10 @@ def main(fh_input, fh_output, id_sample=None, nofilt=False):
       else:
         call = rec.samples[0]
       
+      mid = '%s:%d' % (rec.CHROM, rec.POS)
       rc_ref, rc_alt = call.data.AD
-      muts.append({
-        'id': '%s:%d' % (rec.CHROM, rec.POS),
-        'ref_counts': rc_ref,
-        'var_counts': rc_alt,
-        #'states': [{'g_n':'AA', 'g_r':'AA', 'g_v':x, 'prior_weight':1} for x in ['AB', 'BB']]
-        'states': [{'g_n':'AA', 'g_r':'AA', 'g_v':x, 'prior_weight':1} for x in ['AB']]
-      })
-  data_out = {'mutations': muts}
-  fh_output.write(yaml.dump(data_out))
+      vaf = rc_alt / (rc_ref+rc_alt)
+      fh_output.write('%s\t%d\t%d\t%d\t%d\t%d\t%d\t%f\n' % (mid,rc_ref,rc_alt,2,1,1,2,vaf))
 
 if __name__ == '__main__':
   args = parse_args()

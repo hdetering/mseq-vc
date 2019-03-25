@@ -32,6 +32,7 @@ include: "snv-ppilp.smk"
 include: "pyclone.smk"
 include: "muclone.smk"
 include: "varscan.smk"
+include: "neusomatic.smk"
 
 # pseudo-rules to run variant callers
 # -----------------------------------------------------------------------------
