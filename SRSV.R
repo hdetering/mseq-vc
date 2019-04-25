@@ -65,6 +65,8 @@ callers <- tibble(
   ),
   class = c(rep('general', 2), rep('tumor-normal', 11), rep('multi-sample', 4))
 )
+df_caller <- df_caller %>%
+  inner_join( callers, by = 'name_caller' )
 
 # determine status of variant calls
 #   TP: true positives
