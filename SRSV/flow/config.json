@@ -3,6 +3,7 @@
   {
     "gatk3"          : "java -jar $POSADALAB/APPS/gatk-3.8.1.0/GenomeAnalysisTK.jar",
     "gatk4"          : "$EBROOTGATK/gatk",
+    "gatk4.1"  	     : "/mnt/netapp1/posadalab/APPS/gatk-4.1.1.0/gatk",
     "picard"         : "java -jar $POSADALAB/APPS/picard-2.17.11/picard.jar",
     "mutect1"        : "/mnt/netapp1/posadalab/APPS/mutect-1.1.7/mutect1",
     "vardictjava"    : "/mnt/netapp1/posadalab/APPS/vardictjava-release-v1.5.2/build/install/VarDict/bin/VarDict",

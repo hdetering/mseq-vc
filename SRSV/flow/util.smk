@@ -1,6 +1,27 @@
 # vim: syntax=python tabstop=4 expandtab
 # coding: utf-8
 
+VCFS = [
+  "sim/somatic.vcf",
+  "bcftools.vcf",
+  "caveman.vcf",
+  "haplotypecaller.filt.vcf",
+#  "muclone.vcf",
+  "multisnv.vcf",
+  "mutect1.vcf",
+  "mutect2.vcf",
+  "mutect2m.vcf",
+  "neusomatic.vcf",
+  "shimmer.vcf",
+  "snooper.fix.vcf",
+  "snv-ppilp.vcf",
+  "somaticsniper.vcf",
+  "strelka1.fix.vcf",
+  "strelka2.fix.vcf",
+  "vardict.vcf",
+  "varscan.vcf"
+]
+
 rule ref_index:
     input:
         "{ref}.fa"
@@ -53,6 +74,34 @@ rule merge_vcf:
              -genotypeMergeOptions UNIQUIFY
         ) 1>{log} 2>&1
         """
+
+rule gatk2_collect_allelic_counts:
+    input:
+        ref="ref.fa",
+        bam="{sample}.bam",
+    output:
+        "{sample}.allelicCounts.tsv"
+    log:
+        "log/{sample}.gatk4_alleliccounts.log"
+    threads: 1
+    shell:
+        """
+        time (
+        module load gatk/4.0.10.0
+
+        cat {VCFS} | grep -v "^#" | cut -f 1,2 \
+        | while read chr pos; do printf "%s:%s\n" $chr $pos; done \
+        | sort -u \
+        > vars.pos.list
+
+        {config[tools][gatk4]} CollectAllelicCounts \
+            -R {input.ref} \
+            -I {input.bam} \
+            -L vars.pos.list \
+            -O {output} \
+        ) >{log} 2>&1
+        """
+
 
 # Add read group to BAM files (required by GATK tools)
 rule add_rg:
