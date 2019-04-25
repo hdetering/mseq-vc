@@ -45,21 +45,21 @@ PON=/mnt/netapp1/posadalab/Tama_Laura/PON/workdir/PON.TruSeq.vcf
 
 time(
 
-#$GATK Mutect2\
- # -R ${RESDIR}/${REF}.fa \
-  #-I ${WORKDIR}/ChineseSon.T1.${SCENARIO}.${REPLICATE}.bam \
-  #-I ${WORKDIR}/ChineseSon.T2.${SCENARIO}.${REPLICATE}.bam \
+$GATK Mutect2\
+  -R ${RESDIR}/${REF}.fa \
+  -I ${WORKDIR}/ChineseSon.T1.${SCENARIO}.${REPLICATE}.bam \
+  -I ${WORKDIR}/ChineseSon.T2.${SCENARIO}.${REPLICATE}.bam \
   -I ${WORKDIR}/ChineseSon.T3.${SCENARIO}.${REPLICATE}.bam \
-  #-I ${WORKDIR}/ChineseSon.T4.${SCENARIO}.${REPLICATE}.bam \
-  #-I ${WORKDIR}/ChineseSon.T5.${SCENARIO}.${REPLICATE}.bam \
-  #-I ${WORKDIR}/${HEALTHY}.chr21.bam \
-  #-normal ${HEALTHY} \
-  #--germline-resource ${GERMRES} \
-  #--af-of-alleles-not-in-resource 0.00003125 \
-  #--disable-read-filter MateOnSameContigOrNoMappedMateReadFilter \
-  #-pon ${PON} \
-  #-L 21 \
-  #--output ${WORKDIR}/${SCENARIO}.${REPLICATE}.Mutect2_multisample.vcf
+  -I ${WORKDIR}/ChineseSon.T4.${SCENARIO}.${REPLICATE}.bam \
+  -I ${WORKDIR}/ChineseSon.T5.${SCENARIO}.${REPLICATE}.bam \
+  -I ${WORKDIR}/${HEALTHY}.chr21.bam \
+  -normal ${HEALTHY} \
+  --germline-resource ${GERMRES} \
+  --af-of-alleles-not-in-resource 0.00003125 \
+  --disable-read-filter MateOnSameContigOrNoMappedMateReadFilter \
+  -pon ${PON} \
+  -L 21 \
+  --output ${WORKDIR}/${SCENARIO}.${REPLICATE}.Mutect2_multisample.vcf
 
 )
 
