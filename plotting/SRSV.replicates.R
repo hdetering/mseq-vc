@@ -108,7 +108,7 @@ for ( rid in df_rep$id_rep ) {
 
 rep_name <- df_rep %>% dplyr::filter( id_rep == rid ) %>% select( name_rep )
 # prevalence matrix
-df <- df_prev %>% dplyr::filter( id_rep == id_rep ) #%>% inner_join(df.reps %>% select(id, idx_rep, ttype, cvg), by='id')
+df <- df_prev %>% dplyr::filter( id_rep == rid ) #%>% inner_join(df.reps %>% select(id, idx_rep, ttype, cvg), by='id')
 p.prev <- ggplot( df, aes(x = id_clone, y = id_sample) ) +
   geom_tile( aes(fill = prev) ) +
   scale_fill_gradient( low = 'white', high = 'red', name = 'prevalence', limits = c(0, 1)) +

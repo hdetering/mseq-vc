@@ -1,7 +1,27 @@
 plot_perf <- function ( df )
 {
+  # exclude these callers from plots
+  blacklist <- c( 'Strelka1' )
+  
   # define order of variant callers (will affect plots)
-  df$caller = factor(df$caller, levels = c("Bcftools", "HaplotypeCaller", "CaVEMan", "MuTect1", "Mutect2", "NeuSomatic", "Shimmer", "SNooPer", "SomaticSniper", "Strelka1", "Strelka2", "VarDict", "VarScan", "MuClone", "MultiSNV", "Mutect2_mseq", "SNV-PPILP"))
+  df$caller = factor(df$caller, levels = c(
+    "Bcftools", 
+    "HaplotypeCaller", 
+    "CaVEMan", 
+    "MuTect1", 
+    "Mutect2", 
+    "NeuSomatic", 
+    "Shimmer", 
+    "SNooPer", 
+    "SomaticSniper", 
+    "Strelka1", 
+    "Strelka2", 
+    "VarDict", 
+    "VarScan", 
+    "MuClone", 
+    "MultiSNV", 
+    "Mutect2_mseq", 
+    "SNV-PPILP"))
   df$class <- factor(df$class, levels = c("general", "tumor-normal", "multi-sample"))
   
   # format caller names for better plotting
@@ -15,7 +35,7 @@ plot_perf <- function ( df )
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
   # remove data for some callers (older versions of certain methods)
-  df <- df %>% dplyr::filter( !(caller %in% c('MuTect1', 'Strelka1')) )
+  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
   
   # smaller plots for grid layout
   p_r_cvg_m <- ggplot(df, aes(x = as.factor(cvg), y = recall)) + 

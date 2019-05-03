@@ -25,7 +25,8 @@ plot_dir <- file.path( 'plot', 'SRSV' )
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
 source( file.path('plotting', 'performance.plotting.R') )
-
+source( file.path('analysis', 'upset.analysis.R') )
+source( file.path('plotting', 'upset.plotting.R') )
 
 # connection to analysis database
 #-------------------------------------------------------------------------------
@@ -90,3 +91,38 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 p_perf <- plot_perf( df_perf )
 ggsave( file.path( plot_dir, 'SRSV.performance.pdf'), plot = p_perf, width = 10, height = 6)
 ggsave( file.path( plot_dir, 'SRSV.performance.png'), plot = p_perf, width = 10, height = 6)
+
+################################################################################
+# UpSet plots
+################################################################################
+
+df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
+df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
+
+df_pres <- get_upset_pres( df_vars, df_rc )
+df_pres %>% write_csv( file.path(data_dir, 'SRSV.muts_callsets.csv') )
+
+df_pres <- read.csv( file.path(data_dir, 'SRSV.muts_callsets.csv') )
+# annoying, but necessary... only if loaded from file
+names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
+
+# plot variant calls in relation to TRUE somatic variants
+df <- df_pres
+n <- c(callers$name_caller, 'TRUE_somatic')
+pdf( file.path( plot_dir, 'SRSV.upset.som.pdf'), width = 8, height = 6, onefile = FALSE )
+plot_upset( df, n )
+dev.off()
+
+# plot FP variant calls in relation to germline vars
+df <- df_pres %>% dplyr::filter( type == 'FP' )
+n <- c(callers$name_caller, 'TRUE_germline')
+pdf( file.path( plot_dir, 'SRSV.upset.FP.GL.pdf'), width = 8, height = 6, onefile = FALSE )
+plot_upset( df, n )
+dev.off()
+
+# plot FP variant calls in relation to germline vars
+df <- df_pres %>% dplyr::filter( type == 'TP' )
+n <- c(callers$name_caller, 'TRUE_somatic')
+pdf( file.path( plot_dir, 'SRSV.upset.TP.som.pdf'), width = 8, height = 6, onefile = FALSE )
+plot_upset( df, n )
+dev.off()
