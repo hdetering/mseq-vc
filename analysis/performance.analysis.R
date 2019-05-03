@@ -1,7 +1,7 @@
 classify_variants <- function ( 
   df_varcall, 
   df_mut, 
-  df_sample 
+  df_mut_sample 
 )
 {
   # join detected variants and true mutations
