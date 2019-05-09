@@ -83,8 +83,16 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 p_perf <- plot_perf_rrsv( df_perf )
-ggsave( file.path( plot_dir, 'Fig4.RRSV.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig4.RRSV.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig6.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig6.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+
+# performance by admixture regime
+# ------------------------------------------------------------------------------
+df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
+p_perf_admix <- plot_perf_admix( df )
+ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 
 ################################################################################
