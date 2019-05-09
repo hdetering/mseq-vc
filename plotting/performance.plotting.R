@@ -16,13 +16,13 @@ plot_perf_cvg <- function ( df )
     'Strelka1', 
     'Strelka2', 
     'VarDict', 
-    'VarScan', 
+    'VarScan',
+    'MuClone', 
+    'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq',
-    'MuClone', 
-    'SNV-PPILP'))
-  df$class <- factor(df$class, levels = c('marginal', 'joint', 'two-step'))
+    'Mutect2_mseq'))
+  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
   df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
@@ -82,6 +82,90 @@ plot_perf_cvg <- function ( df )
   return( p_perf )
 }
 
+plot_perf_rrsv <- function ( df )
+{
+  # exclude these callers from plots
+  blacklist <- c( 'Strelka1' )
+  
+  # define order of variant callers (will affect plots)
+  df$caller = factor(df$caller, levels = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka1', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan',
+    'MuClone', 
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_mseq'))
+  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
+  
+  # format caller names for better plotting
+  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
+  df <- df %>% 
+    mutate(lbl = fct_recode(caller, 
+                            'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Neu\nSomatic' = 'NeuSomatic',
+                            'Somatic\nSniper' = 'SomaticSniper',
+                            'Mutect2\n(mseq)' = 'Mutect2_mseq',
+                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # remove data for some callers (older versions of certain methods)
+  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
+  
+  # subplots for grid layout
+  p_r_cvg <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = as.factor(cvg), y=mrec), fill = "gold", shape = 23) + 
+    labs( x = 'caller' ) + ggtitle( 'a' ) +
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme_gray() +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank() ) + 
+    guides( colour = "none", fill = 'none' )
+  
+  p_p_cvg <- ggplot( df, aes(x = as.factor(cvg), y = precision) ) + 
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mpre = median(precision)) %>% arrange(desc(mpre)) %>% dplyr::filter(mpre==max(mpre)), aes(x = as.factor(cvg), y=mpre), fill = "gold", shape = 23) + 
+    labs( x = 'caller' ) + ggtitle( 'a' ) +
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme_gray() +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank() ) + 
+    guides( colour = "none", fill = 'none' )
+  
+  p_f_cvg <- ggplot( df, aes(x = as.factor(cvg), y = F1) ) + 
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=as.factor(cvg), y=mF1), fill = "gold", shape = 23) + 
+    labs( x = 'caller', y = 'F1 score' ) + ggtitle( 'c' ) +
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme_gray() +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank() ) +
+    #theme( axis.text.x = element_text(angle = 45, hjust = 1) ) +
+    theme( legend.position = 'bottom' ) +
+    guides( colour = 'none' )
+  
+  p_perf <- grid.arrange(
+    grobs = list(p_r_cvg, p_p_cvg, p_f_cvg), 
+    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3)),
+    #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
+  )
+  
+  return( p_perf )
+}
+
 plot_perf_admix <- function ( df )
 {
   # exclude these callers from plots
@@ -100,13 +184,13 @@ plot_perf_admix <- function ( df )
     'Strelka1', 
     'Strelka2', 
     'VarDict', 
-    'VarScan', 
+    'VarScan',
+    'MuClone', 
+    'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq',
-    'MuClone', 
-    'SNV-PPILP'))
-  df$class <- factor(df$class, levels = c('marginal', 'joint', 'two-step'))
+    'Mutect2_mseq'))
+  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
   df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))

@@ -63,7 +63,6 @@ df_rc.rrsv <- readRDS( file.path(data_dir.rrsv, 'RRSV.readcounts.rds') )
 callers <- tibble(
   name_caller = c(
     'Bcftools', 
-    'HaplotypeCaller', 
     'CaVEMan', 
     'MuTect1', 
     'Mutect2', 
@@ -74,15 +73,18 @@ callers <- tibble(
     'Strelka1', 
     'Strelka2', 
     'VarDict', 
-    'VarScan', 
+    'VarScan',
     'MuClone', 
-    'MultiSNV', 
     'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
     'Mutect2_mseq'
   ),
-  class = c(rep('general', 2), rep('tumor-normal', 11), rep('multi-sample', 4))
+  class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
-df_caller <- df_caller %>%
+df_caller.srsv <- df_caller.srsv %>%
+  inner_join( callers, by = 'name_caller' )
+df_caller.rrsv <- df_caller.rrsv %>%
   inner_join( callers, by = 'name_caller' )
 
 # determine status of variant calls
@@ -113,14 +115,11 @@ df.srsv <- df_perf.srsv %>% dplyr::filter( cvg == 50 ) %>%
 df.rrsv <- df_perf.rrsv %>% 
   select(id_rep, FN, FP, TP, recall, precision, F1, caller = name_caller) %>%
   mutate( cvg = 'RRSV' )
-df.rrsv$caller[df.rrsv$caller == 'bcftools'] <- 'Bcftools'
-df.rrsv$caller[df.rrsv$caller == 'Haplotype Caller'] <- 'HaplotypeCaller'
-df.rrsv$caller[df.rrsv$caller == 'Somatic Sniper'] <- 'SomaticSniper'
 
 df <- df.srsv %>% bind_rows( df.rrsv ) %>% inner_join( callers, by = c('caller'='name_caller') )
-p_perf <- plot_perf( df )
-ggsave( file.path( plot_dir, 'SRSV.performance.pdf'), plot = p_perf, width = 10, height = 6)
-ggsave( file.path( plot_dir, 'SRSV.performance.png'), plot = p_perf, width = 10, height = 6)
+p_perf <- plot_perf_cvg( df )
+ggsave( file.path( plot_dir.srsv, 'SRSV.performance.pdf'), plot = p_perf, width = 10, height = 6)
+ggsave( file.path( plot_dir.srsv, 'SRSV.performance.png'), plot = p_perf, width = 10, height = 6)
 
 # plot ALT read counts for TP, FP, FN variants
 # ------------------------------------------------------------------------------
