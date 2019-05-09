@@ -19,10 +19,6 @@ require(gridExtra)
 require(grid)
 require(broom) # tidy()
 
-# define input/output paths
-data_dir <- file.path( 'data', 'SRSV' )
-plot_dir <- file.path( 'plot', 'SRSV' )
-
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
 source( file.path('analysis', 'admixture.analysis.R') )
@@ -33,6 +29,9 @@ source( file.path('plotting', 'rc_alt.plotting.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
 source( file.path('plotting', 'upset.plotting.R') )
 
+# define input/output paths
+data_dir <- file.path( 'data', 'SRSV' )
+plot_dir <- file.path( 'plot', 'SRSV' )
 
 # connection to analysis database
 #-------------------------------------------------------------------------------
@@ -68,12 +67,13 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq'
+    'Mutect2_ms'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
+df_caller <- df_caller %>% mutate( name_caller = fct_recode( name_caller, 'Mutect2_ms' = 'Mutect2_mseq' ) )
 
 # determine status of variant calls
 #   TP: true positives
@@ -99,16 +99,16 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 p_perf <- plot_perf_cvg( df_perf )
-ggsave( file.path( plot_dir, 'Fig1.SRSV.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig1.SRSV.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix( df )
-ggsave( file.path( plot_dir, 'Fig2.SRSV.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig2.SRSV.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
 
 
 ################################################################################
@@ -143,7 +143,7 @@ ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.png'), plot = p_vaf, 
 # Similarity between call sets
 ################################################################################
 
-df_var <-  readRDS( file.path(data_dir, 'df_vars.rds') )
+df_var <- readRDS( file.path(data_dir, 'df_vars.rds') )
 
 ## true positives
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
@@ -162,8 +162,8 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn )
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
 
 
 ################################################################################
@@ -174,30 +174,33 @@ df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
 df_pres <- get_upset_pres( df_vars, df_rc )
-df_pres %>% write_csv( file.path(data_dir, 'SRSV.muts_callsets.csv') )
+df_pres %>% write_csv( file.path(data_dir, 'de-novo.muts_callsets.csv') )
 
-df_pres <- read.csv( file.path(data_dir, 'SRSV.muts_callsets.csv') )
+df_pres <- read.csv( file.path(data_dir, 'de-novo.muts_callsets.csv') )
 # annoying, but necessary... only if loaded from file
 names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 
 # plot variant calls in relation to TRUE somatic variants
 df <- df_pres
-n <- c(callers$name_caller, 'TRUE_somatic')
-pdf( file.path( plot_dir, 'SRSV.upset.som.pdf'), width = 8, height = 6, onefile = FALSE )
+lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
+n <- c(lbl_callers, 'TRUE_somatic')
+pdf( file.path( plot_dir, 'Fig5.de-novo.upset.som.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
-n <- c(callers$name_caller, 'TRUE_germline')
-pdf( file.path( plot_dir, 'SRSV.upset.FP.GL.pdf'), width = 8, height = 6, onefile = FALSE )
+lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
+n <- c(lbl_callers, 'TRUE_germline')
+pdf( file.path( plot_dir, 'de-novo.upset.FP.GL.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'TP' )
-n <- c(callers$name_caller, 'TRUE_somatic')
-pdf( file.path( plot_dir, 'SRSV.upset.TP.som.pdf'), width = 8, height = 6, onefile = FALSE )
+lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
+n <- c(lbl_callers, 'TRUE_somatic')
+pdf( file.path( plot_dir, 'de-novo.upset.TP.som.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
 

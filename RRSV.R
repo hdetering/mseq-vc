@@ -7,10 +7,6 @@ require(RColorBrewer)
 require(gridExtra)
 require(grid)
 
-# define input/output paths
-data_dir <- file.path( 'data', 'RRSV' )
-plot_dir <- file.path( 'plot', 'RRSV' )
-
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
 source( file.path('analysis', 'admixture.analysis.R') )
@@ -20,6 +16,10 @@ source( file.path('plotting', 'performance.plotting.R') )
 source( file.path('plotting', 'rc_alt.plotting.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
 source( file.path('plotting', 'upset.plotting.R') )
+
+# define input/output paths
+data_dir <- file.path( 'data', 'RRSV' )
+plot_dir <- file.path( 'plot', 'RRSV' )
 
 # load RRSV data
 #-------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq'
+    'Mutect2_ms'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
@@ -109,7 +109,7 @@ ggsave( file.path( plot_dir, 'Fig5.spike-in.vaf.bar.png'), plot = p_vaf, device 
 # Similarity between call sets
 ################################################################################
 
-df_var <-  readRDS( file.path(data_dir, 'df_vars.rds') )
+df_var <- readRDS( file.path(data_dir, 'df_vars.rds') )
 
 ## true positives
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
@@ -128,5 +128,5 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn )
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
-ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
+ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )

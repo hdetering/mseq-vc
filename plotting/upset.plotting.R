@@ -5,5 +5,6 @@ plot_upset <- function( df, lbl_sets ) {
         keep.order = TRUE, 
         order.by = 'freq',
         mb.ratio = c(0.5, 0.5),
-        number.angles = 45)
+        #main.bar.color = 'steelblue',
+        number.angles = 320)
 }

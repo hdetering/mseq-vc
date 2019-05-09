@@ -21,7 +21,7 @@ plot_perf_cvg <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq'))
+    'Mutect2_ms'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -29,9 +29,9 @@ plot_perf_cvg <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nms' = 'Mutect2_ms',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
-                            'Mutect2\n(mseq)' = 'Mutect2_mseq',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
   # remove data for some callers (older versions of certain methods)
@@ -47,7 +47,7 @@ plot_perf_cvg <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 7)) + 
+          strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = 'none', alpha = "none")
   
   p_p_cvg <- ggplot(df, aes(x = as.factor(cvg), y = precision)) + 
@@ -58,7 +58,7 @@ plot_perf_cvg <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 7)) + 
+          strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = "none", alpha = "none")
   
   p_f_cvg <- ggplot(df, aes(x = as.factor(cvg), y = F1)) + 
@@ -69,7 +69,7 @@ plot_perf_cvg <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
-    theme(strip.text.x = element_text(size = 7)) +
+    theme(strip.text.x = element_text(size = 6)) +
     theme(legend.position = 'bottom') +
     guides(colour = "none", alpha = "none")
   
@@ -105,7 +105,7 @@ plot_perf_rrsv <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq'))
+    'Mutect2_ms'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -113,9 +113,9 @@ plot_perf_rrsv <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nms' = 'Mutect2_ms',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
-                            'Mutect2\n(mseq)' = 'Mutect2_mseq',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
   # remove data for some callers (older versions of certain methods)
@@ -189,7 +189,7 @@ plot_perf_admix <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_mseq'))
+    'Mutect2_ms'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -197,9 +197,9 @@ plot_perf_admix <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nms' = 'Mutect2_ms',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
-                            'Mutect2\n(mseq)' = 'Mutect2_mseq',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
   # remove data for some callers (older versions of certain methods)
@@ -215,7 +215,7 @@ plot_perf_admix <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 7)) + 
+          strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = 'none', alpha = "none")
   
   p_p_ttype <- ggplot(df, aes(x = as.factor(ttype), y = precision)) + 
@@ -226,7 +226,7 @@ plot_perf_admix <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 7)) + 
+          strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = "none", alpha = "none")
   
   p_f_ttype <- ggplot(df, aes(x = as.factor(ttype), y = F1)) + 
@@ -237,7 +237,7 @@ plot_perf_admix <- function ( df )
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
-    theme(strip.text.x = element_text(size = 7)) +
+    theme(strip.text.x = element_text(size = 6)) +
     theme(legend.position = 'bottom') +
     guides(colour = "none", alpha = "none")
   

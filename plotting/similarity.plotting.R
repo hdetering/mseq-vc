@@ -11,7 +11,8 @@
 
 # plot single similarity matrix
 plot_jacc_idx <- function( df ) {
-  p_jacc <- ggplot( df, aes(x = caller2, y = caller1)) + geom_tile(aes(fill = jaccard_idx) ) +
+  p_jacc <- df %>% dplyr::filter(caller1 != 'Strelka1' & caller2 != 'Strelka1') %>%
+    ggplot( aes(x = caller2, y = caller1)) + geom_tile(aes(fill = jaccard_idx) ) +
     scale_fill_distiller( palette = "Spectral", limits = c(0, 1), name = 'Jaccard\nindex' ) +
     theme_bw() +
     theme( axis.title = element_blank(),
@@ -29,7 +30,7 @@ plot_jacc_idx_multi <- function( p1, p2, p3 ) {
     p1 + theme(legend.position = 'none'),
     p2 + theme(legend.position = 'none'),
     p3 + theme(legend.position = 'none'),
-    labels = c('A', 'B', 'C'), nrow = 1
+    labels = c('a', 'b', 'c'), nrow = 1
   )
   p_jacc_multi_legend <- get_legend( p1 + theme(legend.position = 'bottom') )
   p_jacc_multi <- plot_grid(
