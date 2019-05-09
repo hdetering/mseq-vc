@@ -1,7 +1,8 @@
 classify_variants <- function ( 
   df_varcall, 
   df_mut, 
-  df_mut_sample 
+  df_mut_sample,
+  df_caller
 )
 {
   # join detected variants and true mutations
@@ -29,10 +30,6 @@ classify_variants <- function (
     mutate( type = 'FN' )
   
   df_vars <- df_tp %>% rbind( df_fp ) %>% rbind( df_fn )
-  df_vars <- df_vars %>% 
-    left_join( df_snp, by = c('id_rep', 'chrom', 'pos') ) %>% 
-    mutate( germline = (!is.na(id_mut)) ) %>%
-    select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
   
   return( df_vars )
 }
@@ -48,6 +45,30 @@ calculate_performance <- function (
     summarise( n = n() ) %>%
     ungroup() %>%
     complete( id_caller, id_rep, type, fill = list(n = 0) ) %>%
+    spread( type, n ) %>%
+    mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
+    mutate( F1 = 2*recall*precision/(recall+precision) )
+  # add caller information
+  df_eval <- df_eval %>%
+    inner_join( df_caller, by = c('id_caller') ) %>%
+    inner_join( df_rep, by = c('id_rep') ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
+    mutate( caller = name_caller )
+  
+  return( df_eval )
+}
+
+calculate_performance_sample <- function (
+  df_vars, 
+  df_caller, 
+  df_rep
+)
+{
+  df_eval <- df_vars %>% select( id_caller, id_rep, id_sample, type ) %>%
+    group_by( id_caller, id_rep, id_sample, type ) %>%
+    summarise( n = n() ) %>%
+    ungroup() %>%
+    complete( id_caller, id_rep, id_sample, type, fill = list(n = 0) ) %>%
     spread( type, n ) %>%
     mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
     mutate( F1 = 2*recall*precision/(recall+precision) )
