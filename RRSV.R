@@ -90,6 +90,7 @@ ggsave( file.path( plot_dir, 'Fig6.spike-in.performance.cvg.png'), plot = p_perf
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
+df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix( df )
 ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)

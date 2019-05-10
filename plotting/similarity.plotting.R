@@ -22,14 +22,14 @@ plot_jacc_idx <- function( df ) {
 }
 
 # combine three plots into one
-plot_jacc_idx_multi <- function( p1, p2, p3 ) {
+plot_jacc_idx_multi <- function( p1, p2, p3, titles ) {
   
   require( cowplot ) # get_legend
   
   p_jacc_multi_graphs <- plot_grid( 
-    p1 + theme(legend.position = 'none'),
-    p2 + theme(legend.position = 'none'),
-    p3 + theme(legend.position = 'none'),
+    p1 + ggtitle( titles[1] ) + theme(legend.position = 'none'),
+    p2 + ggtitle( titles[2] ) + theme(legend.position = 'none'),
+    p3 + ggtitle( titles[3] ) + theme(legend.position = 'none'),
     labels = c('a', 'b', 'c'), nrow = 1
   )
   p_jacc_multi_legend <- get_legend( p1 + theme(legend.position = 'bottom') )

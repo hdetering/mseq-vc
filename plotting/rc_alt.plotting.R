@@ -12,7 +12,7 @@ plot_vaf_bar_srsv <- function( df_vars, df_rc, df_rep ) {
     scale_fill_brewer( palette = 'Set1' ) +
     facet_wrap( ~caller, ncol = 4, scales = 'free_y' ) +
     #ggtitle( 'VAF distribution for classes of variant calls' ) + 
-    xlab( 'variant allele frequency' ) +
+    labs( x = 'variant allele frequency', fill = '' ) +
     theme_pubclean() +
     theme( legend.position = 'bottom' )
 }

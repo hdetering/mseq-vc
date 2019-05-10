@@ -71,9 +71,10 @@ callers <- tibble(
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
+df_caller <- df_caller %>% mutate( name_caller = fct_recode( name_caller, 'Mutect2_ms' = 'Mutect2_mseq' ) )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
-df_caller <- df_caller %>% mutate( name_caller = fct_recode( name_caller, 'Mutect2_ms' = 'Mutect2_mseq' ) )
+
 
 # determine status of variant calls
 #   TP: true positives
@@ -161,9 +162,9 @@ df_jacc_fn <- Jaccard.df( df_pres_fn %>% select(-id_mut) )
 p_jacc_fn <- plot_jacc_idx( df_jacc_fn )
 
 ## multi-plot
-p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
+p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp, c('TP', 'FN', 'FP') )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
 
 
 ################################################################################

@@ -65,7 +65,7 @@ plot_perf_cvg <- function ( df )
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(cvg), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth', y = 'F1 score') + ggtitle( 'c' ) +
+    labs(x = 'sequencing depth', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
@@ -125,7 +125,7 @@ plot_perf_rrsv <- function ( df )
   p_r_cvg <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = as.factor(cvg), y=mrec), fill = "gold", shape = 23) + 
-    labs( x = 'caller' ) + ggtitle( 'a' ) +
+    labs( x = 'caller', fill = '' ) + ggtitle( 'a' ) +
     facet_wrap( ~ lbl, nrow = 1 ) +
     theme_gray() +
     theme( strip.text.x = element_text(size = 6) ) +
@@ -233,7 +233,7 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture class', y = 'F1 score') + ggtitle( 'c' ) +
+    labs(x = 'admixture class', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
