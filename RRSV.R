@@ -75,7 +75,7 @@ saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 # calculate performance metrics
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf <- calculate_performance( df_vars, df_caller, df_rep )
+df_perf <- calculate_performance_sample( df_vars, df_caller, df_rep )
 # write summary stats to file
 saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 

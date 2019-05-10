@@ -16,20 +16,20 @@ plot_jacc_idx <- function( df ) {
     scale_fill_distiller( palette = "Spectral", limits = c(0, 1), name = 'Jaccard\nindex' ) +
     theme_bw() +
     theme( axis.title = element_blank(),
-           axis.text.x = element_text(angle = 30, hjust = 1, size = 6) )
+           axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5) )
   
   return( p_jacc )
 }
 
 # combine three plots into one
-plot_jacc_idx_multi <- function( p1, p2, p3, titles ) {
+plot_jacc_idx_multi <- function( p1, p2, p3 ) {
   
   require( cowplot ) # get_legend
   
   p_jacc_multi_graphs <- plot_grid( 
-    p1 + ggtitle( titles[1] ) + theme(legend.position = 'none'),
-    p2 + ggtitle( titles[2] ) + theme(legend.position = 'none'),
-    p3 + ggtitle( titles[3] ) + theme(legend.position = 'none'),
+    p1 + theme(legend.position = 'none'),
+    p2 + theme(legend.position = 'none'),
+    p3 + theme(legend.position = 'none'),
     labels = c('a', 'b', 'c'), nrow = 1
   )
   p_jacc_multi_legend <- get_legend( p1 + theme(legend.position = 'bottom') )

@@ -92,9 +92,13 @@ saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 # calculate performance metrics
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf <- calculate_performance( df_vars, df_caller, df_rep )
+df_perf <- calculate_performance_sample( df_vars, df_caller, df_rep )
 # write summary stats to file
 saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
+df_perf_agg <- df_perf %>% 
+  group_by( name_caller, cvg ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
 # plot performance metrics
 # ------------------------------------------------------------------------------
@@ -106,6 +110,11 @@ ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.cvg.png'), plot = p_perf,
 # performance by admixture regime
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
+df_perf_agg <- df_perf %>% 
+  group_by( name_caller, ttype ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix( df )
 ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
@@ -149,20 +158,24 @@ df_var <- readRDS( file.path(data_dir, 'df_vars.rds') )
 ## true positives
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
 df_jacc_tp <- Jaccard.df( df_pres_tp %>% select(-id_mut) )
-p_jacc_tp <- plot_jacc_idx( df_jacc_tp )
-
-## false positives
-df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' )
-df_jacc_fp <- Jaccard.df( df_pres_fp %>% select(-id_mut) )
-p_jacc_fp <- plot_jacc_idx( df_jacc_fp )
+p_jacc_tp <- plot_jacc_idx( df_jacc_tp ) +  
+  annotate("text", x = "HaplotypeCaller", y = "VarDict", label = "TP", size = 10)
 
 ## false negatives
 df_pres_fn <- get_var_pres( df_var, df_caller, 'FN' )
 df_jacc_fn <- Jaccard.df( df_pres_fn %>% select(-id_mut) )
-p_jacc_fn <- plot_jacc_idx( df_jacc_fn )
+p_jacc_fn <- plot_jacc_idx( df_jacc_fn ) +  
+  annotate("text", x = "HaplotypeCaller", y = "VarDict", label = "FN", size = 10)
+
+## false positives
+df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' ) %>%
+  add_column( CaVEMan = 0, .after = 2 )
+df_jacc_fp <- Jaccard.df( df_pres_fp %>% select(-id_mut) )
+p_jacc_fp <- plot_jacc_idx( df_jacc_fp ) +  
+  annotate("text", x = "HaplotypeCaller", y = "VarDict", label = "FP", size = 10)
 
 ## multi-plot
-p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp, c('TP', 'FN', 'FP') )
+p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
 ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
 
