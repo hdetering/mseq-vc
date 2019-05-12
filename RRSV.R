@@ -110,8 +110,8 @@ df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 # ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
 # ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
 p_vaf <- plot_vaf_bar_srsv( df_vars, df_rc, df_rep )
-ggsave( file.path( plot_dir, 'Fig5.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig5.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'Fig8.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'Fig8.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 
 ################################################################################
@@ -139,3 +139,18 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn )
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
 ggsave( file.path( plot_dir, 'Fig8.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
+
+# hierarchical clustering based on varcalls
+#-------------------------------------------------------------------------------
+require(ade4) # dist.binary()
+require(ggdendro) # ggdendrogram()
+df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
+df_jacc <- Jaccard.df( df_pres %>% select(-id_mut) )
+df_jacc_idx <- df_jacc %>% 
+  spread( caller1, jaccard_idx ) %>% 
+  as.data.frame() %>% set_rownames( df_jacc_dist$caller2 ) %>% select( -caller2 )
+d <- as.dist( 1-df_jacc_idx )
+hc <- hclust(d)
+p_hclust_dendro <- ggdendrogram(hc, rotate = TRUE)
+ggsave( file.path(plot_dir, 'FigS5.spike-in.hclust.dendro.pdf'), plot = p_hclust_dendro, device = pdf() )
+ggsave( file.path(plot_dir, 'FigS5.spike-in.hclust.dendro.png'), plot = p_hclust_dendro, device = png() )

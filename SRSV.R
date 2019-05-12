@@ -179,6 +179,21 @@ p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
 ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
 
+# hierarchical clustering based on varcalls
+#-------------------------------------------------------------------------------
+require(ade4) # dist.binary()
+require(ggdendro) # ggdendrogram()
+df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
+df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
+df_jacc_idx <- df_jacc %>% 
+  spread( caller1, jaccard_idx ) %>% 
+  as.data.frame() %>% set_rownames( df_jacc_dist$caller2 ) %>% select( -caller2 )
+d <- as.dist( 1-df_jacc_idx )
+hc <- hclust(d)
+p_hclust_dendro <- ggdendrogram(hc, rotate = TRUE)
+ggsave( file.path(plot_dir, 'FigS4.de-novo.hclust.dendro.pdf'), plot = p_hclust_dendro, device = pdf() )
+ggsave( file.path(plot_dir, 'FigS4.de-novo.hclust.dendro.png'), plot = p_hclust_dendro, device = png() )
+
 
 ################################################################################
 # UpSet plots
@@ -198,27 +213,31 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 df <- df_pres
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-pdf( file.path( plot_dir, 'Fig5.de-novo.upset.som.pdf'), width = 8, height = 6, onefile = FALSE )
+fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
+pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
+system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_germline')
-pdf( file.path( plot_dir, 'de-novo.upset.FP.GL.pdf'), width = 8, height = 6, onefile = FALSE )
+fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
+pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
+system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'TP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-pdf( file.path( plot_dir, 'de-novo.upset.TP.som.pdf'), width = 8, height = 6, onefile = FALSE )
+fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
+pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-
-
+system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 
 ################################################################################
