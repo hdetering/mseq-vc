@@ -190,9 +190,16 @@ df_jacc_idx <- df_jacc %>%
   as.data.frame() %>% set_rownames( df_jacc_dist$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
-p_hclust_dendro <- ggdendrogram(hc, rotate = TRUE)
-ggsave( file.path(plot_dir, 'FigS4.de-novo.hclust.dendro.pdf'), plot = p_hclust_dendro, device = pdf() )
-ggsave( file.path(plot_dir, 'FigS4.de-novo.hclust.dendro.png'), plot = p_hclust_dendro, device = png() )
+
+fn_pfx <- 'FigS1.de-novo.hclust.dendro'
+pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
+par( mar = c(2, 0, 0, 6) )
+plot(as.dendrogram(hc), horiz = TRUE)
+dev.off()
+png( file.path(plot_dir, paste0(fn_pfx, '.png')), width = 8, height = 4, units = 'in', res = 300 )
+par( mar = c(2, 0, 0, 6) )
+plot(as.dendrogram(hc), horiz = TRUE)
+dev.off()
 
 
 ################################################################################
