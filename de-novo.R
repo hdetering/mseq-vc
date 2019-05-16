@@ -225,14 +225,14 @@ df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
 df_jacc_tp <- Jaccard.df( df_pres_tp %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_tp <- plot_jacc_idx( df_jacc_tp %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "TP", size = 10)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "TP", size = 8)
 
 ## false negatives
 df_pres_fn <- get_var_pres( df_var, df_caller, 'FN' )
 df_jacc_fn <- Jaccard.df( df_pres_fn %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FN", size = 10)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FN", size = 8)
 
 ## false positives
 df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' ) %>%
@@ -240,7 +240,7 @@ df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' ) %>%
 df_jacc_fp <- Jaccard.df( df_pres_fp %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FP", size = 10)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FP", size = 8)
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
