@@ -215,7 +215,7 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = ttype, fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(ttype), y=mrec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture class') + ggtitle( 'a' ) +
+    labs(x = 'admixture') + ggtitle( 'a' ) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     facet_grid(.~lbl) +
     theme_gray() +
@@ -227,7 +227,7 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(ttype), y = mprec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture class') + ggtitle( 'b' ) +
+    labs(x = 'admixture') + ggtitle( 'b' ) +
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
@@ -238,7 +238,7 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture class', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
+    labs(x = 'admixture', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
     facet_grid(.~lbl) +
     theme_gray() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
