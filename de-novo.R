@@ -148,9 +148,9 @@ df_pwt <- pwt$p.value %>%
                             breaks = c(0.0, 0.0001, 0.001, 0.01, 0.05, 1), 
                             labels = c("****", "***", "**", "*", "ns")))
 lst_callers <- callers
-df_pwt$id1 <- factor(df_pwt$id1, levels = lst_callers)
-df_pwt$id2 <- factor(df_pwt$id2, levels = lst_callers)
-p_loc_f1_pwt <- ggplot(df_pwt, aes(x = id1, y = id2)) + 
+#df_pwt$id1 <- factor(df_pwt$id1, levels = lst_callers)
+#df_pwt$id2 <- factor(df_pwt$id2, levels = lst_callers)
+p_perf_f1_pwt <- ggplot(df_pwt, aes(x = id1, y = id2)) + 
   geom_tile(aes(fill = significance), color = "white") +
   geom_text(aes(label = round(-log(p.adj)))) +
   ggtitle("B) Pairwise Wilcoxon rank sum test (values: -log(p.adj))") + 
@@ -163,7 +163,7 @@ p_loc_f1_pwt <- ggplot(df_pwt, aes(x = id1, y = id2)) +
   )
 
 
-p_perf_f1 <- grid.arrange(grobs = list(p_loc_f1_box, p_loc_f1_pwt), 
+p_perf_f1 <- grid.arrange(grobs = list(p_perf_f1_box, p_perf_f1_pwt), 
                          layout_matrix = rbind(c(1,2), c(1,2)))
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
