@@ -30,8 +30,8 @@ source( file.path('plotting', 'similarity.plotting.R') )
 source( file.path('plotting', 'upset.plotting.R') )
 
 # define input/output paths
-data_dir <- file.path( 'data', 'SRSV' )
-plot_dir <- file.path( 'plot', 'SRSV' )
+data_dir <- file.path( 'data', 'de-novo' )
+plot_dir <- file.path( 'plot', 'de-novo' )
 
 # connection to analysis database
 #-------------------------------------------------------------------------------
@@ -75,6 +75,9 @@ df_caller <- df_caller %>% mutate( name_caller = fct_recode( name_caller, 'Mutec
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
 
+################################################################################
+# Performance metrics (recall, precision, F1 score)
+################################################################################
 
 # determine status of variant calls
 #   TP: true positives
@@ -103,22 +106,67 @@ df_perf_agg <- df_perf %>%
 # plot performance metrics
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
+df_perf_cvg_agg <- df_perf %>% 
+  group_by( name_caller, cvg ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
 p_perf <- plot_perf_cvg( df_perf )
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
-df_perf_agg <- df_perf %>% 
+df_perf_mix_agg <- df_perf %>% 
   group_by( name_caller, ttype ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix( df )
-ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+
+# check for significant performance differences
+# ------------------------------------------------------------------------------
+# plot Box- and Violinplots of F1 scores for callers
+p_perf_f1_box <- ggviolin(df_perf, x = "caller", y = "F1", color = "class",
+                         main = "A) Distribution of F1 scores",
+                         add = "boxplot") +
+  rotate_x_text(45)
+
+# Kruskal-Wallis rank sum test
+kruskal.test(F1 ~ caller, data = df_perf)
+
+# perform pairwise Wilcoxon rank sum test (Mann-Whitney test?)
+pwt <- pairwise.wilcox.test( df_perf$F1, df_perf$caller, p.adjust.method = "BH" )
+df_pwt <- pwt$p.value %>% 
+  as_tibble(rownames = "id1") %>% 
+  gather(id2, p.adj, -id1) %>% dplyr::filter(!is.na(p.adj)) %>%
+  mutate(significance = cut(p.adj, 
+                            breaks = c(0.0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                            labels = c("****", "***", "**", "*", "ns")))
+lst_callers <- callers
+df_pwt$id1 <- factor(df_pwt$id1, levels = lst_callers)
+df_pwt$id2 <- factor(df_pwt$id2, levels = lst_callers)
+p_loc_f1_pwt <- ggplot(df_pwt, aes(x = id1, y = id2)) + 
+  geom_tile(aes(fill = significance), color = "white") +
+  geom_text(aes(label = round(-log(p.adj)))) +
+  ggtitle("B) Pairwise Wilcoxon rank sum test (values: -log(p.adj))") + 
+  scale_fill_manual(values = c(rev(brewer.pal(4, "Greens")), "grey")) +
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+p_perf_f1 <- grid.arrange(grobs = list(p_loc_f1_box, p_loc_f1_pwt), 
+                         layout_matrix = rbind(c(1,2), c(1,2)))
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
 
 
 ################################################################################
