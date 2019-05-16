@@ -186,14 +186,14 @@ df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
 df_jacc_tp <- Jaccard.df( df_pres_tp %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_tp <- plot_jacc_idx( df_jacc_tp %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "TP", size = 8)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "TP", size = 6)
 
 ## false negatives
 df_pres_fn <- get_var_pres( df_var, df_caller, 'FN' )
 df_jacc_fn <- Jaccard.df( df_pres_fn %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FN", size = 8)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FN", size = 6)
 
 ## false positives
 df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' ) %>%
@@ -201,12 +201,12 @@ df_pres_fp <- get_var_pres( df_var, df_caller, 'FP' ) %>%
 df_jacc_fp <- Jaccard.df( df_pres_fp %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder))) +  
-  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FP", size = 8)
+  annotate("text", x = "MuTect1", y = "MultiSNV", label = "FP", size = 6)
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'Fig5.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'Fig5.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
 
 # hierarchical clustering based on varcalls
 #-------------------------------------------------------------------------------
@@ -214,9 +214,8 @@ require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
-df_jacc_idx <- df_jacc %>% 
-  spread( caller1, jaccard_idx ) %>% 
-  as.data.frame() %>% set_rownames( df_jacc$caller2 ) %>% select( -caller2 )
+df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
+df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
@@ -253,7 +252,10 @@ fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
+#system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
@@ -263,7 +265,10 @@ fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
+#system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'TP' )
@@ -273,7 +278,10 @@ fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
+#system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 
 ################################################################################
