@@ -130,41 +130,11 @@ ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.png'), plot = p_per
 
 # check for significant performance differences
 # ------------------------------------------------------------------------------
-# plot Box- and Violinplots of F1 scores for callers
-p_perf_f1_box <- ggviolin(df_perf, x = "caller", y = "F1", color = "class",
-                         main = "A) Distribution of F1 scores",
-                         add = "boxplot") +
-  rotate_x_text(45)
 
 # Kruskal-Wallis rank sum test
 kruskal.test(F1 ~ caller, data = df_perf)
 
-# perform pairwise Wilcoxon rank sum test (Mann-Whitney test?)
-pwt <- pairwise.wilcox.test( df_perf$F1, df_perf$caller, p.adjust.method = "BH" )
-df_pwt <- pwt$p.value %>% 
-  as_tibble(rownames = "id1") %>% 
-  gather(id2, p.adj, -id1) %>% dplyr::filter(!is.na(p.adj)) %>%
-  mutate(significance = cut(p.adj, 
-                            breaks = c(0.0, 0.0001, 0.001, 0.01, 0.05, 1), 
-                            labels = c("****", "***", "**", "*", "ns")))
-lst_callers <- callers
-#df_pwt$id1 <- factor(df_pwt$id1, levels = lst_callers)
-#df_pwt$id2 <- factor(df_pwt$id2, levels = lst_callers)
-p_perf_f1_pwt <- ggplot(df_pwt, aes(x = id1, y = id2)) + 
-  geom_tile(aes(fill = significance), color = "white") +
-  geom_text(aes(label = round(-log(p.adj)))) +
-  ggtitle("B) Pairwise Wilcoxon rank sum test (values: -log(p.adj))") + 
-  scale_fill_manual(values = c(rev(brewer.pal(4, "Greens")), "grey")) +
-  coord_flip() +
-  theme_minimal() +
-  theme(
-    axis.title = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-
-p_perf_f1 <- grid.arrange(grobs = list(p_perf_f1_box, p_perf_f1_pwt), 
-                         layout_matrix = rbind(c(1,2), c(1,2)))
+p_perf_f1 <- plot_pairwise_wilcoxon( df_perf )
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
 
@@ -176,25 +146,16 @@ ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14,
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
-# p_vaf <- plot_vaf_dens_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
-# p_vaf <- plot_rc_alt_ridges_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
 p_vaf <- plot_vaf_bar_srsv( df_vars, df_rc, df_rep )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
-p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'Mutect2_mseq', 3000 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.Mutect2_ms.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.Mutect2_ms.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
-p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'SNooPer', 3000 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
-p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'VarDict', 3000 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+# p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'SNooPer', 3000 )
+# ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+# ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+# p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'VarDict', 3000 )
+# ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+# ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 
 ################################################################################
@@ -255,7 +216,7 @@ df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
 df_jacc_idx <- df_jacc %>% 
   spread( caller1, jaccard_idx ) %>% 
-  as.data.frame() %>% set_rownames( df_jacc_dist$caller2 ) %>% select( -caller2 )
+  as.data.frame() %>% set_rownames( df_jacc$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
