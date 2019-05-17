@@ -30,6 +30,7 @@ plot_perf_cvg <- function ( df )
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
                             'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
@@ -114,6 +115,7 @@ plot_perf_rrsv <- function ( df )
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
                             'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
@@ -203,6 +205,7 @@ plot_perf_admix <- function ( df )
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
                             'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
@@ -248,7 +251,7 @@ plot_perf_admix <- function ( df )
   
   p_perf <- grid.arrange(
     grobs = list(p_r_ttype, p_p_ttype, p_f_ttype), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3)),
+    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3))
     #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
   )
   
