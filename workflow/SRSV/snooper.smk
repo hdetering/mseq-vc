@@ -5,10 +5,21 @@
 #MODEL="/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_45-55X/model/"
 
 def get_snooper_model(wildcards):
-  if ("model" in config):
-    return config["model"]
+  model_30x  = "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_25-35X/model/"
+  model_50x  = "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_45-55X/model/"
+  model_100x = "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_85-95X/model/"
+  model_300x = "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_85-95X/model/"
+  if ("depth" in config):
+    if (config["depth"]=="30"):
+      return model_30x
+    elif (config["depth"]=="50"):
+      return model_50x
+    elif (config["depth"]=="100"):
+      return model_100x
+    elif (config["depth"]=="300"):
+      return model_300x
   else:
-    return "/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/src/SNooPer_v0.03_trained_models/SNooPer_v0.03_trained_model_45-55X/model/"
+    return model_50x
 
 rule snooper:
     input:
@@ -45,7 +56,7 @@ rule snooper:
             -o {params.workdir} \
             -a1 somatic \
             -a2 classify \
-            -m {params.model} \
+            -m {config[model]} \
             -w $EBROOTWEKA/weka.jar \
             -id 0
 
@@ -53,7 +64,8 @@ rule snooper:
         bcftools reheader \
           -s <(printf "%s\n" {wildcards.sample}) \
           {params.workdir}/*/SNooPer_0_classification.snp \
-        | gunzip -c > {output}
+        > {output}
+        #| gunzip -c > {output}
  
         # cleanup
         rm -r {params.workdir}

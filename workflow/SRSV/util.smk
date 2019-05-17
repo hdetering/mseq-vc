@@ -6,18 +6,18 @@ VCFS = [
   "bcftools.vcf",
   "caveman.vcf",
   "haplotypecaller.filt.vcf",
-#  "muclone.vcf",
+  "muclone.vcf",
   "multisnv.vcf",
   "mutect1.vcf",
   "mutect2.vcf",
   "mutect2m.vcf",
   "neusomatic.vcf",
   "shimmer.vcf",
-  "snooper.fix.vcf",
+  "snooper.vcf", # fix?
   "snv-ppilp.vcf",
   "somaticsniper.vcf",
-  "strelka1.fix.vcf",
-  "strelka2.fix.vcf",
+#  "strelka1.fix.vcf",
+  "strelka2.vcf", # fix?
   "vardict.vcf",
   "varscan.vcf"
 ]

@@ -58,7 +58,7 @@ rule mutect2m_filter:
         {config[tools][gatk4.1]} FilterMutectCalls \
             --variant {input.vcf} \
             --reference {input.ref} \
-            --filtering-stats {input.vcf}.stats \
+            --stats {input.vcf}.stats \
             --output {output}
         ) >{log} 2>&1
         """

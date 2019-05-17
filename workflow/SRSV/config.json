@@ -20,5 +20,5 @@
     "varscan"        : "java -jar /mnt/netapp1/posadalab/APPS/varscan-2.4.3/VarScan.v2.4.3.jar",
     "neusomatic"     : "/mnt/netapp1/posadalab/APPS/neusomatic"
   },
- "scripts" : "/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/scripts"
+ "scripts" : "/mnt/lustre/scratch/home/uvi/be/posadalustre/mseq-vc/de-novo/scripts"
 }

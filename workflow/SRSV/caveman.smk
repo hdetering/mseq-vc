@@ -197,7 +197,7 @@ rule caveman:
 
         # copy somatic mutations VCF to comply with naming convention
         cp {output.muts} {output.vcf}
-        ) 1>>{log} 2>>&1
+        ) 1>>{log} 2>&1
 
         # compress intermediate files (reduce number of files / disk space)
         tar -zcf caveman/{wildcards.sample}.tar.gz caveman/{wildcards.sample} && rm -r caveman/{wildcards.sample}

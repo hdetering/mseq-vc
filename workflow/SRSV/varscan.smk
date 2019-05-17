@@ -52,7 +52,7 @@ rule varscan:
     # rename samples in VCF header (VarScan reports as NORMAL, TUMOUR)
     bcftools reheader -s <(printf "%s\n%s\n" RN {wildcards.sample}) \
       {output.snp} > {output.vcf}
-    rm {output.vcf}.idx
+    #rm {output.vcf}.idx
     ) 1>{log} 2>&1
     """
 

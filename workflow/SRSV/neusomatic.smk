@@ -68,7 +68,8 @@ rule neusomatic_post:
   output: "neusomatic/{sample}.vcf"
   log: "log/neusomatic_post.{sample}.log"
   params:
-    workdir="neusomatic/{sample}/call"
+    workdir="neusomatic/{sample}/call",
+    pre_vcf="neusomatic/{sample}.prelim.vcf"
   threads: 1
   shell:
     """
@@ -82,7 +83,12 @@ rule neusomatic_post:
       --tumor_bam {input.tum} \
       --pred_vcf {params.workdir}/pred.vcf \
       --candidates_vcf {params.workdir}/work_tumor/filtered_candidates.vcf \
-      --output_vcf {output} \
+      --output_vcf {params.pre_vcf} \
       --work {params.workdir}
+
+    # fix vcf format (otherwise GATK parser bails)
+    awk -f {config[scripts]}/neusomatic_vcf_fix.awk {params.pre_vcf} \
+    > {output}
+
     ) >{log} 2>&1
     """
