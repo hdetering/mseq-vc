@@ -93,7 +93,7 @@ plot_perf_rrsv <- function ( df )
     'Bcftools', 
     'CaVEMan', 
     'MuTect1', 
-    'Mutect2_single', 
+    'Mutect2', 
     'NeuSomatic', 
     'Shimmer', 
     'SNooPer', 
@@ -106,7 +106,7 @@ plot_perf_rrsv <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'))
+    'Mutect2_ms'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -114,8 +114,12 @@ plot_perf_rrsv <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
+<<<<<<< HEAD
                             'Mutect2\nmulti' = 'Mutect2_multi',
                             'Mutect2\nsingle' = 'Mutect2_single',
+=======
+                            'Mutect2\nms' = 'Mutect2_ms',
+>>>>>>> d6a07117a753d5549a634fac90afd96116a5c2ce
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
