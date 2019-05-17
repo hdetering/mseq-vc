@@ -36,6 +36,7 @@ plot_dir <- file.path( 'plot', 'de-novo' )
 # connection to analysis database
 #-------------------------------------------------------------------------------
 db <- file.path( data_dir, 'analysis.db' )
+db <- file.path( data_dir, 'analysis.new.db' )
 con <- DBI::dbConnect(RSQLite::SQLite(), db)
 df_rep <- tbl( con, 'replicates' ) %>% collect()
 df_mut <- tbl( con, 'mutations' ) %>% collect()
@@ -47,6 +48,11 @@ df_varcall <- tbl( con, 'varcalls' ) %>% collect()
 df_rc <- tbl( con, 'readcounts' ) %>% collect()
 df_snp <- tbl( con, 'snps' ) %>% collect()
 
+# rename Mutect2 sub-modes
+df_caller <- df_caller %>% 
+  mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") ) %>%
+  mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi") )
+
 # define variant calling tools and their properties
 #-------------------------------------------------------------------------------
 callers <- tibble(
@@ -54,7 +60,7 @@ callers <- tibble(
     'Bcftools', 
     'CaVEMan', 
     'MuTect1', 
-    'Mutect2', 
+    'Mutect2_single', 
     'NeuSomatic', 
     'Shimmer', 
     'SNooPer', 
@@ -67,11 +73,10 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_ms'
+    'Mutect2_multi'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
-df_caller <- df_caller %>% mutate( name_caller = fct_recode( name_caller, 'Mutect2_ms' = 'Mutect2_mseq' ) )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
 
@@ -167,7 +172,7 @@ callerorder = c(
   'Bcftools', 
   'CaVEMan', 
   'MuTect1', 
-  'Mutect2', 
+  'Mutect2_single', 
   'NeuSomatic', 
   'Shimmer', 
   'SNooPer', 
@@ -179,7 +184,7 @@ callerorder = c(
   'SNV-PPILP',
   'HaplotypeCaller', 
   'MultiSNV', 
-  'Mutect2_ms'
+  'Mutect2_multi'
 )
 ## true positives
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )

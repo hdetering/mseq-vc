@@ -8,7 +8,7 @@ plot_perf_cvg <- function ( df )
     'Bcftools', 
     'CaVEMan', 
     'MuTect1', 
-    'Mutect2', 
+    'Mutect2_single', 
     'NeuSomatic', 
     'Shimmer', 
     'SNooPer', 
@@ -21,7 +21,7 @@ plot_perf_cvg <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_ms'))
+    'Mutect2_multi'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -29,7 +29,8 @@ plot_perf_cvg <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nms' = 'Mutect2_ms',
+                            'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
@@ -181,7 +182,7 @@ plot_perf_admix <- function ( df )
     'Bcftools', 
     'CaVEMan', 
     'MuTect1', 
-    'Mutect2', 
+    'Mutect2_single', 
     'NeuSomatic', 
     'Shimmer', 
     'SNooPer', 
@@ -194,7 +195,7 @@ plot_perf_admix <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_ms'))
+    'Mutect2_multi'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -202,7 +203,8 @@ plot_perf_admix <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nms' = 'Mutect2_ms',
+                            'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
