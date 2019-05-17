@@ -254,3 +254,40 @@ plot_perf_admix <- function ( df )
   
   return( p_perf )
 }
+
+plot_pairwise_wilcoxon <- function( df ) {
+  # plot Box- and Violinplots of F1 scores for callers
+  p_perf_f1_box <- ggviolin( df, x = 'caller', y = 'F1', color = 'class',
+                             main = 'a) Distribution of F1 scores',
+                             add = 'boxplot' ) +
+    rotate_x_text( 45 )
+  
+  # perform pairwise Wilcoxon rank sum test (Mann-Whitney test?)
+  pwt <- pairwise.wilcox.test( df$F1, df$caller, p.adjust.method = "BH" )
+  df_pwt <- pwt$p.value %>% 
+    as_tibble( rownames = 'id1' ) %>% 
+    gather( id2, p.adj, -id1) %>% dplyr::filter(!is.na(p.adj) ) %>%
+    mutate( significance = cut(p.adj, 
+                               breaks = c(0.0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                               labels = c('****', '***', '**', '*', 'ns')) )
+
+  p_perf_f1_pwt <- ggplot( df_pwt, aes(x = id1, y = id2) ) + 
+    geom_tile( aes(fill = significance), color = "white" ) +
+    geom_text( aes(label = round(-log(p.adj))) ) +
+    ggtitle( 'b) Pairwise Wilcoxon rank sum test (values: -log(p.adj))' ) + 
+    scale_fill_manual( values = c(rev(brewer.pal(4, 'Greens')), 'grey') ) +
+    coord_flip() +
+    theme_minimal() +
+    theme(
+      axis.title = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+  
+  
+  p <- grid.arrange(
+    grobs = list(p_perf_f1_box, p_perf_f1_pwt), 
+    layout_matrix = rbind(c(1,2), c(1,2))
+  )
+  
+  return( p )
+}
