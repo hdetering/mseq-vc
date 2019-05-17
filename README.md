@@ -19,3 +19,4 @@ The study was carried out using two different simulation approaches:
 
 - R code to generate the plots for the publictation are in the scripts [de-novo.R](de-novo.R) and [spike-in.R](spike-in.R)
 - Scripts that show how variant callers where run are in the respective directories under [workflow](workflow).
+- Technical details about the simulations can be gleaned from the content of the [sim](sim) directories.
