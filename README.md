@@ -17,5 +17,5 @@ The study was carried out using two different simulation approaches:
 
 # Structure of this repository
 
-- R code to generate the plots for the publictation are in the scripts de-novo.R and spike-in.R
-- Scripts that show how variant callers where run are in the respective directories under workflow.
+- R code to generate the plots for the publictation are in the scripts [de-novo.R](de-novo.R) and [spike-in.R](spike-in.R)
+- Scripts that show how variant callers where run are in the respective directories under [workflow](workflow).
