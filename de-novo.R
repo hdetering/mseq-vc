@@ -49,9 +49,9 @@ df_rc <- tbl( con, 'readcounts' ) %>% collect()
 df_snp <- tbl( con, 'snps' ) %>% collect()
 
 # rename Mutect2 sub-modes
-df_caller <- df_caller %>% 
-  mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") ) %>%
-  mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi") )
+# df_caller <- df_caller %>% 
+#   mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") ) %>%
+#   mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi") )
 
 # define variant calling tools and their properties
 #-------------------------------------------------------------------------------

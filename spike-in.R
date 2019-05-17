@@ -217,17 +217,14 @@ system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 
-df_jacc <- Jaccard.df( df_pres %>% ungroup() %>%select(-id_mut) )
+df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
+df_pres <- df_pres %>% select (
+  Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi, Mutect2_single, NeuSomatic, 
+  Shimmer, SNooPer, `SNV-PPILP`, SomaticSniper, Strelka2, VarDict, VarScan
+)
+df_jacc <- Jaccard.df( df_pres )
 df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
 df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 ) %>% ungroup()
-d <- as.dist( 1-df_jacc_idx )
-hc <- hclust(d)
-
-
-df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
-df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
-df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
-df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
