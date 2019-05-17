@@ -41,7 +41,7 @@ callers <- tibble(
     'Bcftools', 
     'CaVEMan', 
     'MuTect1', 
-    'Mutect2', 
+    'Mutect2_single', 
     'NeuSomatic', 
     'Shimmer', 
     'SNooPer', 
@@ -54,7 +54,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_ms'
+    'Mutect2_multi'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
@@ -124,7 +124,7 @@ callerorder = c(
   'Bcftools', 
   'CaVEMan', 
   'MuTect1', 
-  'Mutect2', 
+  'Mutect2_single', 
   'NeuSomatic', 
   'Shimmer', 
   'SNooPer', 
@@ -136,9 +136,10 @@ callerorder = c(
   'SNV-PPILP',
   'HaplotypeCaller', 
   'MultiSNV', 
-  'Mutect2_ms'
+  'Mutect2_multi'
 )
 ## true positives
+
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )
 df_jacc_tp <- Jaccard.df( df_pres_tp %>% select(-id_mut)  %>% select(callerorder))
 p_jacc_tp <- plot_jacc_idx( df_jacc_tp %>% mutate(caller1 = factor(caller1, levels = callerorder), 
@@ -164,27 +165,7 @@ p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 ggsave( file.path( plot_dir, 'Fig9.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
 ggsave( file.path( plot_dir, 'Fig9.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
 
-# hierarchical clustering based on varcalls
-#-------------------------------------------------------------------------------
-require(ade4) # dist.binary()
-require(ggdendro) # ggdendrogram()
-df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
-df_jacc <- Jaccard.df( df_pres %>% select(-id_mut) )
-df_jacc_idx <- df_jacc %>%
-  spread( caller1, jaccard_idx ) %>%
-  as.data.frame() %>% set_rownames( df_jacc_dist$caller2 ) %>% select( -caller2 )
-d <- as.dist( 1-df_jacc_idx )
-hc <- hclust(d)
 
-fn_pfx <- 'FigS5.spike-in.hclust.dendro'
-pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
-par( mar = c(2, 0, 0, 6) )
-plot(as.dendrogram(hc), horiz = TRUE)
-dev.off()
-png( file.path(plot_dir, paste0(fn_pfx, '.png')), width = 8, height = 4, units = 'in', res = 300 )
-par( mar = c(2, 1, 0, 6) )
-plot(as.dendrogram(hc), horiz = TRUE)
-dev.off()
 
 ################################################################################
 # UpSet plots
@@ -230,4 +211,33 @@ plot_upset( df, n )
 dev.off()
 system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
+
+# hierarchical clustering based on varcalls
+#-------------------------------------------------------------------------------
+require(ade4) # dist.binary()
+require(ggdendro) # ggdendrogram()
+
+df_jacc <- Jaccard.df( df_pres %>% ungroup() %>%select(-id_mut) )
+df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
+df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 ) %>% ungroup()
+d <- as.dist( 1-df_jacc_idx )
+hc <- hclust(d)
+
+
+df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
+df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
+df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
+df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 )
+d <- as.dist( 1-df_jacc_idx )
+hc <- hclust(d)
+
+fn_pfx <- 'FigS5.spike-in.hclust.dendro'
+pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
+par( mar = c(2, 0, 0, 6) )
+plot(as.dendrogram(hc), horiz = TRUE)
+dev.off()
+png( file.path(plot_dir, paste0(fn_pfx, '.png')), width = 8, height = 4, units = 'in', res = 300 )
+par( mar = c(2, 1, 0, 6) )
+plot(as.dendrogram(hc), horiz = TRUE)
+dev.off()
 
