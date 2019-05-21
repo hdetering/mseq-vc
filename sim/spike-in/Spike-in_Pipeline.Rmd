@@ -1,0 +1,842 @@
+---
+title: "Spike-in simulations pipeline"
+output: html_notebook
+---
+
+This document describes the process of generating spike-in simulated multiregion bam files from a healthy sample (NA24631) downloaded from https://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/. The input are 336 paired-end fastq.gz files (168 samples listed in ChineseSon.SampleList). 
+
+
+# Environment
+
+Simulations were ran in a cluster with slurm job scheduler. The variables used are:
+
+* $SLURM_ARRAY_TASK_ID is an environment variable automatically set to the array index value of the job
+* $WORKDIR contains the files of the simulations (fastq, bam, vcf, ...)
+* $RESDIR contains auxiliar files such as the reference genome
+* $REF is "hs37d5"
+* $LIBRARY is "TruSeqNanoDNA350"
+
+We created different sample lists for different steps of the process, which have been uploaded to the repository as independent files. In our environment, they were located in the working directory. $SAMPLELIST is ChineseSon.SampleList. 
+
+
+# Cutadap
+
+Remove sequencing adapters. 
+
+$ADAPTER_FORWARD is "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+$ADAPTER_REVERSE is "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"
+
+```{bash}
+
+module load gcc/5.3.0 python/2.7.11 cutadapt/1.15
+
+SAMPLE=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${SAMPLELIST} # 1-168 
+
+ADAPTERS_FILE=${RESDIR}/AdaptersByLibrary
+ADAPTER_FORWARD=`awk -F " " -v library=$LIBRARY '{if ($1 == library) {print $2}}' $ADAPTERS_FILE`
+ADAPTER_REVERSE=`awk -F " " -v library=$LIBRARY '{if ($1 == library) {print $3}}' $ADAPTERS_FILE`
+
+cutadapt -m 70 \
+  -a $ADAPTER_FORWARD \
+  -A $ADAPTER_REVERSE \
+  -o ${WORKDIR}/${SAMPLE}_1.trimmed.fastq.gz \
+  -p ${WORKDIR}/${SAMPLE}_2.trimmed.fastq.gz \
+  ${WORKDIR}/${SAMPLE}_R1_001.fastq.gz ${WORKDIR}/${SAMPLE}_R2_001.fastq.gz > ${WORKDIR}/${SAMPLE}.Cutadapt.log
+
+```
+
+# BWA mem
+
+Mapping to the reference genome hs37d5
+
+```{bash}
+
+module load gcc/5.3.0 bwa/0.7.17
+
+SAMPLE=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${SAMPLELIST}) # 1-168 
+echo $SAMPLE
+
+ID=${SAMPLE}
+SM=$(echo $SAMPLELIST | sed 's/.SampleNames//')
+PL="ILLUMINA"   
+LB=${LIBRARY}
+PU=`zcat ${WORKDIR}/${SAMPLE}_1.trimmed.fastq.gz | head -1 | sed 's/[:].*//' | sed 's/@//'`
+RG="@RG\\tID:${ID}\\tSM:${SM}\\tPL:${PL}\\tLB:${LB}\\tPU:${PU}"
+
+
+bwa mem -M  \
+  -R ${RG} \
+  ${RESDIR}/${REF}.fa \
+  ${WORKDIR}/${SAMPLE}_1.trimmed.fastq.gz \
+  ${WORKDIR}/${SAMPLE}_2.trimmed.fastq.gz > ${WORKDIR}/${SAMPLE}.sam
+
+
+```
+
+
+# SortSam
+
+```{bash}
+
+module load picard/2.2.1
+
+SAMPLE=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${SAMPLELIST})  # 1-168
+
+java -jar $PICARD SortSam \
+        I=${WORKDIR}/${SAMPLE}.sam \
+        TMP_DIR=${WORKDIR} \
+        O=${WORKDIR}/${SAMPLE}.sorted.bam \
+        CREATE_INDEX=true \
+        SORT_ORDER=coordinate
+
+
+```
+
+
+
+# MergeWithMarkDuplicates
+
+Remove PCR and optical duplicates, and simultaneously merge all the samples into a single bam file. 
+
+```{bash}
+
+module load picard/2.2.1
+
+samples=$(awk -v dir=$WORKDIR '{print "I="dir$0".sorted.bam"}' ${WORKDIR}/${SAMPLELIST} | tr '\n' ' ')
+SAMPLE=$(echo $SAMPLELIST | sed 's/.SampleNames//')
+SAMPLE=$(echo $SAMPLE | sed 's/.SampleList//')
+
+java -jar $PICARD MarkDuplicates \
+        ${samples} \
+        OUTPUT=${WORKDIR}/${SAMPLE}.dedup.bam \
+        CREATE_INDEX=true \
+        REMOVE_DUPLICATES=true \
+        TMP_DIR=${WORKDIR} \
+        M=${WORKDIR}/Duplicates_${SAMPLE}.txt \
+        VALIDATION_STRINGENCY=LENIENT
+
+```
+
+
+
+
+# Select chr21
+
+```{bash}
+
+module load gcc/6.4.0 samtools/1.9
+samtools view -b -h ${WORKDIR}/ChineseSon.dedup.bam "21" > ${WORKDIR}/ChineseSon.chr21.bam
+
+```
+
+
+
+
+# Samtools depth 
+
+```{bash}
+module load cesga/2018 gcc/6.4.0 samtools/1.9
+
+# Command
+
+INPUTLIST=ChineseAlleles.SampleList
+
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST}) #1-2
+
+samtools depth -a ${WORKDIR}/${INPUTNAME}.sorted.bam > ${WORKDIR}/${INPUTNAME}.bam.depth
+```
+
+# Phasing
+
+
+Call the variants in the original file
+
+```{bash}
+module load gatk/4.0.0.0
+
+gatk --java-options "-Xmx8g" HaplotypeCaller  \
+   -R ${RESDIR}/hs37d5.fa \
+   -I ${WORKDIR}/ChineseSon.chr21.bam \
+   -L "21" \
+   -O ${WORKDIR}/ChineseSon.chr21.HaplotypeCaller.vcf
+```
+
+Phase the vcf
+
+```{bash}
+
+module load gcc/6.4.0 phase-tools/1.1.3
+
+ngs-phase --chr 21 \
+  --sample ChineseSon.SampleList \
+  --out ${WORKDIR}/ChineseSon.chr21.HaplotypeCaller.phased.vcf \
+  --var ${WORKDIR}/ChineseSon.chr21.HaplotypeCaller.vcf \
+  --ref ${RESDIR}/${REF}.fa \
+  --map ${WORKDIR}/ChineseSon.chr21.bam
+```
+  
+Phase the bam
+
+```{bash}
+
+module load gcc/6.4.0 phase-tools/1.1.3
+
+bam-phase-split --chr 21 \
+  --sample ChineseSon.SampleList \
+  --out ${WORKDIR}/ChineseSon.Phased \
+  --map ${WORKDIR}/ChineseSon.chr21.bam \
+  --var ${WORKDIR}/ChineseSon.chr21.HaplotypeCaller.phased.vcf \
+  --ref ${RESDIR}/${REF}.fa 
+  
+```
+
+Sort and index the phased files
+
+```{bash}
+
+module load picard/2.2.1
+
+java -jar $PICARD SortSam I=ChineseSon.Phased.21.0.bam TMP_DIR=. O=ChineseMum.bam CREATE_INDEX=true SORT_ORDER=coordinate
+java -jar $PICARD SortSam I=ChineseSon.Phased.21.1.bam TMP_DIR=. O=ChineseDad.bam CREATE_INDEX=true SORT_ORDER=coordinate
+
+
+module load gcc/6.4.0 samtools/1.8
+
+samtools index ChineseMum.bam
+samtools index ChineseDad.bam
+```
+
+# Sort 
+
+Sort the bam files of each of the pseudo-haplotypes
+
+```{bash}
+
+module load cesga/2018 picard/2.18.14
+
+INPUTLIST=ChineseAlleles.SampleList
+
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST}) #1-2
+
+java -jar $EBROOTPICARD/picard.jar SortSam \
+        I=${WORKDIR}/${INPUTNAME}.bam \
+        TMP_DIR=${WORKDIR} \
+        O=${WORKDIR}/${INPUTNAME}.sorted.bam \
+        CREATE_INDEX=true \
+        SORT_ORDER=coordinate
+)
+```
+
+
+  
+# Split into regions
+
+Evenly split each of the pseudo-haplotypes into six regions, one healthy and five tumor regions
+
+```{bash}
+
+INPUTLIST=ChineseAlleles.SampleList
+OUTPUTLIST=ChineseRegions.SampleList
+
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST})   # 1-2, ChineseMum or ChineseDad
+
+
+
+echo "INPUTLIST $INPUTLIST"
+echo "OUTPUTLIST $OUTPUTLIST"
+echo "INPUTNAME $INPUTNAME"
+
+
+# Names of the output files
+
+FILE1=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "1q;d" ).sam     # [ChineseMum|ChineseDad].H.sam
+FILE2=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "2q;d" ).sam     # [ChineseMum|ChineseDad].T1.sam
+FILE3=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "3q;d" ).sam     # [ChineseMum|ChineseDad].T2.sam
+FILE4=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "4q;d" ).sam     # [ChineseMum|ChineseDad].T3.sam
+FILE5=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "5q;d" ).sam     # [ChineseMum|ChineseDad].T4.sam
+FILE6=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | sed "6q;d" ).sam     # [ChineseMum|ChineseDad].T5.sam
+
+
+
+# Splitting the read pairs
+
+# I remove the header of the sam files
+
+awk -v f1=$FILE1 -v f2=$FILE2 -v f3=$FILE3 -v f4=$FILE4 -v f5=$FILE5 -v f6=$FILE6 '{
+num=rand();
+prop=1/6;
+
+if ($1==prevquery){print $0 >> prevfile}
+else{
+prevquery=$1
+if (num < prop){print $0 >> f1; prevfile = f1}
+else if (num < 2*prop){print $0 >> f2; prevfile = f2}
+else if (num < 3*prop){print $0 >> f3; prevfile = f3}
+else if (num < 4*prop){print $0 >> f4; prevfile = f4}
+else if (num < 5*prop){print $0 >> f5; prevfile = f5}
+else if (num < 1){print $0 >> f6; prevfile = f6}
+}
+}' ${WORKDIR}/${INPUTNAME}.sam
+
+
+```
+
+# Split in clones
+
+Split each region into clones according to the prevalence matrix
+
+```{bash}
+
+INPUTLIST=ChineseTumorRegions.SampleList
+OUTPUTLIST=ChineseClones.SampleList
+
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST})   # Tasks 1-10: ChineseMum (T1-T5) (task 6,7,8,9,10) or ChineseDad (T1-T5) (task 1,2,3,4,5)
+REGION=$(echo $INPUTNAME | cut -d "." -f2)
+
+
+
+echo "INPUTLIST $INPUTLIST"
+echo "OUTPUTLIST $OUTPUTLIST"
+echo "INPUTNAME $INPUTNAME"
+echo "REGION $REGION"
+
+
+
+# Scenario 1: low admixture (select clone proportions for the current region)
+
+echo "Scenario 1"
+
+FILE1=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "1q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C1.sam
+FILE2=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "2q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C2.sam
+FILE3=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "3q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C3.sam
+FILE4=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "4q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C4.sam
+FILE5=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "5q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C5.sam
+FILE6=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "6q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C6.sam
+FILE7=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S1 | sed "7q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S1.C7.sam
+
+echo "Output files $FILE1 $FILE2 $FILE3 $FILE4 $FILE5 $FILE6 $FILE7"
+
+PROP1=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f1)
+PROP2=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f2)
+PROP3=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f3)
+PROP4=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f4)
+PROP5=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f5)
+PROP6=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f6)
+PROP7=$(grep "Scenario1" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f7)
+
+echo "Abundance of the clones $PROP1 $PROP2 $PROP3 $PROP4 $PROP5 $PROP6 $PROP7"
+
+awk -v f1=$FILE1 -v f2=$FILE2 -v f3=$FILE3 -v f4=$FILE4 -v f5=$FILE5 -v f6=$FILE6 -v f7=$FILE7 -v p1=$PROP1 -v p2=$PROP2 -v p3=$PROP3 -v p4=$PROP4 -v p5=$PROP5 -v p6=$PROP6 '{
+num=rand();
+if ($1==prevquery){print $0 >> prevfile}
+else{
+prevquery=$1
+if (num < p1){print $0 >> f1; prevfile = f1}
+else if (num < p1+p2){print $0 >> f2; prevfile = f2}
+else if (num < p1+p2+p3){print $0 >> f3; prevfile = f3}
+else if (num < p1+p2+p3+p4){print $0 >> f4; prevfile = f4}
+else if (num < p1+p2+p3+p4+p5){print $0 >> f5; prevfile = f5}
+else if (num < p1+p2+p3+p4+p5+p6){print $0 >> f6; prevfile = f6}
+else if (num < 1){print $0 >> f7; prevfile = f7}
+}
+}' ${WORKDIR}/${INPUTNAME}.sam
+
+
+# Scenario 2: intermediate admixture (select clone proportions for the current region)
+
+echo "Scenario 2"
+
+FILE1=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "1q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C1.sam
+FILE2=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "2q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C2.sam
+FILE3=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "3q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C3.sam
+FILE4=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "4q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C4.sam
+FILE5=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "5q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C5.sam
+FILE6=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "6q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C6.sam
+FILE7=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S2 | sed "7q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S2.C7.sam
+
+echo "Output files $FILE1 $FILE2 $FILE3 $FILE4 $FILE5 $FILE6 $FILE7"
+
+
+PROP1=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f1)
+PROP2=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f2)
+PROP3=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f3)
+PROP4=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f4)
+PROP5=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f5)
+PROP6=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f6)
+PROP7=$(grep "Scenario2" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f7)
+
+echo "Abundance of the clones $PROP1 $PROP2 $PROP3 $PROP4 $PROP5 $PROP6 $PROP7"
+
+awk -v f1=$FILE1 -v f2=$FILE2 -v f3=$FILE3 -v f4=$FILE4 -v f5=$FILE5 -v f6=$FILE6 -v f7=$FILE7 -v p1=$PROP1 -v p2=$PROP2 -v p3=$PROP3 -v p4=$PROP4 -v p5=$PROP5 -v p6=$PROP6 '{
+num=rand();
+if ($1==prevquery){print $0 >> prevfile}
+else{
+prevquery=$1
+if (num < p1){print $0 >> f1; prevfile = f1}
+else if (num < p1+p2){print $0 >> f2; prevfile = f2}
+else if (num < p1+p2+p3){print $0 >> f3; prevfile = f3}
+else if (num < p1+p2+p3+p4){print $0 >> f4; prevfile = f4}
+else if (num < p1+p2+p3+p4+p5){print $0 >> f5; prevfile = f5}
+else if (num < p1+p2+p3+p4+p5+p6){print $0 >> f6; prevfile = f6}
+else if (num < 1){print $0 >> f7; prevfile = f7}
+}
+}' ${WORKDIR}/${INPUTNAME}.sam
+
+
+# Scenario 3: high admixture (select clone proportions for the current region)
+
+echo "Scenario 3"
+
+FILE1=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "1q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C1.sam
+FILE2=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "2q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C2.sam
+FILE3=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "3q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C3.sam
+FILE4=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "4q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C4.sam
+FILE5=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "5q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C5.sam
+FILE6=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "6q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C6.sam
+FILE7=${WORKDIR}/$(grep ${INPUTNAME} ${WORKDIR}/${OUTPUTLIST} | grep S3 | sed "7q;d" ).sam     # [ChineseMum|ChineseDad].[H-T5].S3.C7.sam
+
+echo "Output files $FILE1 $FILE2 $FILE3 $FILE4 $FILE5 $FILE6 $FILE7"
+
+
+PROP1=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f1)
+PROP2=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f2)
+PROP3=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f3)
+PROP4=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f4)
+PROP5=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f5)
+PROP6=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f6)
+PROP7=$(grep "Scenario3" ${WORKDIR}/AbundanceMatrix | grep ${REGION} | cut -d " " -f7)
+
+echo "Abundance of the clones $PROP1 $PROP2 $PROP3 $PROP4 $PROP5 $PROP6 $PROP7"
+
+awk -v f1=$FILE1 -v f2=$FILE2 -v f3=$FILE3 -v f4=$FILE4 -v f5=$FILE5 -v f6=$FILE6 -v f7=$FILE7 -v p1=$PROP1 -v p2=$PROP2 -v p3=$PROP3 -v p4=$PROP4 -v p5=$PROP5 -v p6=$PROP6 '{
+num=rand();
+if ($1==prevquery){print $0 >> prevfile}
+else{
+prevquery=$1
+if (num < p1){print $0 >> f1; prevfile = f1}
+else if (num < p1+p2){print $0 >> f2; prevfile = f2}
+else if (num < p1+p2+p3){print $0 >> f3; prevfile = f3}
+else if (num < p1+p2+p3+p4){print $0 >> f4; prevfile = f4}
+else if (num < p1+p2+p3+p4+p5){print $0 >> f5; prevfile = f5}
+else if (num < p1+p2+p3+p4+p5+p6){print $0 >> f6; prevfile = f6}
+else if (num < 1){print $0 >> f7; prevfile = f7}
+}
+}' ${WORKDIR}/${INPUTNAME}.sam
+```
+
+
+# Sort back
+
+
+```{bash}
+
+module load cesga/2018 gcc/6.4.0 samtools/1.9 picard/2.18.14
+
+
+INPUTLIST=ChineseClones.SampleList
+
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST}) # 1-210
+
+# Add back the header of the bam file
+
+samtools view -H ${WORKDIR}/ChineseDad.querysorted.bam > ${WORKDIR}/header.${INPUTNAME}.sam
+cat ${WORKDIR}/header.${INPUTNAME}.sam ${WORKDIR}/${INPUTNAME}.sam > ${WORKDIR}/${INPUTNAME}.header.sam
+rm ${WORKDIR}/header.${INPUTNAME}.sam
+
+# Sort by coordinate + AddOrReplaceReadGroups + Convert to bam
+
+SAMPLENAME=`awk -v name=$INPUTNAME 'BEGIN{split(name,namesplit,"."); print namesplit[1]"."namesplit[2]"."namesplit[3]}'`
+
+
+java -jar $EBROOTPICARD/picard.jar AddOrReplaceReadGroups \
+  I=${WORKDIR}/${INPUTNAME}.header.sam \
+  O=${WORKDIR}/${INPUTNAME}.sorted.bam \
+  RGID=${SAMPLENAME} \
+  RGLB=${SAMPLENAME} \
+  RGPL=ILLUMINA \
+  RGPU=foo \
+  RGSM=${SAMPLENAME} \
+  SORT_ORDER=coordinate
+
+```
+
+
+
+# Get Consensus 
+
+Create a consensus sequence for each pseudo-haplotype. These consensus sequences will be used as the template to simulate mutations according to signature 5. 
+```{bash}
+
+module load gatk/4.0.0.0
+
+INPUTLIST=ChineseAlleles.SampleList
+INPUTNAME=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${INPUTLIST})   # ChineseMum (task 2) or ChineseDad (task 1)
+
+
+gatk --java-options "-Xmx8g" HaplotypeCaller  \
+   -R /mnt/netapp1/posadalab/phylocancer/RESOURCES/hs37d5.fa \
+   -I /mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/${INPUTNAME}.bam \
+   -L "21" \
+   -O /mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/${INPUTNAME}.vcf
+   
+   
+grep -v '^#' ${INPUTNAME}.vcf| awk '{if(length($4)!=length($5)){print $0}}' > ${INPUTNAME}.vcf.Indels
+grep -v '^#' ${INPUTNAME}.vcf| awk '{if(length($4)==length($5)){print $0}}' > ${INPUTNAME}.vcf.SNPs
+
+grep "0/1" ${INPUTNAME}.vcf.SNPs >  ${INPUTNAME}.vcf.SNPs.hetero
+grep "1/1" ${INPUTNAME}.vcf.SNPs >  ${INPUTNAME}.vcf.SNPs.homo
+grep "1/2" ${INPUTNAME}.vcf.SNPs >> ${INPUTNAME}.vcf.SNPs.hetero 
+```
+
+
+
+```{python}
+
+from sys import argv
+
+fasta = open(argv[1], 'r')    # Fasta reference for chr21
+snpsvcf = open(argv[2], 'r')  # 1/1 SNPs for Chinese[Mum|Dad] with HaplotypeCaller => Modify the reference sequence
+indelsvcf=open(argv[3], 'r')  # Indels for Chinese[Mum|Dad] with HaplotypeCaller   => Mask
+heteros = open(argv[4], 'r')  # 0/1 variants for Chinese[Mum|Dad] with HaplotypeCaller => Mask (possible phasing errors)
+depth = open(argv[5], 'r')    # Samtools depth output for Chinese[Mum|Dad] => Mask if depth<1
+
+output = open(argv[6], 'w')   # ${WORKDIR}/Chinese[Mum|Dad].fasta
+
+
+# Getting the reference sequence
+
+ref = ""
+
+for line in fasta:
+  if line[0]==">":
+    continue
+  line=line[:-1]
+  ref+=line
+
+ref = list(ref)
+
+
+# Getting the not-enough-depth positions and putting Ns      ( minimum depth for mutation: 1x )
+ 
+for line in depth: 
+  line = line.split("\t")
+  if int(line[2])==0:
+    ref[int(line[1])-1]="N"
+
+# Getting heterozygous (0/1) variants (possible phasing errors) and putting Ns
+
+for line in heteros:
+  if line[0]=="#":
+    continue
+  line=line[:-1]
+  line = line.split("\t")
+  ref[int(line[1])-1] = "N"
+
+# Getting indel-surrounding positions and putting Ns
+
+for line in indelsvcf:
+  if line[0]=="#":
+    continue
+  line=line[:-1]
+  line = line.split("\t")
+  ref[int(line[1])-1] = "N"
+  ref[int(line[1])] = "N"
+
+
+## Changing SNPs to the actual nucleotide
+
+for line in snpsvcf:
+  if line[0]=="#":
+    continue
+  line=line[:-1]
+  line = line.split("\t")
+  pos = int(line[1])
+  if ref[pos-1]!="N":
+    ref[pos-1]= line[3]
+
+
+ref = ''.join(ref)
+
+# Print the reference
+
+sample = argv[6].split("/")[-1]
+sample = sample.split(".")[0]
+output.write(">"+sample+"\n")
+output.write(ref+"\n")
+
+```
+ 
+ 
+# CreateMutationMatrix
+
+Create 20 different mutation matrices (ten per pseudo-haplotype), each containing 1000 SNVs according to signature 5 ans relying on the previously-obtained consensus sequence. 
+
+```{python}
+
+from sys import argv
+import random
+
+
+random.seed(4)
+
+def revcomp(trinuc):
+  trans = {"A":"T", "T":"A","C":"G","G":"C"}
+  trinuc = trinuc[::-1]
+  trinuc = list(trinuc)
+  for i in range(len(trinuc)):
+    trinuc[i] = trans[trinuc[i]]
+  trinuc =''.join(trinuc)
+  return trinuc
+
+def GenotypeClones(branch):
+  if branch ==0:
+    return "1\t1\t1\t1\t1\t1\t1"
+  if branch ==1:
+    return "0\t1\t0\t1\t1\t0\t0"
+  if branch ==2:
+    return "0\t0\t1\t0\t0\t1\t1"
+  if branch ==3:
+    return "0\t0\t0\t1\t0\t0\t0"
+  if branch ==4:
+    return "0\t0\t0\t0\t1\t0\t0"
+  if branch ==5:
+    return "0\t0\t0\t0\t0\t1\t0"
+  if branch ==6:
+    return "0\t0\t0\t0\t0\t0\t1"
+
+workdir=argv[2]
+signature5file = open(workdir + "Signature5.cumulative", 'r')
+
+
+tumors = ["T1", "T2", "T3", "T4", "T5"]
+scenarios = ["S1", "S2", "S3"]
+clons = ["C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+replicates = ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8" , "R9", "R10"]
+allele = argv[1]
+
+signature5 = {}   #  Key = <trinuc><new base in the middle position>, for example AGTC; Value = cumulative probability
+signature5sortedkeys=[]
+for linea in signature5file:
+  linea = linea[:-1]
+  linea = linea.split("\t")
+  signature5[linea[0]+linea[1]] = float(linea[3])
+  signature5sortedkeys.append(linea[0]+linea[1])
+
+
+fasta = open(workdir + allele + ".fasta", 'r')
+
+
+ref = ""     # Get the fasta reference sequence specific for the allele
+for linea in fasta:
+  if linea[0]==">":
+    continue
+  linea = linea[:-1]
+  ref+=linea
+
+trinucs = []     # Get a list of trinucleotides
+for j in range(len(ref)-2):
+  trinuc = ref[j:j+3]
+  trinucs.append(trinuc)
+
+postrinucs={}  
+
+for h in range(len(trinucs)):    # Create a dict: keys = 95 types of trinucleotides, values = pos in which there are those trinucleotides
+  if trinucs[h][0] =="N" or trinucs[h][1] =="N" or trinucs[h][2] =="N":    # Skip those trinucleotides containing Ns
+    continue
+  if trinucs[h] in postrinucs.keys():
+    postrinucs[trinucs[h]].append(h)     
+  else:
+    postrinucs[trinucs[h]] = [h]
+
+
+
+for replicate in replicates:
+  outputfiles=[]
+  for scenario in scenarios:
+    for tumor in tumors:
+      salida = open(workdir + allele+"."+tumor+"."+scenario+"."+replicate+".matrix", 'w')
+      outputfiles.append(salida)
+    
+  mutatedpos = [] # Create a list of mutated positions to avoid mutating a trinucleotide that has already changed
+  for i in range(500):  # Generate the 1000 mutations
+    prob = random.random()    # random number [0,1)
+      
+    for muttype in signature5sortedkeys:
+      if prob < signature5[muttype]:
+        selectedmuttype = muttype
+        break
+    trinuc = selectedmuttype[0:3]
+    newnuc = selectedmuttype[3]
+    orirev = random.choice(["ori","rev"])
+    if orirev =="rev":
+      trinuc=revcomp(trinuc)
+      newnuc = revcomp(newnuc)
+    pos2mut = random.choice(postrinucs[trinuc]) +2  # Add 1 because python is 0-based, and another 1 because the middle nuc of the trinuc is the one that mutates
+    while (pos2mut in mutatedpos) or (pos2mut+1 in mutatedpos) or (pos2mut-1 in mutatedpos):
+      pos2mut = random.choice(postrinucs[trinuc]) +2
+    mutatedpos.append(pos2mut)
+    branch = random.choice(range(7))
+    clongenotypes = GenotypeClones(branch)
+    for salida in outputfiles:
+      salida.write(str(pos2mut)+"\t"+newnuc+"\t"+trinuc+"\t"+clongenotypes+"\n")   # pos newnuc trinuc clon1 clon2 clon3 clon 4 clon5 clon6 clon7 (genotypes 0|1)
+
+
+```
+
+
+# MutationMatrixPerclone
+
+Separate the mutation matrices into the seven clones. 
+
+```{python}
+
+from sys import argv
+
+
+alleles = ["ChineseMum", "ChineseDad"]
+tumors = ["T1", "T2", "T3", "T4", "T5"]
+scenarios = ["S1", "S2", "S3"]
+clons = ["C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+replicates = ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8" , "R9", "R10"]
+
+workdir=argv[1]
+
+for allele in alleles:
+  for tumor in tumors:
+    for scenario in scenarios:
+      for replicate in replicates:
+
+        mutfile = open(workdir + "Mutations2introduce."+allele+"."+tumor+"."+scenario+"."+replicate+".matrix" , 'r')
+
+        clonfiles={}
+        for clon in clons:  # Create output files
+          clonfiles[clon] = open(workdir + "Mutations2introduce."+allele+"."+tumor+"."+scenario+"."+clon+"."+replicate+".matrix" , 'w')
+
+        for linea in mutfile:
+          linea = linea[:-1]
+          linea = linea.split("\t")
+          toadd = "21\t"+linea[0]+"\t"+linea[0]+"\t"+"1"+"\t"+linea[1]+"\n"
+          for clon in clons:
+            clonnumber = int(list(clon)[1]) + 2 # Due to the structure of the input, C1 is the 4th column (python index 3)
+            if linea[clonnumber]=="1":
+              clonfiles[clon].write(toadd)
+```
+
+
+# BamSurgeon
+
+Introduce the SNVs in the corresponding replicate and clone, at frequency 1.0.
+
+```{bash}
+
+module load gcc/6.4.0 bamsurgeon/1.1-python-2.7.15 
+module load picard/2.18.14   
+module load gcc/6.4.0 samtools/1.8 
+
+
+# Selecting inputs and outputs
+
+OUTPUTLIST=ChineseNonEmptyReplicates.SampleList
+
+OUTPUTSAMPLE=$(sed "${SLURM_ARRAY_TASK_ID}q;d" ${WORKDIR}/${OUTPUTLIST}) # 1-1120
+INPUTSAMPLE=$(awk -F "." -v name=$OUTPUTSAMPLE 'BEGIN{split(name,namesplit,"."); print namesplit[1]"."namesplit[2]"."namesplit[3]"."namesplit[4]}')
+
+
+INPUTMUTS=${WORKDIR}/Mutations2introduce.${OUTPUTSAMPLE}.matrix
+INPUTBAM=${WORKDIR}/${INPUTSAMPLE}.sorted.bam
+OUTPUTBAM=${WORKDIR}/${OUTPUTSAMPLE}.mutated.bam
+
+
+echo "OUTPUTLIST $OUTPUTLIST"
+echo "INPUTSAMPLE $INPUTSAMPLE"
+echo "OUTPUTSAMPLE $OUTPUTSAMPLE"
+echo "INPUTMUTS $INPUTMUTS"
+echo "INPUTBAM $INPUTBAM"
+echo "OUTPUTBAM $OUTPUTBAM"
+
+# Command
+
+# I use SLURM_ARRAY_TASK_ID as the seed
+
+samtools index $INPUTBAM
+
+# Loading modules again
+
+module load gcc/6.4.0 bamsurgeon/1.1-python-2.7.15  
+module load picard/2.18.14  
+
+mkdir -p ${WORKDIR}/${OUTPUTSAMPLE}
+
+addsnv.py \
+  -v $INPUTMUTS \
+  -f $INPUTBAM \
+  -r ${RESDIR}/${REF}.fa \
+  -o $OUTPUTBAM \
+  --mindepth 0 \
+  --minmutreads 0 \
+  --force \
+  --ignoresnps \
+  --seed $SLURM_ARRAY_TASK_ID \
+  --tmpdir ${WORKDIR}/${OUTPUTSAMPLE}
+
+# Modify the read group to be <tumorregion>.<scenario>.<replicate>. The read group will be the same for all the bams to be merged together
+
+SAMPLENAME=`awk -v name=$OUTPUTSAMPLE 'BEGIN{split(name,namesplit,"."); print namesplit[2]"."namesplit[3]"."namesplit[5]}'`
+
+java -jar $EBROOTPICARD/picard.jar SortSam I=${OUTPUTBAM} O=${WORKDIR}/${OUTPUTSAMPLE}.mutated.sorted.bam SORT_ORDER=coordinate
+
+java -jar $EBROOTPICARD/picard.jar AddOrReplaceReadGroups \
+  I=${WORKDIR}/${OUTPUTSAMPLE}.mutated.sorted.bam \
+  O=${WORKDIR}/${OUTPUTSAMPLE}.mutated.rg.bam \
+  RGID=${SAMPLENAME} \
+  RGLB=${SAMPLENAME} \
+  RGPL=ILLUMINA \
+  RGPU=foo \
+  RGSM=${SAMPLENAME}
+
+```
+
+
+
+# Merge into final samples
+
+Merge all the clone bam files belonging to the same admixture scenario, replicate and region (different clone or/and pseudo-haplotype)
+
+```{bash}
+
+module load cesga/2018 gcc/6.4.0 samtools/1.9 picard/2.18.14
+
+
+# Command
+
+regions='T1 T2 T3 T4 T5'
+scenarios='S1 S2 S3'
+replicates='R1 R2 R3 R4 R5 R6 R7 R8 R9 R10'
+
+
+for region in $regions; do
+for scenario in $scenarios; do
+for replicate in $replicates; do
+
+echo Working with ChineseSon.$region.$scenario.$replicate.bam
+
+echo "Merging"
+samtools merge -f -c ${WORKDIR}/ChineseSon.$region.$scenario.$replicate.unsorted.bam ${WORKDIR}/Chinese*.$region.$scenario.C*.$replicate.mutated.rg.bam
+
+echo "Sorting"
+java -jar $EBROOTPICARD/picard.jar SortSam \
+  I=${WORKDIR}/ChineseSon.$region.$scenario.$replicate.unsorted.bam \
+  O=${WORKDIR}/ChineseSon.$region.$scenario.$replicate.bam \
+  SORT_ORDER=coordinate
+
+echo "Indexing"
+samtools index ${WORKDIR}/ChineseSon.$region.$scenario.$replicate.bam
+
+done
+done
+done
+```
+
+
+
+
