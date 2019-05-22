@@ -76,7 +76,7 @@ plot_perf_cvg <- function ( df )
   
   p_perf <- grid.arrange(
     grobs = list(p_r_cvg, p_p_cvg, p_f_cvg), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3)),
+    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3))
     #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
   )
   
@@ -114,12 +114,8 @@ plot_perf_rrsv <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-<<<<<<< HEAD
                             'Mutect2\nmulti' = 'Mutect2_multi',
                             'Mutect2\nsingle' = 'Mutect2_single',
-=======
-                            'Mutect2\nms' = 'Mutect2_ms',
->>>>>>> d6a07117a753d5549a634fac90afd96116a5c2ce
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
