@@ -36,7 +36,7 @@ plot_dir <- file.path( 'plot', 'de-novo' )
 # connection to analysis database
 #-------------------------------------------------------------------------------
 db <- file.path( data_dir, 'analysis.db' )
-db <- file.path( data_dir, 'analysis.new.db' )
+#db <- file.path( data_dir, 'analysis.new.db' )
 con <- DBI::dbConnect(RSQLite::SQLite(), db)
 df_rep <- tbl( con, 'replicates' ) %>% collect()
 df_mut <- tbl( con, 'mutations' ) %>% collect()
@@ -51,7 +51,7 @@ df_snp <- tbl( con, 'snps' ) %>% collect()
 # rename Mutect2 sub-modes
 # df_caller <- df_caller %>% 
 #   mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") ) %>%
-#   mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi") )
+#   mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi_F") )
 
 # define variant calling tools and their properties
 #-------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
+    'Mutect2_multi_F'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
@@ -184,7 +184,7 @@ callerorder = c(
   'SNV-PPILP',
   'HaplotypeCaller', 
   'MultiSNV', 
-  'Mutect2_multi'
+  'Mutect2_multi_F'
 )
 ## true positives
 df_pres_tp <- get_var_pres( df_var, df_caller, 'TP' )

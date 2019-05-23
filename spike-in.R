@@ -54,7 +54,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
+    'Mutect2_multi_F'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
@@ -136,7 +136,7 @@ callerorder = c(
   'SNV-PPILP',
   'HaplotypeCaller', 
   'MultiSNV', 
-  'Mutect2_multi'
+  'Mutect2_multi_F'
 )
 ## true positives
 
@@ -185,7 +185,7 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 df <- df_pres
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
+fn_pfx <- file.path( plot_dir, 'FigS9.spike-in.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -195,17 +195,17 @@ system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_germline')
-fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
+fn_pfx <- file.path( plot_dir, 'FigS7.spike-in.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
 system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
-# plot FP variant calls in relation to germline vars
+# plot TP variant calls in relation to somatic vars
 df <- df_pres %>% dplyr::filter( type == 'TP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
+fn_pfx <- file.path( plot_dir, 'FigS10.spike-in.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -219,7 +219,7 @@ require(ggdendro) # ggdendrogram()
 
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_pres <- df_pres %>% select (
-  Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi, Mutect2_single, NeuSomatic, 
+  Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi_F, Mutect2_single, NeuSomatic, 
   Shimmer, SNooPer, `SNV-PPILP`, SomaticSniper, Strelka2, VarDict, VarScan
 )
 df_jacc <- Jaccard.df( df_pres )
