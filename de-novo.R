@@ -152,8 +152,8 @@ df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
 p_vaf <- plot_vaf_bar_srsv( df_vars, df_rc, df_rep )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS1.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS1.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 # p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'SNooPer', 3000 )
 # ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
@@ -210,8 +210,8 @@ p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig5.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
-ggsave( file.path( plot_dir, 'Fig5.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4.5 )
+ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4.5 )
 
 # hierarchical clustering based on varcalls
 #-------------------------------------------------------------------------------
@@ -224,7 +224,7 @@ df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS1.de-novo.hclust.dendro'
+fn_pfx <- 'FigS4.de-novo.hclust.dendro'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
@@ -253,7 +253,7 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 df <- df_pres
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
+fn_pfx <- file.path( plot_dir, 'FigS5.de-novo.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -266,7 +266,7 @@ dev.off()
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_germline')
-fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
+fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -279,7 +279,7 @@ dev.off()
 df <- df_pres %>% dplyr::filter( type == 'TP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
+fn_pfx <- file.path( plot_dir, 'FigS6.de-novo.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
