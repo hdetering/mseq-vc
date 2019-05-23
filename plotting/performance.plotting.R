@@ -21,7 +21,7 @@ plot_perf_cvg <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'))
+    'Mutect2_multi_F'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -29,7 +29,7 @@ plot_perf_cvg <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
                             'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
@@ -109,7 +109,7 @@ plot_perf_rrsv <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'))
+    'Mutect2_multi_F'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -117,7 +117,7 @@ plot_perf_rrsv <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
                             'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
@@ -201,7 +201,7 @@ plot_perf_admix <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'))
+    'Mutect2_multi_F'))
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting
@@ -209,7 +209,7 @@ plot_perf_admix <- function ( df )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti' = 'Mutect2_multi',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
                             'Mutect2\nsingle' = 'Mutect2_single',
                             'Neu\nSomatic' = 'NeuSomatic',
                             'Somatic\nSniper' = 'SomaticSniper',
