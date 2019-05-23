@@ -104,15 +104,9 @@ ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.png'), plot = p_pe
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
-# p_vaf <- plot_vaf_dens_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
-# p_vaf <- plot_rc_alt_ridges_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
 p_vaf <- plot_vaf_bar_srsv( df_vars, df_rc, df_rep )
-ggsave( file.path( plot_dir, 'FigS8.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'FigS8.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS9.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS9.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 
 ################################################################################
@@ -162,8 +156,8 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'FigS14.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
-ggsave( file.path( plot_dir, 'FigS14.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
+ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
 
 
 
@@ -185,7 +179,7 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 df <- df_pres
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS12.spike-in.upset.som')
+fn_pfx <- file.path( plot_dir, 'FigS13.spike-in.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -197,7 +191,7 @@ dev.off()
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_germline')
-fn_pfx <- file.path( plot_dir, 'FigS10.spike-in.upset.FP.GL')
+fn_pfx <- file.path( plot_dir, 'FigS11.spike-in.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -209,7 +203,7 @@ dev.off()
 df <- df_pres %>% dplyr::filter( type == 'TP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS13.spike-in.upset.TP.som')
+fn_pfx <- file.path( plot_dir, 'FigS14.spike-in.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -233,7 +227,7 @@ df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS15.spike-in.hclust.dendro'
+fn_pfx <- 'FigS16.spike-in.hclust.dendro'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
