@@ -43,10 +43,10 @@ plot_perf_cvg <- function ( df )
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(cvg), y=mrec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth') + ggtitle( 'a' ) +
+    labs(x = 'sequencing depth') +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal()+
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = 'none', alpha = "none")
@@ -55,9 +55,9 @@ plot_perf_cvg <- function ( df )
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(cvg), y = mprec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth') + ggtitle( 'b' ) +
+    labs(x = 'sequencing depth')  +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = "none", alpha = "none")
@@ -66,9 +66,9 @@ plot_perf_cvg <- function ( df )
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(cvg), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
+    labs(x = 'sequencing depth', y = 'F1 score', fill = '') +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
     theme(strip.text.x = element_text(size = 6)) +
     theme(legend.position = 'bottom') +
@@ -128,7 +128,6 @@ plot_perf_rrsv <- function ( df )
   
   # subplots for grid layout
   p_r_cvg <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
-    theme_gray()+
     theme_minimal()+
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = as.factor(cvg), y=mrec), fill = "gold", shape = 23) + 
