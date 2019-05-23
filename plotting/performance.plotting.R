@@ -74,10 +74,13 @@ plot_perf_cvg <- function ( df )
     theme(legend.position = 'bottom') +
     guides(colour = "none", alpha = "none")
   
-  p_perf <- grid.arrange(
-    grobs = list(p_r_cvg, p_p_cvg, p_f_cvg), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3))
-    #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
+  p_perf <- ggarrange(
+    p_r_cvg, p_p_cvg, p_f_cvg,
+    ncol = 1,
+    nrow = 3,
+    labels = "auto", 
+    common.legend = TRUE, 
+    legend = "bottom"
   )
   
   return( p_perf )
@@ -125,33 +128,34 @@ plot_perf_rrsv <- function ( df )
   
   # subplots for grid layout
   p_r_cvg <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
+    theme_gray()+
+    theme_minimal()+
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = as.factor(cvg), y=mrec), fill = "gold", shape = 23) + 
     labs( x = 'caller', fill = '' )  +
     facet_wrap( ~ lbl, nrow = 1 ) +
-    theme_gray() +
     theme( strip.text.x = element_text(size = 6) ) +
     theme( axis.text.x = element_blank(),
-           axis.ticks.x = element_blank() ) + 
+           axis.ticks.x = element_blank()) + 
     guides( colour = "none", fill = 'none' )
   
   p_p_cvg <- ggplot( df, aes(x = as.factor(cvg), y = precision) ) + 
+    theme_minimal()+
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mpre = median(precision)) %>% arrange(desc(mpre)) %>% dplyr::filter(mpre==max(mpre)), aes(x = as.factor(cvg), y=mpre), fill = "gold", shape = 23) + 
     labs( x = 'caller' ) + 
     facet_wrap( ~ lbl, nrow = 1 ) +
-    theme_gray() +
     theme( strip.text.x = element_text(size = 6) ) +
     theme( axis.text.x = element_blank(),
            axis.ticks.x = element_blank() ) + 
     guides( colour = "none", fill = 'none' )
   
   p_f_cvg <- ggplot( df, aes(x = as.factor(cvg), y = F1) ) + 
+    theme_minimal()+
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=as.factor(cvg), y=mF1), fill = "gold", shape = 23) + 
     labs( x = 'caller', y = 'F1 score' )  +
     facet_wrap( ~ lbl, nrow = 1 ) +
-    theme_gray() +
     theme( strip.text.x = element_text(size = 6) ) +
     theme( axis.text.x = element_blank(),
            axis.ticks.x = element_blank() ) +
@@ -164,8 +168,9 @@ plot_perf_rrsv <- function ( df )
     p_r_cvg, p_p_cvg, p_f_cvg,
     ncol = 1,
     nrow = 3,
-    heights = c(1,1,2),
-    labels = "auto" 
+    labels = "auto" , 
+    common.legend = TRUE, 
+    legend = "bottom"
  
 
   )
@@ -218,10 +223,10 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = ttype, fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(ttype), y=mrec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture') + ggtitle( 'a' ) +
+    labs(x = 'admixture') +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = 'none', alpha = "none")
@@ -230,9 +235,9 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(ttype), y = mprec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture') + ggtitle( 'b' ) +
+    labs(x = 'admixture') + 
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal()+
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = "none", alpha = "none")
@@ -241,20 +246,22 @@ plot_perf_admix <- function ( df )
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
+    labs(x = 'admixture', y = 'F1 score', fill = '') + 
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal()+
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
     theme(strip.text.x = element_text(size = 6)) +
     theme(legend.position = 'bottom') +
     guides(colour = "none", alpha = "none")
   
-  p_perf <- grid.arrange(
-    grobs = list(p_r_ttype, p_p_ttype, p_f_ttype), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3))
-    #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
+  p_perf <- ggarrange(
+    p_r_ttype, p_p_ttype, p_f_ttype,
+    ncol = 1,
+    nrow = 3,
+    labels = "auto", 
+    common.legend = TRUE, 
+    legend = "bottom"
   )
-  
   return( p_perf )
 }
 
