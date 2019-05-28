@@ -350,7 +350,7 @@ plot_perf_cvg_aux <- function ( df )
     labs(x = 'sequencing depth') + ggtitle( 'a' ) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = 'none', alpha = "none")
@@ -361,7 +361,7 @@ plot_perf_cvg_aux <- function ( df )
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'sequencing depth') + ggtitle( 'b' ) +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
           strip.text.x = element_text(size = 6)) + 
     guides(colour = "none", fill = "none", alpha = "none")
@@ -372,7 +372,7 @@ plot_perf_cvg_aux <- function ( df )
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'sequencing depth', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
     facet_grid(.~lbl) +
-    theme_gray() +
+    theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
     theme(strip.text.x = element_text(size = 6)) +
     theme(legend.position = 'bottom') +

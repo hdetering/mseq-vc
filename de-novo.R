@@ -118,8 +118,8 @@ ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.pdf'), plot = p_perf,
 ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 p_perf <- plot_perf_cvg_aux( df_perf %>% dplyr::filter( name_caller %in% c('MuClone', 'MuClone_perf') ) ) 
-ggsave( file.path( plot_dir, 'FigSX.de-novo.performance.cvg.MuClone.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'FigSX.de-novo.performance.cvg.Muclone.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.MuClone.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.Muclone.png'), plot = p_perf, width = 8, height = 10)
 
 
 # performance by admixture regime
