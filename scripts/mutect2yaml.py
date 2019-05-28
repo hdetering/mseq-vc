@@ -40,7 +40,7 @@ def main(fh_input, fh_output, id_sample=None, nofilt=False):
       else:
         call = rec.samples[0]
       
-      rc_ref, rc_alt = call.data.AD
+      rc_ref, rc_alt = call.data.AD[0:2]
       muts.append({
         'id': '%s:%d' % (rec.CHROM, rec.POS),
         'ref_counts': rc_ref,

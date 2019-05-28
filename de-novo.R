@@ -185,7 +185,7 @@ roc <- df %>%
   replace_na( list(precision = 1, recall = 1) )
 
 df_vaf <- df %>% 
-  group_by( caller, ints = cut_width(vaf, width = 0.02, boundary = 0 ), type ) %>% 
+  group_by( caller, bin = cut_width(vaf, width = 0.02, boundary = 0 ), type ) %>% 
   summarize( n = n() ) %>%
   spread( type, n, fill = 0 ) %>%
 #  mutate( TP_FN = sum(TP+FN), TP_FP = sum(TP+FP) ) %>%
@@ -195,11 +195,14 @@ df_vaf <- df %>%
   mutate( F1 = 2*recall*precision/(recall+precision) )
 
 #roc %>% mutate(AUC = sum(diff(FDR) * na.omit(lead(TPR) + TPR)) / 2)
-df_vaf %>% select( caller, ints, recall, precision, F1 ) %>%
-  gather( measure, score, -caller, -ints)
-  ggplot(roc, aes(precision, recall)) +
-  geom_line() +
-  #geom_abline( lty = 2, intercept = 1, slope = -1 ) +
+df_vaf %>% select( caller, bin, recall, precision, F1 ) %>%
+  gather( measure, score, -caller, -bin) %>%
+  mutate( vaf_lims = str_extract_all(bin, '([\\d\\.]+)'), 
+          vaf_min = (vaf_lims[[1]]),
+          vaf_max = (vaf_lims[[2]])) %>%
+  ggplot( aes(bin, score, color = measure) ) +
+  geom_point() + labs( x = 'Variant allele frequency' ) +
+  scale_x_discrete( breaks = as.character(seq(0, 1, 0.02)) ) +
   facet_wrap( ~ caller )
 
 

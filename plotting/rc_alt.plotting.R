@@ -3,7 +3,7 @@ plot_vaf_bar_srsv <- function( df_vars, df_rc, df_rep ) {
   df <- df_vars %>% dplyr::filter( name_caller != 'Strelka1' ) %>% 
     inner_join( df_rc, by = c('id_rep', 'id_sample', 'chrom', 'pos') ) %>%
     select(caller = name_caller, id_rep, id_sample, chrom, pos, type, rc_ref, rc_alt) %>%
-    mutate( vaf = (rc_alt)/(rc_ref+rc_alt) ) %>%
+    mutate( vaf = if_else(rc_ref+rc_alt==0, 0, (rc_alt)/(rc_ref+rc_alt) )) %>%
     inner_join( df_rep, by = 'id_rep' )
   df$type <- factor( df$type, levels = c('FP', 'FN', 'TP') )
   

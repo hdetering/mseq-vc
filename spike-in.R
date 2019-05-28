@@ -54,7 +54,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
+    'Mutect2_multi_F'
   ),
   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
 )
@@ -84,8 +84,8 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 
 p_perf <- plot_perf_rrsv( df_perf )
-ggsave( file.path( plot_dir, 'Fig6.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig6.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -93,8 +93,8 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix( df )
-ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 
 ################################################################################
@@ -104,15 +104,9 @@ ggsave( file.path( plot_dir, 'Fig7.spike-in.performance.admix.png'), plot = p_pe
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
-# p_vaf <- plot_vaf_dens_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.dens.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
-# p_vaf <- plot_rc_alt_ridges_srsv( df_vars, df_rc, df_rep )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 10 )
-# ggsave( file.path( plot_dir, 'Fig3.SRSV.vaf.ridges.png'), plot = p_vaf, device = png(), width = 8, height = 10 )
 p_vaf <- plot_vaf_bar_srsv( df_vars, df_rc, df_rep )
-ggsave( file.path( plot_dir, 'Fig8.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig8.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS9.spike-in.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS9.spike-in.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 
 ################################################################################
@@ -136,7 +130,7 @@ callerorder = c(
   'SNV-PPILP',
   'HaplotypeCaller', 
   'MultiSNV', 
-  'Mutect2_multi'
+  'Mutect2_multi_F'
 )
 ## true positives
 
@@ -162,8 +156,8 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'Fig9.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10, height = 4 )
-ggsave( file.path( plot_dir, 'Fig9.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10, height = 4 )
+ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
 
 
 
@@ -185,32 +179,37 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 df <- df_pres
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
+fn_pfx <- file.path( plot_dir, 'FigS13.spike-in.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
 
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_germline')
-fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
+fn_pfx <- file.path( plot_dir, 'FigS11.spike-in.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
 
-# plot FP variant calls in relation to germline vars
+# plot TP variant calls in relation to somatic vars
 df <- df_pres %>% dplyr::filter( type == 'TP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
+fn_pfx <- file.path( plot_dir, 'FigS14.spike-in.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
-system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
-
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset( df, n )
+dev.off()
 
 # hierarchical clustering based on varcalls
 #-------------------------------------------------------------------------------
@@ -219,7 +218,7 @@ require(ggdendro) # ggdendrogram()
 
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_pres <- df_pres %>% select (
-  Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi, Mutect2_single, NeuSomatic, 
+  Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi_F, Mutect2_single, NeuSomatic, 
   Shimmer, SNooPer, `SNV-PPILP`, SomaticSniper, Strelka2, VarDict, VarScan
 )
 df_jacc <- Jaccard.df( df_pres )
@@ -228,7 +227,7 @@ df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS5.spike-in.hclust.dendro'
+fn_pfx <- 'FigS16.spike-in.hclust.dendro'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)

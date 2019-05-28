@@ -1,0 +1,325 @@
+
+
+    ====================ART====================
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+    -------------------------------------------
+
+
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+
+
+    ====================ART====================
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+    -------------------------------------------
+
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 274.45
+
+The random seed for the run: 1537278585
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            87X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C2.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C2.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C2.2.sam
+
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 86.08
+
+The random seed for the run: 1537278867
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            27X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C4.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C4.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C4.2.sam
+
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 756.51
+
+The random seed for the run: 1537278585
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            237X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C1.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C1.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C1.2.sam
+
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 952.63
+
+The random seed for the run: 1537278585
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            300X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R5.C1.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R5.C1.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R5.C1.2.sam
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 949.41
+
+The random seed for the run: 1537278585
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            300X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R1.C3.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R1.C3.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R1.C3.2.sam
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 597.33
+
+The random seed for the run: 1537278956
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            186X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C6.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C6.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R4.C6.2.sam
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 199.84
+
+The random seed for the run: 1537279363
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            63X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C6.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C6.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R2.C6.2.sam
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 960.49
+
+The random seed for the run: 1537278585
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            300X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R3.C5.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R3.C5.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/R3.C5.2.sam
+
+
+    ====================ART====================
+             ART_Illumina (2008-2016)          
+          Q Version 2.5.8 (June 7, 2016)       
+     Contact: Weichun Huang <whduke@gmail.com> 
+    -------------------------------------------
+
+                  Paired-end sequencing simulation
+
+Total CPU time used: 599.03
+
+The random seed for the run: 1537282170
+
+Parameters used during run
+	Read Length:	100
+	Genome masking 'N' cutoff frequency: 	1 in 100
+	Fold Coverage:            300X
+	Mean Fragment Length:     500
+	Standard Deviation:       20
+	Profile Type:             Combined
+	ID Tag:                   
+
+Quality Profile(s)
+	First Read:   HiSeq 2500 Length 126 R1 (built-in profile) 
+	First Read:   HiSeq 2500 Length 126 R2 (built-in profile) 
+
+Output files
+
+  FASTQ Sequence Files:
+	 the 1st reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/RN.N.21.fq
+	 the 2nd reads: /mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/RN.N.22.fq
+
+  SAM Alignment File:
+	/mnt/lustre/scratch/home/uvi/be/hde/m-seq_varcall/sims/316d3da2-bb2c-11e8-82e1-80000048fe80/output/bam/RN.N.2.sam
+
+Initializing copy number state for clone genomes...
+Writing tiled ref seqs...
+Writing tiled ref seqs...
+Generating sequencing reads...
+Generating bulk sample 'R3'
+Generating bulk sample 'R4'
+Generating bulk sample 'R5'
+Generating bulk sample 'R2'
+Generating bulk sample 'R1'
+Generating bulk sample 'RN'

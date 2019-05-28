@@ -1,0 +1,49 @@
+bam-input: ''
+clones: 5
+mut-gl-hom: 0.2
+mut-gl-model: HKY
+mut-gl-model-params:
+  Qa: [0.0, 0.0406, 0.1661, 0.0331]
+  Qc: [0.0417, 0.0, 0.0438, 0.1746]
+  Qg: [0.1744, 0.044, 0.0, 0.0418]
+  Qt: [0.0331, 0.1662, 0.0405, 0.0]
+  kappa: 1.7
+  nucFreq: [0.3, 0.2, 0.2, 0.3]
+mut-gl-num: 3000
+mut-som-cnv-gain-prob: 0.5
+mut-som-cnv-len-exp: 1
+mut-som-cnv-len-min: 1000
+mut-som-cnv-rate-arm: 0.05
+mut-som-cnv-rate-chr: 0.05
+mut-som-cnv-rate-foc: 0.49
+mut-som-cnv-rate-tel: 0.4
+mut-som-cnv-rate-wgd: 0.01
+mut-som-cnv-ratio: 0.0
+mut-som-num: 100
+mut-som-sig-file: resources/signatures_probabilities.txt
+mut-som-sig-mix: {Signature 1: 1.0}
+mut-som-trunk: 0
+mut-som-vcf: ''
+out-dir: output
+ref-nuc-freqs: [0.3, 0.2, 0.2, 0.3]
+ref-seq-len-mean: 3000000
+ref-seq-len-sd: 0
+ref-seq-num: 1
+reference: ''
+sampling: clone_prev.csv
+seed: 280599954
+seq-art-path: /home/uvi/be/hde/src/art_bin_MountRainier/art_illumina
+seq-coverage: 30
+seq-fq-out: false
+seq-frag-len-mean: 500
+seq-frag-len-sd: 20
+seq-rc-disp: 30
+seq-rc-error: 0.01
+seq-rc-min: 2
+seq-read-gen: true
+seq-read-len: 100
+seq-reuse-reads: true
+seq-sam-out: true
+seq-use-vaf: false
+tree: clone_tree.nwk
+verbosity: 1

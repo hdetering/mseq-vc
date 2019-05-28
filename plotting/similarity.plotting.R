@@ -16,7 +16,8 @@ plot_jacc_idx <- function( df ) {
     scale_fill_distiller( palette = "Spectral", limits = c(0, 1), name = 'Jaccard\nindex' ) +
     theme_bw() +
     theme( axis.title = element_blank(),
-           axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5) )
+           axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5) ,
+           plot.margin = margin(t = 20, l = 10))
   
   return( p_jacc )
 }
@@ -24,19 +25,25 @@ plot_jacc_idx <- function( df ) {
 # combine three plots into one
 plot_jacc_idx_multi <- function( p1, p2, p3 ) {
   
-  require( cowplot ) # get_legend
+  # require( cowplot ) # get_legend
+  # 
+  # p_jacc_multi_graphs <- plot_grid( 
+  #   p1 + theme(legend.position = 'none'),
+  #   p2 + theme(legend.position = 'none'),
+  #   p3 + theme(legend.position = 'none'),
+  #   labels = c('a', 'b', 'c'), nrow = 1
+  # )
+  # p_jacc_multi_legend <- get_legend( p1 + theme(legend.position = 'bottom') )
+  # p_jacc_multi <- plot_grid(
+  #   p_jacc_multi_graphs, 
+  #   p_jacc_multi_legend, 
+  #   ncol = 1, rel_heights = c(1, .2) )
   
-  p_jacc_multi_graphs <- plot_grid( 
-    p1 + theme(legend.position = 'none'),
-    p2 + theme(legend.position = 'none'),
-    p3 + theme(legend.position = 'none'),
-    labels = c('a', 'b', 'c'), nrow = 1
-  )
-  p_jacc_multi_legend <- get_legend( p1 + theme(legend.position = 'bottom') )
-  p_jacc_multi <- plot_grid(
-    p_jacc_multi_graphs, 
-    p_jacc_multi_legend, 
-    ncol = 1, rel_heights = c(1, .2) )
-  
+  p_jacc_multi = ggarrange(p1,p2,p3,
+                           labels = "auto",
+                           ncol = 3,
+                           nrow = 1,
+                           common.legend = TRUE,
+                           legend = "bottom")
   return( p_jacc_multi )
 }
