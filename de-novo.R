@@ -210,15 +210,15 @@ p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4.2 )
+ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4.2 )
 
 # hierarchical clustering based on varcalls
 #-------------------------------------------------------------------------------
 require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
-df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -Strelka1) )
+df_jacc <- Jaccard.df( df_pres %>% select(-id_mut) )
 df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
 df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
@@ -226,7 +226,7 @@ hc <- hclust(d)
 
 fn_pfx <- 'FigS4.de-novo.hclust.dendro'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
-par( mar = c(2, 0, 0, 6) )
+par( mar = c(2, 1, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
 png( file.path(plot_dir, paste0(fn_pfx, '.png')), width = 8, height = 4, units = 'in', res = 300 )
