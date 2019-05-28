@@ -165,46 +165,6 @@ ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.png'), plot = p_vaf, device =
 # ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
 # ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.VarDict.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
-# ROC curve for TPR (recall, sensitivity) vs. FDR
-#-------------------------------------------------------------------------------
-df <- df_vars %>% dplyr::filter( !(name_caller %in% noshow) ) %>% 
-  inner_join( df_rc, by = c('id_rep', 'id_sample', 'chrom', 'pos') ) %>%
-  select(caller = name_caller, id_rep, id_sample, chrom, pos, type, rc_ref, rc_alt) %>%
-  mutate( vaf = round((rc_alt)/(rc_ref+rc_alt), 2) ) %>%
-  inner_join( df_rep, by = 'id_rep' )
-#df$type <- factor( df$type, levels = c('FP', 'FN', 'TP') )
-
-roc <- df %>% 
-  group_by( caller, vaf, type ) %>% 
-  summarize( n = n() ) %>%
-  spread( type, n, fill = 0 ) %>%
-  arrange( vaf ) %>%
-  mutate( TP_FN = sum(TP+FN), TP_FP = sum(TP+FP) ) %>%
-  mutate( recall = sum(TP)/sum(TP+FN), 
-          precision = sum(TP)/sum(TP+FP) ) %>%
-  replace_na( list(precision = 1, recall = 1) )
-
-df_vaf <- df %>% 
-  group_by( caller, bin = cut_width(vaf, width = 0.02, boundary = 0 ), type ) %>% 
-  summarize( n = n() ) %>%
-  spread( type, n, fill = 0 ) %>%
-#  mutate( TP_FN = sum(TP+FN), TP_FP = sum(TP+FP) ) %>%
-  mutate( recall = sum(TP)/sum(TP+FN), 
-          precision = sum(TP)/sum(TP+FP) ) %>%
-  replace_na( list(precision = 1, recall = 1) ) %>%
-  mutate( F1 = 2*recall*precision/(recall+precision) )
-
-#roc %>% mutate(AUC = sum(diff(FDR) * na.omit(lead(TPR) + TPR)) / 2)
-df_vaf %>% select( caller, bin, recall, precision, F1 ) %>%
-  gather( measure, score, -caller, -bin) %>%
-  mutate( vaf_lims = str_extract_all(bin, '([\\d\\.]+)'), 
-          vaf_min = (vaf_lims[[1]]),
-          vaf_max = (vaf_lims[[2]])) %>%
-  ggplot( aes(bin, score, color = measure) ) +
-  geom_point() + labs( x = 'Variant allele frequency' ) +
-  scale_x_discrete( breaks = as.character(seq(0, 1, 0.02)) ) +
-  facet_wrap( ~ caller )
-
 
 ################################################################################
 # Similarity between call sets
