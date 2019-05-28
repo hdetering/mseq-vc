@@ -341,8 +341,11 @@ plot_perf_cvg_aux <- function ( df )
   
   p_perf <- grid.arrange(
     grobs = list(p_r_cvg, p_p_cvg, p_f_cvg), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3)),
-    #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
+    ncol = 1,
+    nrow = 3,
+    labels = "auto", 
+    common.legend = TRUE, 
+    legend = "bottom"
   )
   
   return( p_perf )
