@@ -17,6 +17,39 @@ plot_vaf_bar_srsv <- function( df_vars, df_rc, df_rep ) {
     theme( legend.position = 'bottom' )
 }
 
+plot_vaf_bar_empirical <- function( df_vars, df_rc ) {
+  
+  df <- df_vars %>%
+    inner_join( df_rc, by = c('id_sample', 'chrom', 'pos') ) %>%
+    select( caller = name_caller, id_sample, chrom, pos, rc_ref, rc_alt) %>%
+    mutate( vaf = if_else(rc_ref+rc_alt==0, 0, (rc_alt)/(rc_ref+rc_alt) ))
+  
+  p_rc_alt <- ggplot( df, aes(x = vaf) ) + 
+    geom_histogram( bins = 50 ) +
+    facet_wrap( ~caller, ncol = 4, scales = 'free_y' ) +
+    #ggtitle( 'VAF distribution for classes of variant calls' ) + 
+    labs( x = 'variant allele frequency' ) +
+    theme_pubclean()
+}
+
+plot_vaf_bar_empirical_sample <- function( df_vars, df_rc, df_sample ) {
+  
+  df <- df_vars %>%
+    inner_join( df_rc, by = c('id_sample', 'chrom', 'pos') ) %>%
+    select( caller = name_caller, id_sample, chrom, pos, rc_ref, rc_alt) %>%
+    mutate( vaf = if_else(rc_ref+rc_alt==0, 0, (rc_alt)/(rc_ref+rc_alt) )) %>%
+    inner_join( df_sample, by = 'id_sample' )
+  
+  p_rc_alt <- ggplot( df, aes(x = vaf) ) + 
+    geom_histogram( aes(y = ..density..), binwidth = 0.02, fill = 'grey' ) +
+    geom_density( aes(color = id_sample) ) +
+    scale_color_manual( values = cbPal ) +
+    facet_grid( caller~patient, scale = 'free_y' ) +
+    theme_dark() +
+    theme( strip.text.y = element_text(angle = 0) )
+  
+}
+
 plot_vaf_bar_ybreak <- function( df_vars, df_rc, df_rep, lbl_caller, break_at = 5000 ) {
   
   #Function to transform data to y positions

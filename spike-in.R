@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+# vim: syntax=R tabstop=2 expandtab
+# coding: utf-8
+#------------------------------------------------------------------------------
+# Load benchmarking data, perform analyses and generate plots for publication.
+#------------------------------------------------------------------------------
+# author   : Harald Detering
+# email    : harald.detering@gmail.com
+# modified : 2019-11-03
+#------------------------------------------------------------------------------
+
 require(tidyverse)
 require(dbplyr)
 require(RSQLite)
@@ -36,28 +47,28 @@ df_snp <- readRDS( file.path(data_dir, 'RRSV.snps.rds') )
 
 # define variant calling tools and their properties
 #-------------------------------------------------------------------------------
-callers <- tibble(
-  name_caller = c(
-    'Bcftools', 
-    'CaVEMan', 
-    'MuTect1', 
-    'Mutect2_single', 
-    'NeuSomatic', 
-    'Shimmer', 
-    'SNooPer', 
-    'SomaticSniper', 
-    'Strelka1', 
-    'Strelka2', 
-    'VarDict', 
-    'VarScan',
-    'MuClone', 
-    'SNV-PPILP',
-    'HaplotypeCaller', 
-    'MultiSNV', 
-    'Mutect2_multi_F'
-  ),
-  class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
-)
+# df_caller <- tibble(
+#   name_caller = c(
+#     'Bcftools', 
+#     'CaVEMan', 
+#     'MuTect1', 
+#     'Mutect2_single', 
+#     'NeuSomatic', 
+#     'Shimmer', 
+#     'SNooPer', 
+#     'SomaticSniper', 
+#     'Strelka1', 
+#     'Strelka2', 
+#     'VarDict', 
+#     'VarScan',
+#     'MuClone', 
+#     'SNV-PPILP',
+#     'HaplotypeCaller', 
+#     'MultiSNV', 
+#     'Mutect2_multi_F'
+#   ),
+#   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
+# )
 
 # determine status of variant calls
 #   TP: true positives
@@ -82,10 +93,18 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 # plot performance metrics
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
+df_perf_agg <- df_perf %>% 
+  group_by( name_caller ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf <- plot_perf_rrsv( df_perf )
-ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+p_perf <- plot_perf_min( df_perf )
+ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
+
+# p_perf <- plot_perf_rrsv( df_perf )
+# ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+# ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -95,6 +114,207 @@ df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix( df )
 ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
+
+# correlation between F1 score and recall, precision
+# ------------------------------------------------------------------------------
+cor.test( df$F1, df$recall )
+#       Pearson's product-moment correlation
+# 
+# data:  df$F1 and df$recall
+# t = 35.457, df = 2398, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#   0.5595922 0.6121199
+# sample estimates:
+#   cor 
+# 0.5864723 
+cor.test( df$F1, df$precision )
+#       Pearson's product-moment correlation
+# 
+# data:  df$F1 and df$precision
+# t = 115.25, df = 2398, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#   0.9140135 0.9262676
+# sample estimates:
+#   cor 
+# 0.9203662 
+# ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
+# Two-out-of-two performance
+# ------------------------------------------------------------------------------
+
+# enumerate all possible pairs of callers
+df_caller_pairs <- df_caller  %>% 
+  dplyr::filter( !(name_caller %in% c('MuTect1', 'Mutect2_single')) ) %>%
+  select( id_caller, name_caller ) %>%
+  map_df( function(x) { combn(x, 2, paste, collapse = '_') } )
+# calculate intersections of paired call sets
+df_varcall_pairs <- df_varcall %>%
+  dplyr::filter( !(id_caller %in% c(3, 4)) ) %>%
+  inner_join( df_varcall, by = c('id_rep', 'id_sample', 'chrom', 'pos') ) %>%
+  dplyr::filter( id_caller.x < id_caller.y ) %>%
+  unite( id_caller, id_caller.x, id_caller.y)
+# assign type (TP, FP, FN) to var calls
+df_vars_pairs <- classify_variants( df_varcall_pairs, df_mut, df_mut_sample, df_caller_pairs )
+# assign germline status to var calls
+df_vars_pairs <- df_vars_pairs %>% 
+  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
+  mutate( germline = (!is.na(id_mut)) ) %>%
+  select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
+
+df_perf_pairs <- calculate_performance_sample( df_vars_pairs, df_caller_pairs, df_rep )
+df_perf_pairs_agg <- df_perf_pairs %>% group_by( id_caller ) %>%
+  summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) ) %>%
+  separate( id_caller, c('id1', 'id2'), sep = '_') %>%
+  mutate( id_caller1 = as.numeric(id1), id_caller2 = as.numeric(id2) ) %>%
+  inner_join( df_caller, by = c('id_caller1' = 'id_caller')) %>%
+  inner_join( df_caller, by = c('id_caller2' = 'id_caller')) %>%
+  select( id_caller1, id_caller2, caller1 = name_caller.x, caller2 = name_caller.y, med_F1, med_prec, med_rec ) %>%
+  ungroup()
+
+df_perf_pairs_top <- df_perf_pairs %>%
+  inner_join(
+    df_perf_pairs %>% 
+    group_by( id_caller ) %>%
+    summarise( med_F1 = median(F1) ) %>% 
+    mutate( rank_mF1 = rank(desc(med_F1)) ) %>%
+    dplyr::filter( rank_mF1 <= 10 ) %>% 
+    select( id_caller, rank_mF1 ),
+    by = c('id_caller')
+  )
+
+# plot performance metrics
+# ------------------------------------------------------------------------------
+
+p_perf <- plot_perf_pairs( df_perf_pairs_top )
+ggsave( file.path( plot_dir, 'spike-in.performance.pairs.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'spike-in.performance.pairs.png'), plot = p_perf, width = 8, height = 10)
+
+# performance by admixture regime
+# ------------------------------------------------------------------------------
+df <- df_perf_pairs_top %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
+df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
+p_perf_admix <- plot_perf_pairs_admix( df )
+ggsave( file.path( plot_dir, 'spike-in.performance.pairs.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'spike-in.performance.pairs.admix.png'), plot = p_perf_admix, width = 8, height = 10)
+
+# plot heat map
+# ------------------------------------------------------------------------------
+
+p_mF1_hm <- plot_perf_pairs_hm( df_perf_pairs_agg )
+ggsave( file.path( plot_dir, 'spike-in.median_F1.pairs.hm.pdf'), plot = p_mF1_hm, width = 8, height = 8)
+ggsave( file.path( plot_dir, 'spike-in.median_F1.pairs.hm.png'), plot = p_mF1_hm, width = 8, height = 8)
+
+# ------------------------------------------------------------------------------
+# Two-out-of-three performance
+# ------------------------------------------------------------------------------
+
+# enumerate all possible triplets of callers
+# df_caller_trip <- df_caller %>%
+#   select( id_caller, name_caller ) %>%
+#   map_df( function(x) { combn(x, 3, paste, collapse = '_') } )
+df_caller_trip <- df_caller %>%
+  dplyr::filter( !(name_caller %in% c('MuTect1', 'Mutect2_single')) ) %>%
+  select( id_caller ) %>%
+  map_df( function(x) { combn(x, 3) } ) %>%
+  mutate( id_trip = floor((row_number()-1)/3)+1 )
+# create accessory table for variants
+df_var <- df_varcall %>%
+  dplyr::filter( !(id_caller %in% c(3, 4)) ) %>%
+  select( id_rep, id_sample, chrom, pos ) %>%
+  unique() %>%
+  rowid_to_column( 'id_mut' )
+saveRDS( df_var, file.path(data_dir, 'df_var.rds') )
+# determine presence/absecce of var calls
+df_varcall_trip <- df_varcall %>%
+  dplyr::filter( !(id_caller %in% c(3, 4)) ) %>%
+  inner_join( df_var, by = c('id_rep', 'id_sample', 'chrom', 'pos' ) ) %>%
+  select( id_mut, id_caller ) %>%
+  inner_join( df_caller_trip )
+saveRDS( df_varcall_trip, file.path(data_dir, 'df_varcall_trip.s.rds') )
+
+df_varcall_trip <- readRDS( file.path(data_dir, 'df_varcall_trip.s.rds') )
+class(df_varcall_trip$id_mut)
+
+library(data.table)
+dt_varcall_trip <- copy( df_varcall_trip )
+setDT( dt_varcall_trip )
+dt <- dt_varcall_trip[, .(n = .N), by = .(id_mut, id_trip)]
+saveRDS( dt, file.path(data_dir, 'dt_varcall_trip.grouped.rds') )
+
+df_caller_trip <- df_caller_trip %>% 
+  inner_join( df_caller ) %>%
+  group_by( id_trip ) %>%
+  summarise( id_caller = str_c(id_caller, collapse = '_'), name_caller = str_c(name_caller, collapse = '_') )
+# calculate intersections of paired call sets
+df_varcall_trip <- dt %>% dplyr::filter( n > 1 ) %>%
+  inner_join( df_var, by = 'id_mut' ) %>% 
+  inner_join( df_caller_trip, by = 'id_trip' ) %>% 
+  select( -id_mut )
+# assign type (TP, FP, FN) to var calls
+df_vars_trip <- classify_variants( df_varcall_trip, df_mut, df_mut_sample, df_caller_trip )
+saveRDS( df_vars_trip, file.path(data_dir, 'df_vars_trip.rds') )
+# assign germline status to var calls
+df_vars_trip <- df_vars_trip %>%
+  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
+  mutate( germline = (!is.na(id_mut)) ) %>%
+  select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
+saveRDS( df_vars_trip, file.path(data_dir, 'df_vars_trip.rds') )
+
+df_perf_trip <- calculate_performance_sample( df_vars_trip, df_caller_trip, df_rep )
+saveRDS( df_perf_trip, file.path(data_dir, 'df_perf_trip.rds') )
+
+df_perf_trip <- readRDS( file.path(data_dir, 'df_perf_trip.rds') )
+
+df_perf_trip_agg <- df_perf_trip %>% group_by( id_caller ) %>%
+  summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) ) %>%
+  separate( id_caller, c('id1', 'id2', 'id3') ) %>%
+  mutate( id_caller1 = as.numeric(id1), 
+          id_caller2 = as.numeric(id2), 
+          id_caller3 = as.numeric(id3) ) %>%
+  inner_join( df_caller, by = c('id_caller1' = 'id_caller')) %>%
+  inner_join( df_caller, by = c('id_caller2' = 'id_caller')) %>%
+  inner_join( df_caller, by = c('id_caller3' = 'id_caller')) %>%
+  select( id_caller1, id_caller2, id_caller3,
+          caller1 = name_caller.x, caller2 = name_caller.y, caller3 = name_caller, 
+          med_F1, med_prec, med_rec ) %>%
+  ungroup()
+df_perf_agg <- df_perf %>% group_by( id_caller ) %>%
+  summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) )
+
+df_perf_trip_top <- df_perf_trip %>%
+  inner_join(
+    df_perf_trip %>% 
+      group_by( id_caller ) %>%
+      summarise( med_F1 = median(F1) ) %>% 
+      mutate( rank_mF1 = rank(desc(med_F1)) ) %>%
+      dplyr::filter( rank_mF1 <= 10 ) %>% 
+      select( id_caller, rank_mF1 ),
+    by = c('id_caller')
+  )
+
+# plot performance metrics
+# ------------------------------------------------------------------------------
+
+p_perf <- plot_perf_pairs( df_perf_trip_top )
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.pdf'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.png'), plot = p_perf, width = 8, height = 10)
+
+p_perf <- plot_perf_trip_hm( df_perf_trip_agg )
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.all.pdf'), plot = p_perf, width = 16, height = 14)
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.all.png'), plot = p_perf, width = 16, height = 14)
+
+
+# performance by admixture regime
+# ------------------------------------------------------------------------------
+df <- df_perf_trip_top %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
+df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
+p_perf_admix <- plot_perf_pairs_admix( df )
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'spike-in.performance.trip.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 
 ################################################################################
@@ -177,11 +397,12 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 
 # plot variant calls in relation to TRUE somatic variants
 df <- df_pres
-lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
+lbl_callers <- setdiff(df_caller$name_caller, c('Strelka1'))
 n <- c(lbl_callers, 'TRUE_somatic')
 fn_pfx <- file.path( plot_dir, 'FigS13.spike-in.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
+# plot_upset_empirical( df, n )
 dev.off()
 png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
 plot_upset( df, n )

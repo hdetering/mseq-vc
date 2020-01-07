@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-05-23
+# modified : 2019-11-03
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -74,6 +74,25 @@ callers <- tibble(
     'MultiSNV', 
     'Mutect2_multi'
   ),
+  sh = c(
+    'Bt', 
+    'CM', 
+    'M1', 
+    'M2s', 
+    'Ns', 
+    'Sh', 
+    'SN', 
+    'SS',
+    'S2', 
+    'VD', 
+    'VS',
+    'MC', 
+    'MCp',
+    'SP',
+    'HC', 
+    'MS', 
+    'M2m'
+  ),
   class = c(rep('marginal', 11), rep('two-step', 3), rep('joint', 3))
 )
 df_caller <- df_caller %>%
@@ -109,6 +128,18 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
+df_perf_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+  group_by( name_caller ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
+p_perf <- plot_perf_min( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.png'), plot = p_perf, width = 12, height = 4)
+
+# performance by coverage
+# ------------------------------------------------------------------------------
+df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
 df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller, cvg ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
@@ -120,7 +151,6 @@ ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.png'), plot = p_perf,
 p_perf <- plot_perf_cvg_aux( df_perf %>% dplyr::filter( name_caller %in% c('MuClone', 'MuClone_perf') ) ) 
 ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.MuClone.pdf'), plot = p_perf, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.Muclone.png'), plot = p_perf, width = 8, height = 10)
-
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -135,6 +165,32 @@ df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
 p_perf_tt <- plot_perf_admix( df )
 ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+
+# correlation between F1 score and recall, precision
+# ------------------------------------------------------------------------------
+cor.test( df$F1, df$recall )
+#       Pearson's product-moment correlation
+# 
+# data:  df$F1 and df$recall
+# t = 132.95, df = 9598, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#   0.7978892 0.8119720
+# sample estimates:
+#   cor 
+# 0.805044 
+cor.test( df$F1, df$precision )
+#       Pearson's product-moment correlation
+# 
+# data:  df$F1 and df$precision
+# t = 92.23, df = 9598, p-value < 2.2e-16
+# alternative hypothesis: true correlation is not equal to 0
+# 95 percent confidence interval:
+#   0.6747043 0.6959187
+# sample estimates:
+#   cor 
+# 0.685457 
+# ------------------------------------------------------------------------------
 
 # check for significant performance differences
 # ------------------------------------------------------------------------------
