@@ -11,7 +11,7 @@ classify_variants <- function (
     inner_join( df_mut_sample %>% dplyr::filter( as.logical( is_present ) ), 
                 by = c('id_rep', 'id_sample', 'id_mut') ) %>%
     select( id_caller, id_rep, id_sample, chrom, pos ) %>%
-    mutate( type = 'TP')
+    mutate( type = 'TP' )
   
   # join detected variants and true mutations
   df_fp <- df_varcall %>% 
@@ -19,7 +19,7 @@ classify_variants <- function (
                  inner_join( df_mut, by = c('id_rep', 'id_mut') ), 
                by = c('id_rep', 'id_sample', 'chrom', 'pos') ) %>%
     select( id_caller, id_rep, id_sample, chrom, pos ) %>%
-    mutate(type = 'FP')
+    mutate( type = 'FP' )
   
   # join detected variants and true mutations
   df_fn <- df_mut_sample %>% dplyr::filter( as.logical( is_present ) ) %>%

@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-11-03
+# modified : 2020-01-10
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -22,6 +22,7 @@ source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
 source( file.path('plotting', 'performance.plotting.R') )
 source( file.path('plotting', 'rc_alt.plotting.R') )
+source( file.path('plotting', 'upset.plotting.R') )
 
 df_caller <- tibble(
   name_caller = c(
@@ -126,7 +127,7 @@ p1 <- df %>% dplyr::filter( grepl('^MSS1', id_sample) ) %>%
   group_by( id_sample, caller ) %>% summarise( n = sum(present) ) %>%
   ggplot( aes(x = caller, y = n) ) + 
   geom_bar( stat = 'identity' ) +
-  geom_hline( data = df_snv %>% dplyr::filter(grepl('^MSS1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
+  geom_hline( data = df %>% dplyr::filter(grepl('^MSS1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
   facet_wrap( ~id_sample, ncol = 1 ) +
   ggtitle( 'MSS1' ) +
   theme_minimal() +
@@ -136,7 +137,7 @@ p2 <- df %>% dplyr::filter( grepl('^MSI-H1', id_sample) ) %>%
   group_by( id_sample, caller ) %>% summarise( n = sum(present) ) %>%
   ggplot( aes(x = caller, y = n) ) + 
   geom_bar( stat = 'identity' ) +
-  geom_hline( data = df_snv %>% dplyr::filter(grepl('^MSI-H1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
+  geom_hline( data = df %>% dplyr::filter(grepl('^MSI-H1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
   facet_wrap( ~id_sample, ncol = 1 ) +
   ggtitle( 'MSI-H1' ) +
   theme_minimal() +
@@ -146,7 +147,7 @@ p3 <- df %>% dplyr::filter( grepl('^PR1', id_sample) ) %>%
   group_by( id_sample, caller ) %>% summarise( n = sum(present) ) %>%
   ggplot( aes(x = caller, y = n) ) + 
   geom_bar( stat = 'identity' ) +
-  geom_hline( data = df_snv %>% dplyr::filter(grepl('^PR1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
+  geom_hline( data = df %>% dplyr::filter(grepl('^PR1', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
   facet_wrap( ~id_sample, ncol = 1 ) +
   ggtitle( 'PR1' ) +
   theme_minimal() +
@@ -156,7 +157,7 @@ p4 <- df %>% dplyr::filter( grepl('^PR2', id_sample) ) %>%
   group_by( id_sample, caller ) %>% summarise( n = sum(present) ) %>%
   ggplot( aes(x = caller, y = n) ) + 
   geom_bar( stat = 'identity' ) +
-  geom_hline( data = df_snv %>% dplyr::filter(grepl('^PR2', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
+  geom_hline( data = df %>% dplyr::filter(grepl('^PR2', id_sample)) %>% group_by(id_sample) %>% tally(), aes(yintercept=n), lty=2 ) +
   facet_wrap( ~id_sample, ncol = 1 ) +
   ggtitle( 'PR2' ) +
   theme_minimal() +
@@ -173,27 +174,30 @@ cor.test( df_eval$F1, df_eval$recall )
 #       Pearson's product-moment correlation
 # 
 # data:  df_eval$F1 and df_eval$recall
-# t = 7.2743, df = 238, p-value = 5.01e-12
+# t = 6.1244, df = 238, p-value = 3.733e-09
 # alternative hypothesis: true correlation is not equal to 0
 # 95 percent confidence interval:
-#  0.3169799 0.5247792
+#   0.2542223 0.4734815
 # sample estimates:
-#       cor 
-# 0.4264908 
+#   cor 
+# 0.3689741
 cor.test( df_eval$F1, df_eval$precision )
 #       Pearson's product-moment correlation
 # 
 # data:  df_eval$F1 and df_eval$precision
-# t = 56.962, df = 238, p-value < 2.2e-16
+# t = 46.333, df = 238, p-value < 2.2e-16
 # alternative hypothesis: true correlation is not equal to 0
 # 95 percent confidence interval:
-#  0.9553672 0.9729372
+#   0.9344251 0.9600707
 # sample estimates:
-#       cor 
-# 0.9652259
+#   cor 
+# 0.9487885 
 # ------------------------------------------------------------------------------
 
 # UpSet plot
+n <- c('Bcftools', 'CaVEMan', 'HaplotypeCaller', 'MuClone', 'MultiSNV', 'MuTect1', 
+       'Mutect2_multi', 'Mutect2_single', 'NeuSomatic', 'Shimmer', 'SNV-PPILP', 
+       'SNooPer', 'SomaticSniper', 'Strelka2', 'VarDict', 'VarScan')
 pdf( file.path(plot_dir, 'empirical.upset.pub.pdf'), width = 16, height = 8, onefile = FALSE )
 #png( 'plots/empirical.upset.pub.png', width = 10, height = 4.5 ) # does produce empty output...
 upset(df, sets = n, 
@@ -228,7 +232,7 @@ callerorder = c(
   'Mutect2_multi'
 )
 ## Jaccard distance plot
-df_jacc <- Jaccard.df( df_pres %>% select(-id_sample, -id_mut)  %>% select(callerorder))
+df_jacc <- Jaccard.df( df_pres %>% select(-id_sample, -id_mut) %>% select(callerorder))
 p_jacc <- plot_jacc_idx( df_jacc %>% mutate(caller1 = factor(caller1, levels = callerorder), 
                                                   caller2 = factor(caller2, levels = callerorder)))
 
@@ -240,15 +244,15 @@ ggsave( file.path( plot_dir, 'empirical.jaccard.png'), plot = p_jacc, device = p
 #-------------------------------------------------------------------------------
 require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
-df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
-df_jacc <- Jaccard.df( df_pres %>% select(-id_mut, -MuClone_perf) )
+#df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
+df_jacc <- Jaccard.df( df_pres %>% select(-id_sample, -id_mut) )
 
 df_jacc_idx <- df_jacc %>% spread( caller1, jaccard_idx ) %>% as.data.frame() 
 df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -caller2 )
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS1.de-novo.hclust.dendro'
+fn_pfx <- 'empirical.hclust.dendro'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 1, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
@@ -266,14 +270,13 @@ names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 n <- c('Bcftools', 'CaVEMan', 'HaplotypeCaller', 'MuClone', 'MultiSNV', 'MuTect1', 
        'Mutect2_multi', 'Mutect2_single', 'NeuSomatic', 'Shimmer', 'SNV-PPILP', 
        'SNooPer', 'SomaticSniper', 'Strelka2', 'VarDict', 'VarScan')
-pdf( 'plots/empirical.upset.all.pdf', width = 16, height = 8, onefile = FALSE )
 #png( 'plots/empirical.upset.all.png', width = 10, height = 4.5 ) # does produce empty output...
-upset(df_pres, sets = n, 
-      keep.order = FALSE, 
-      order.by = 'freq',
-      mb.ratio = c(0.5, 0.5),
-      number.angles = 30,
-      text.scale = 1.5)
+fn_pfx <- file.path( plot_dir, 'empirical.upset')
+pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
+plot_upset_empirical( df_pres, n )
+dev.off()
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset_empirical( df_pres, n )
 dev.off()
 
 # ratio of private variants for each caller
@@ -283,12 +286,16 @@ df_uniq <- df_pres %>% mutate( n = rowSums(select(., -c(1:2))) ) %>% dplyr::filt
 df_total <- df_pres %>% 
   gather( "caller", "present", -id_sample, -id_mut ) %>% group_by( caller ) %>% summarise( n_total = sum(present) )
 df_uniq <- df_uniq %>% inner_join( df_total ) %>% mutate( r_unique = n_unique/n_total )
-p_uniq_calls <- ggplot( df_uniq ) + geom_bar( aes(x = reorder(caller, -n_total), y = r_unique), stat = 'identity' ) +
+p_uniq_calls <- ggplot( df_uniq ) + 
+  geom_bar( aes(x = reorder(caller, -n_total), y = r_unique), stat = 'identity' ) +
+  geom_text( aes(x = reorder(caller, -n_total), y = 0.75, label = n_total, color = (r_unique > 0.75)) ) +
   labs( x = 'caller', y = 'unique/total calls' ) +
+  guides( color = 'none' ) +
   coord_flip() +
-  theme_minimal()
-ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.unique_calls.pdf' ), device = pdf() )
-ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.unique_calls.png' ), device = png() )
+  theme_minimal() +
+  scale_color_manual( values = c('black', 'white') )
+ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.private_calls.pdf' ), device = pdf() )
+ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.private_calls.png' ), device = png() )
 
 # by sample
 df_uniq <- df_pres %>% mutate( n = rowSums(select(., -c(1:2))) ) %>% dplyr::filter( n == 1 ) %>%
@@ -313,8 +320,8 @@ p_uniq_calls <- ggplot( df_uniq ) + geom_bar( aes(x = reorder(caller, -n_total),
   labs( x = 'caller', y = 'unique/total calls' ) +
   coord_flip() +
   theme_minimal()
-ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.unique_calls.mutect_pooled.pdf' ), device = pdf() )
-ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.unique_calls.mutect_pooled.png' ), device = png() )
+ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.private_calls.mutect_pooled.pdf' ), device = pdf() )
+ggsave( plot = p_uniq_calls, filename = file.path(plot_dir, 'empirical.private_calls.mutect_pooled.png' ), device = png() )
 
 
 
@@ -370,26 +377,8 @@ p_vaf_sample <- plot_vaf_bar_empirical_sample( df_vars, df_rc, df_sample )
 ggsave( file.path( plot_dir, 'empirical.vaf.bar.sample.pdf'), plot = p_vaf_sample, device = pdf(), width = 8, height = 8 )
 ggsave( file.path( plot_dir, 'empirical.vaf.bar.sample.png'), plot = p_vaf_sample, device = png(), width = 8, height = 8 )
 
-# VAF spectrum for unique vs. shared calls
-df <- df_vars %>%
-  inner_join( df_rc, by = c('id_sample', 'chrom', 'pos') ) %>%
-  unite( id_mut, id_sample, chrom, pos ) %>%
-  inner_join( df_pres, by = c('id_mut') ) %>%
-  mutate( unique = rowSums(select(., -c(1:7))) == 1 ) %>%
-  select( caller = name_caller, id_mut, rc_ref, rc_alt, unique ) %>%
-  mutate( vaf = if_else(rc_ref+rc_alt==0, 0, (rc_alt)/(rc_ref+rc_alt) ))
-
-p_vaf_uniq <- ggplot( df, aes(x = vaf) ) + 
-  geom_histogram( aes(fill = unique), bins = 50, position = 'dodge' ) +
-  facet_wrap( ~caller, ncol = 4, scales = 'free_y' ) +
-  #ggtitle( 'VAF distribution for classes of variant calls' ) + 
-  labs( x = 'variant allele frequency' ) +
-  theme_minimal() +
-  scale_fill_manual(
-    labels = c('shared', 'unique'),
-    values = c('steelblue', 'red')
-  ) +
-  labs( fill = 'variant status' )
-ggsave( file.path( plot_dir, 'empirical.vaf.bar.unique.pdf'), plot = p_vaf_uniq, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'empirical.vaf.bar.unique.png'), plot = p_vaf_uniq, device = png(), width = 8, height = 8 )
+# VAF spectrum for private vs. shared calls
+p_vaf_priv <- plot_vaf_bar_empirical_private( df_vars, df_rc, df_pres )
+ggsave( file.path( plot_dir, 'empirical.vaf.bar.private.pdf'), plot = p_vaf_priv, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'empirical.vaf.bar.private.png'), plot = p_vaf_priv, device = png(), width = 8, height = 8 )
 

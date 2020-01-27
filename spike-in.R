@@ -437,6 +437,10 @@ dev.off()
 require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 
+df_pres <- read.csv( file.path(data_dir, 'spike-in.muts_callsets.csv') )
+# annoying, but necessary... only if loaded from file
+names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
+
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_pres <- df_pres %>% select (
   Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi_F, Mutect2_single, NeuSomatic, 
@@ -448,7 +452,8 @@ df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS16.spike-in.hclust.dendro'
+fn_pfx <- 'spike-in.hclust.dendro.tp_fn_fp'
+fn_pfx <- 'spike-in.hclust.dendro.df_pres'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
