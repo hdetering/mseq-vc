@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-11-03
+# modified : 2020-01-29
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -72,7 +72,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
+    'Mutect2_multi_F'
   ),
   sh = c(
     'Bt', 
@@ -97,6 +97,7 @@ callers <- tibble(
 )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
+df_caller %>% saveRDS( file.path(data_dir, 'df_caller.rds') )
 # do not show these callers in main plots
 noshow <- c( 'MuClone_perf' )
 
@@ -271,8 +272,8 @@ p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, leve
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4.2 )
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4.2 )
+ggsave( file.path( plot_dir, 'de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4.2 )
+ggsave( file.path( plot_dir, 'de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4.2 )
 
 
 # hierarchical clustering based on varcalls

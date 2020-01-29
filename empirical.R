@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-01-10
+# modified : 2020-01-28
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -41,7 +41,7 @@ df_caller <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
+    'Mutect2_multi_F'
   ),
   class = c(rep('marginal', 11), rep('two-step', 2), rep('joint', 3))
 )
@@ -289,7 +289,7 @@ df_uniq <- df_uniq %>% inner_join( df_total ) %>% mutate( r_unique = n_unique/n_
 p_uniq_calls <- ggplot( df_uniq ) + 
   geom_bar( aes(x = reorder(caller, -n_total), y = r_unique), stat = 'identity' ) +
   geom_text( aes(x = reorder(caller, -n_total), y = 0.75, label = n_total, color = (r_unique > 0.75)) ) +
-  labs( x = 'caller', y = 'unique/total calls' ) +
+  labs( x = 'caller', y = 'private/total calls' ) +
   guides( color = 'none' ) +
   coord_flip() +
   theme_minimal() +

@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-11-03
+# modified : 2020-01-29
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -376,8 +376,8 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
-ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
 
 
 
