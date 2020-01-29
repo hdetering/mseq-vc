@@ -80,7 +80,6 @@ p_jacc_em <- plot_jacc_idx( df_jacc_em )
 
 # hierarchical clustering based on varcalls
 #-------------------------------------------------------------------------------
-#require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 
 p_dendro_dn <- plot_dendrogram( df_jacc_dn )
@@ -108,3 +107,87 @@ png( file.path(plot_dir, paste0(fn_pfx, '.png')), width = 8, height = 4, units =
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
+
+
+
+# Jaccard indices for TP, FN and FP calls in simulated datasets
+#-------------------------------------------------------------------------------
+
+df_caller_dn  <- readRDS( file.path(data_dn, 'df_caller.rds') )
+df_var_dn <- readRDS( file.path(data_dn, 'df_vars.rds') )
+callerorder = c(
+  'Bcftools', 
+  'CaVEMan', 
+  'MuTect1', 
+  'Mutect2_single', 
+  'NeuSomatic', 
+  'Shimmer', 
+  'SNooPer', 
+  'SomaticSniper', 
+  'Strelka2', 
+  'VarDict', 
+  'VarScan', 
+  'MuClone',
+  'SNV-PPILP',
+  'HaplotypeCaller', 
+  'MultiSNV', 
+  'Mutect2_multi_F'
+)
+## true positives
+df_pres_tp_dn <- get_var_pres( df_var_dn, df_caller_dn, 'TP' )
+df_jacc_tp_dn <- Jaccard.df( df_pres_tp_dn %>% select(-id_mut)  %>% select(callerorder))
+
+## false negatives
+df_pres_fn_dn <- get_var_pres( df_var_dn, df_caller_dn, 'FN' )
+df_jacc_fn_dn <- Jaccard.df( df_pres_fn_dn %>% select(-id_mut)  %>% select(callerorder))
+
+## false positives
+df_pres_fp_dn <- get_var_pres( df_var_dn, df_caller_dn, 'FP' ) %>%
+  add_column( CaVEMan = 0, .after = 2 )
+df_jacc_fp_dn <- Jaccard.df( df_pres_fp_dn %>% select(-id_mut)  %>% select(callerorder))
+
+# spike-in
+#-------------------------------------------------------------------------------
+
+df_caller_si <- readRDS( file.path(data_si, 'RRSV.callers.rds') )
+df_var_si <- readRDS( file.path(data_si, 'df_vars.rds') )
+## true positives
+df_pres_tp_si <- get_var_pres( df_var_si, df_caller_si, 'TP' )
+df_jacc_tp_si <- Jaccard.df( df_pres_tp_si %>% select(-id_mut)  %>% select(callerorder))
+
+## false positives
+df_pres_fp_si <- get_var_pres( df_var_si, df_caller_si, 'FP' )
+df_jacc_fp_si <- Jaccard.df( df_pres_fp_si %>% select(-id_mut)  %>% select(callerorder))
+
+## false negatives
+df_pres_fn_si <- get_var_pres( df_var_si, df_caller_si, 'FN' )
+df_jacc_fn_si <- Jaccard.df( df_pres_fn_si %>% select(-id_mut) %>% select(callerorder))
+
+# generate plots
+#-------------------------------------------------------------------------------
+
+p_jacc_tp_dn <- plot_jacc_idx( df_jacc_tp_dn %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "TP", size = 6)
+p_jacc_fp_dn <- plot_jacc_idx( df_jacc_fp_dn %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "FP", size = 6)
+
+p_jacc_fn_dn <- plot_jacc_idx( df_jacc_fn_dn %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "FN", size = 6)
+p_jacc_tp_si <- plot_jacc_idx( df_jacc_tp_si %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "TP", size = 6)
+p_jacc_fn_si <- plot_jacc_idx( df_jacc_fn_si %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "FN", size = 6)
+p_jacc_fp_si <- plot_jacc_idx( df_jacc_fp_si %>% mutate(caller1 = factor(caller1, levels = callerorder), 
+                                                        caller2 = factor(caller2, levels = callerorder))) +  
+  annotate("text", x = "CaVEMan", y = "MultiSNV", label = "FP", size = 6)
+
+## multi-plot
+p_jacc <- plot_jacc_idx_joint( p_jacc_tp_dn, p_jacc_fn_dn, p_jacc_fp_dn,
+                               p_jacc_tp_si, p_jacc_fn_si, p_jacc_fp_si )
+ggsave( file.path( plot_dir, 'joint.jaccard.pdf'), plot = p_jacc, device = pdf(), width = 10.5, height = 8.2 )
+ggsave( file.path( plot_dir, 'joint.jaccard.png'), plot = p_jacc, device = png(), width = 10.5, height = 8.2 )

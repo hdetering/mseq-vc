@@ -16,7 +16,7 @@ plot_jacc_idx <- function( df ) {
     scale_fill_distiller( palette = "Spectral", limits = c(0, 1), name = 'Jaccard\nindex' ) +
     theme_bw() +
     theme( axis.title = element_blank(),
-           axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5) ,
+           axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1) ,
            plot.margin = margin(t = 20, l = 10))
   
   return( p_jacc )
@@ -43,6 +43,18 @@ plot_jacc_idx_multi <- function( p1, p2, p3 ) {
                             labels = "auto",
                             ncol = 3,
                             nrow = 1,
+                            common.legend = TRUE,
+                            legend = "bottom" )
+  return( p_jacc_multi )
+}
+
+# combine all plots into one
+plot_jacc_idx_joint <- function( p1, p2, p3, p4, p5, p6 ) {
+  
+  p_jacc_multi = ggarrange( p1, p2, p3, p4, p5, p6,
+                            labels = "auto",
+                            ncol = 3,
+                            nrow = 2,
                             common.legend = TRUE,
                             legend = "bottom" )
   return( p_jacc_multi )
