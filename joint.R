@@ -30,10 +30,8 @@ df_pres_si <- read.csv( file.path(data_si, 'spike-in.muts_callsets.csv') )
 df_pres_em <- read.csv( file.path(data_em, 'df_pres.csv') )
 # rename SNV-PPILP column (necessary if loaded from csv file)
 names(df_pres_dn)[names(df_pres_dn)=='SNV.PPILP'] <- 'SNV-PPILP'
-names(df_pres_dn)[names(df_pres_dn)=='Mutect2_multi'] <- 'Mutect2_multi_F'
 names(df_pres_si)[names(df_pres_si)=='SNV.PPILP'] <- 'SNV-PPILP'
 names(df_pres_em)[names(df_pres_em)=='SNV.PPILP'] <- 'SNV-PPILP'
-names(df_pres_em)[names(df_pres_em)=='Mutect2_multi'] <- 'Mutect2_multi_F'
 #common_cols <- Reduce( intersect, list(names(df_pres_dn), names(df_pres_si), names(df_pres_em)) )
 
 callers = c(
@@ -76,6 +74,43 @@ p_jacc_dn <- plot_jacc_idx( df_jacc_dn )
 p_jacc_si <- plot_jacc_idx( df_jacc_si )
 p_jacc_em <- plot_jacc_idx( df_jacc_em )
 
+# Jaccard index by empirical patient
+#-------------------------------------------------------------------------------
+df <- df_pres_em %>% inner_join(df_sample)
+df_jacc_em_patient <- df %>%
+  group_split( patient ) %>%
+  map_dfr( ~ {
+    Jaccard.df.lbl(.x %>% select(sort(callers)), .x$patient[1] ) 
+  })
+
+df_jacc_em_patient %>%
+  group_split( label ) %>%
+  map_dfr( ~ {
+    tibble( label = .x$label[1] ) %>%
+      bind_cols(tidy(cor.test(df_jacc_dn$jaccard_idx, .x$jaccard_idx))
+    )
+  })
+df_jacc_em_patient %>%
+  group_split( label ) %>%
+  map_dfr( ~ {
+    tibble( label = .x$label[1] ) %>%
+      bind_cols(tidy(cor.test(df_jacc_si$jaccard_idx, .x$jaccard_idx))
+      )
+  })
+
+require(ggcorrplot)
+df_jacc_em_wide <- df_jacc_em_patient %>%
+  pivot_wider( names_from = label, values_from = jaccard_idx )
+corr <- df_jacc_em_wide %>% select( -caller1, -caller2 ) %>% cor()
+ggcorrplot(corr, hc.order = TRUE, type = "lower",
+          outline.col = "white", lab = TRUE)
+
+# calculate correlation between Jaccard indices for simulated vs. empirical data
+#-------------------------------------------------------------------------------
+
+cor.test(df_jacc_dn$jaccard_idx, df_jacc_si$jaccard_idx)
+cor.test(df_jacc_dn$jaccard_idx, df_jacc_em$jaccard_idx)
+cor.test(df_jacc_si$jaccard_idx, df_jacc_em$jaccard_idx)
 
 
 # hierarchical clustering based on varcalls
@@ -189,5 +224,5 @@ p_jacc_fp_si <- plot_jacc_idx( df_jacc_fp_si %>% mutate(caller1 = factor(caller1
 ## multi-plot
 p_jacc <- plot_jacc_idx_joint( p_jacc_tp_dn, p_jacc_fn_dn, p_jacc_fp_dn,
                                p_jacc_tp_si, p_jacc_fn_si, p_jacc_fp_si )
-ggsave( file.path( plot_dir, 'joint.jaccard.pdf'), plot = p_jacc, device = pdf(), width = 10.5, height = 8.2 )
-ggsave( file.path( plot_dir, 'joint.jaccard.png'), plot = p_jacc, device = png(), width = 10.5, height = 8.2 )
+ggsave( file.path( plot_dir, 'FigS10.joint.jaccard.pdf'), plot = p_jacc, device = pdf(), width = 10.5, height = 8.2 )
+ggsave( file.path( plot_dir, 'FigS10.joint.jaccard.png'), plot = p_jacc, device = png(), width = 10.5, height = 8.2 )
