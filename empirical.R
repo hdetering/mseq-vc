@@ -50,6 +50,7 @@ df_caller <- tibble(
 # ------------------------------------------------------------------------------
 
 df_sample <- read.csv( file.path(data_dir, 'df_samples.csv') )
+
 df_vars <- read.csv( file.path(data_dir, 'df_vars.csv') )
 df_pres <- read.csv( file.path(data_dir, 'df_pres.csv') )
 # rename SNV-PPILP column (necessary if loaded from file)
