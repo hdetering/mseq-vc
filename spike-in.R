@@ -20,10 +20,15 @@ require(grid)
 
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
+# source( file.path('analysis', 'tumor-wise.analysis.R') )
+source("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/05_SCRIPTS/new_version_paper_20200514/tumor-wise.analysis.R")
+source( file.path('analysis', 'ITH.analysis.R') )
 source( file.path('analysis', 'admixture.analysis.R') )
 source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('analysis', 'upset.analysis.R') )
 source( file.path('plotting', 'performance.plotting.R') )
+source( file.path('plotting', 'tumor-wise.plotting.R') )
+source( file.path('plotting', 'ITH.plotting.R') )
 source( file.path('plotting', 'rc_alt.plotting.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
 source( file.path('plotting', 'upset.plotting.R') )
@@ -148,6 +153,7 @@ cor.test( df$F1, df$precision )
 
 # enumerate all possible pairs of callers
 df_caller_pairs <- df_caller  %>% 
+  mutate(name_caller = as.character(name_caller)) %>%
   dplyr::filter( !(name_caller %in% c('MuTect1', 'Mutect2_single')) ) %>%
   select( id_caller, name_caller ) %>%
   map_df( function(x) { combn(x, 2, paste, collapse = '_') } )
@@ -408,6 +414,12 @@ png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
 plot_upset( df, n )
 dev.off()
 
+# plot variant calls intersections (agnostic to truth)
+
+df <- df_pres %>% select(-c(TRUE_somatic, TRUE_germline))
+n <- lbl_callers
+plot_upset( df, n )  
+  
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
@@ -458,3 +470,25 @@ par( mar = c(2, 1, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
 
+
+# calculate tumor-wise performance
+#-------------------------------------------------------------------------------
+
+df_vars_tw <- classify_variants_tumorwise( df_varcall, df_mut, df_caller )
+df_vars_tw <- df_vars %>% 
+  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
+  mutate( germline = (!is.na(id_mut)) ) %>%
+  select( id_caller, id_rep, chrom, pos, type, germline )
+
+
+df_perf_tw <- calculate_performance_tumorwise( df_vars_tw, df_caller, df_rep )
+
+# plot tumor-wise performance
+
+df_perf_agg <- df_perf_tw %>% 
+  group_by( name_caller ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
+p_perf <- plot_perf_rrsv( df_perf_tw )
+ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
