@@ -18,6 +18,7 @@ require(RColorBrewer)
 require(gridExtra)
 require(grid)
 require(broom) # tidy()
+require(rstatix) # wilcox_test()
 
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
@@ -137,6 +138,10 @@ p_perf <- plot_perf_min( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.png'), plot = p_perf, width = 12, height = 4)
 
+# plot F1 score histograms to check if scores are normally-distributed
+#df_perf %>% ggplot( aes(x = F1) ) + geom_histogram() + facet_wrap( ~name_caller, ncol = 1 )
+#ggsave( filename = 'de-novo.F1.hist.pdf', width = 4, height = 20 )
+
 # performance by coverage
 # ------------------------------------------------------------------------------
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
@@ -196,14 +201,42 @@ cor.test( df$F1, df$precision )
 
 # check for significant performance differences
 # ------------------------------------------------------------------------------
-
-# Kruskal-Wallis rank sum test
-kruskal.test(F1 ~ caller, data = df_perf)
+df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') ) %>%
+  dplyr::filter( !(caller %in% noshow) )
 
 p_perf_f1 <- plot_pairwise_wilcoxon( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
 
+# Global F1 scores (across conditions)
+#--------------------------------------
+# one-sided ANOVA (parametric)
+aov(F1 ~ caller, data = df_perf) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+kruskal.test(F1 ~ caller, data = df_perf)
+
+# F1 scores interaction with factors
+#------------------------------------
+# two-sided ANOVA (parametric)
+aov(F1 ~ caller * cvg, data = df_perf) %>% summary()
+aov(F1 ~ caller * ttype, data = df_perf) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+df_perf %>%
+  group_by( name_caller ) %>%
+  kruskal_test( F1 ~ cvg ) %>%
+  adjust_pvalue( method = 'BH' )
+df_perf %>%
+  group_by( name_caller ) %>%
+  kruskal_test( F1 ~ ttype ) %>%
+  adjust_pvalue( method = 'BH' )
+
+p_cvg_sig <- plot_perf_cvg_sig( df_perf, 'anova' )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.anova.pdf', device = 'pdf', width = 12, height = 10 )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.anova.png', device = 'png', width = 12, height = 10 )
+
+p_cvg_sig <- plot_perf_cvg_sig( df_perf, 'kruskal.test' )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.kruskal.pdf', device = 'pdf', width = 12, height = 10 )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.kruskal.png', device = 'png', width = 12, height = 10 )
 
 ################################################################################
 # Variant allele freqs for TP, FP, FN variants

@@ -81,3 +81,73 @@ calculate_performance_sample <- function (
   
   return( df_eval )
 }
+
+performance_kruskal_wallis <- function ( df_perf )
+{
+  require(rstatix) # wilcox_test()
+  
+  kruskwal <- df_perf %>%
+    group_by( name_caller ) %>%
+    kruskal_test( F1 ~ cvg ) %>%
+    adjust_pvalue( method = 'BH' )
+  # Pairwise comparisons between condition levels
+  # (this is overkill, though...)
+  # wilcox <- df %>%
+  #   group_by(lbl) %>%
+  #   wilcox_test(F1 ~ cvg) %>%
+  #   adjust_pvalue(method = 'BH') %>%
+  #   mutate(y.position = case_when(
+  #     (group1 == '30' & group2 == '50') ~ 1.02,
+  #     (group1 == '30' & group2 == '100') ~ 1.10,
+  #     (group1 == '30' & group2 == '300') ~ 1.18,
+  #     (group1 == '50' & group2 == '100') ~ 1.06,
+  #     (group1 == '50' & group2 == '300') ~ 1.14,
+  #     (group1 == '100' & group2 == '300') ~ 1.02,
+  #     TRUE ~ 1.35
+  #   ))
+  # 
+  # p_f_cvg <- ggboxplot(df, x = 'cvg', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
+  #   facet(facet.by = 'lbl', nrow = 1) +
+  #   rotate_x_text() +
+  #   #ylim(0.0, 1.16) +
+  #   stat_pvalue_manual(wilcox, label = 'p.adj.signif', tip.length = 0.01) # Add pairwise comparisons p-value
+  #     #font("xy.text", size = 12)
+  # ggsave(plot = p_f_cvg, filename = 'de-novo.f1.wilcox.pdf', width = 12, height = 9)
+  # ggsave(plot = p_f_cvg, filename = 'de-novo.f1.wilcox.png', width = 12, height = 9)
+  
+}
+
+performance_anova <- function ( df_perf )
+{
+  require(rstatix) # wilcox_test()
+  
+  kruskwal <- df_perf %>%
+    group_by( name_caller ) %>%
+    kruskal_test( F1 ~ cvg ) %>%
+    adjust_pvalue( method = 'BH' )
+  # Pairwise comparisons between condition levels
+  # (this is overkill, though...)
+  # wilcox <- df %>%
+  #   group_by(lbl) %>%
+  #   wilcox_test(F1 ~ cvg) %>%
+  #   adjust_pvalue(method = 'BH') %>%
+  #   mutate(y.position = case_when(
+  #     (group1 == '30' & group2 == '50') ~ 1.02,
+  #     (group1 == '30' & group2 == '100') ~ 1.10,
+  #     (group1 == '30' & group2 == '300') ~ 1.18,
+  #     (group1 == '50' & group2 == '100') ~ 1.06,
+  #     (group1 == '50' & group2 == '300') ~ 1.14,
+  #     (group1 == '100' & group2 == '300') ~ 1.02,
+  #     TRUE ~ 1.35
+  #   ))
+  # 
+  # p_f_cvg <- ggboxplot(df, x = 'cvg', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
+  #   facet(facet.by = 'lbl', nrow = 1) +
+  #   rotate_x_text() +
+  #   #ylim(0.0, 1.16) +
+  #   stat_pvalue_manual(wilcox, label = 'p.adj.signif', tip.length = 0.01) # Add pairwise comparisons p-value
+  #     #font("xy.text", size = 12)
+  # ggsave(plot = p_f_cvg, filename = 'de-novo.f1.wilcox.pdf', width = 12, height = 9)
+  # ggsave(plot = p_f_cvg, filename = 'de-novo.f1.wilcox.png', width = 12, height = 9)
+  
+}

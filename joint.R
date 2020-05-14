@@ -11,6 +11,7 @@
 
 require(tidyverse)
 require(ggpubr)
+require(rstatix)
 require(RColorBrewer)
 require(gridExtra)
 
@@ -21,6 +22,8 @@ plot_dir = 'plot/joint'
 
 source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
+
+source( file.path('plotting', 'performance.plotting.R') )
 
 # load variant call sets
 #-------------------------------------------------------------------------------
@@ -76,6 +79,7 @@ p_jacc_em <- plot_jacc_idx( df_jacc_em )
 
 # Jaccard index by empirical patient
 #-------------------------------------------------------------------------------
+df_sample <- read.csv( file.path(data_em, 'df_samples.csv') )
 df <- df_pres_em %>% inner_join(df_sample)
 df_jacc_em_patient <- df %>%
   group_split( patient ) %>%
@@ -102,6 +106,7 @@ require(ggcorrplot)
 df_jacc_em_wide <- df_jacc_em_patient %>%
   pivot_wider( names_from = label, values_from = jaccard_idx )
 corr <- df_jacc_em_wide %>% select( -caller1, -caller2 ) %>% cor()
+pmat <- df_jacc_em_wide %>% select( -caller1, -caller2 ) %>% cor_pmat()
 ggcorrplot(corr, hc.order = TRUE, type = "lower",
           outline.col = "white", lab = TRUE)
 
@@ -226,3 +231,102 @@ p_jacc <- plot_jacc_idx_joint( p_jacc_tp_dn, p_jacc_fn_dn, p_jacc_fp_dn,
                                p_jacc_tp_si, p_jacc_fn_si, p_jacc_fp_si )
 ggsave( file.path( plot_dir, 'FigS10.joint.jaccard.pdf'), plot = p_jacc, device = pdf(), width = 10.5, height = 8.2 )
 ggsave( file.path( plot_dir, 'FigS10.joint.jaccard.png'), plot = p_jacc, device = png(), width = 10.5, height = 8.2 )
+
+
+
+# PERFORMANCE SIGNIFICANCE TESTING
+#===============================================================================
+
+# de-novo sims
+#-------------------------------------------------------------------------------
+df_perf_dn <- readRDS( file.path(data_dn, 'df_perf.rds') ) %>%
+  dplyr::filter( caller %in% callers )  %>% 
+  mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
+
+# Global F1 scores (across conditions)
+#--------------------------------------
+# one-sided ANOVA (parametric)
+aov(F1 ~ caller, data = df_perf_dn) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+kruskal.test(F1 ~ caller, data = df_perf_dn)
+
+# F1 scores in relation to factors
+#----------------------------------
+# two-sided ANOVA (parametric)
+dn_anova_f1 <- df_perf_dn %>% group_by( caller ) %>%
+  anova_test( F1 ~ cvg * ttype ) %>%
+  adjust_pvalue( method = 'bonferroni' ) %>%
+  add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+# Kruskal-Wallis rank sum test (non-parametric)
+dn_kruskal_f1_cvg <- df_perf_dn %>% group_by( caller ) %>%
+  kruskal_test( F1 ~ cvg ) %>%
+  adjust_pvalue( method = 'bonferroni' ) %>%
+  add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  mutate( factor = 'cvg' )
+dn_kruskal_f1_ttype <- df_perf_dn %>% group_by( caller ) %>%
+  kruskal_test( F1 ~ ttype ) %>%
+  adjust_pvalue( method = 'bonferroni' ) %>%
+  add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  mutate( factor = 'ttype' )
+
+dn_signif <- dn_anova_f1 %>% 
+  dplyr::filter( Effect %in% c('cvg', 'ttype') ) %>%
+  select( caller, factor = Effect, p_anova = p.adj, sig_anova = sig_sym ) %>%
+  left_join( 
+    dn_kruskal_f1_cvg %>% 
+      bind_rows(dn_kruskal_f1_ttype) %>%
+      select( caller, factor, p_kruskal = p.adj, sig_kruskal = sig_sym), 
+    by = c('caller', 'factor') )
+
+p_cvg_dn <- plot_perf_cvg_sig( df_perf_dn, 'anova' )
+ggsave(plot = p_cvg_dn, filename = 'de-novo.perf-by-cvg.pdf', width = 12, height = 9)
+ggsave(plot = p_cvg_dn, filename = 'de-novo.perf-by-cvg.png', width = 12, height = 9)
+
+p_admix_dn <- plot_perf_admix_sig( df_perf_dn, 'anova' )
+ggsave(plot = p_admix_dn, filename = 'de-novo.perf-by-admix.pdf', width = 12, height = 9)
+ggsave(plot = p_admix_dn, filename = 'de-novo.perf-by-admix.png', width = 12, height = 9)
+
+
+# spike-in sims
+#-------------------------------------------------------------------------------
+df_perf_si <- readRDS( file.path(data_si, 'df_perf.rds') ) 
+
+# Global F1 scores (across conditions)
+#--------------------------------------
+# one-sided ANOVA (parametric)
+aov(F1 ~ caller, data = df_perf_si) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+kruskal.test(F1 ~ caller, data = df_perf_si)
+
+# F1 scores in relation to factors
+#----------------------------------
+# two-sided ANOVA (parametric)
+aov(F1 ~ caller * ttype, data = df_perf_si) %>% summary()
+
+si_anova_f1 <- df_perf_si %>% group_by( caller ) %>%
+  anova_test( F1 ~ ttype ) %>%
+  adjust_pvalue( method = 'bonferroni' ) %>%
+  add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+# Kruskal-Wallis rank sum test (non-parametric)
+si_kruskal_f1 <- df_perf_si %>% group_by( caller ) %>%
+  kruskal_test( F1 ~ ttype ) %>%
+  adjust_pvalue( method = 'bonferroni' ) %>%
+  add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  mutate( factor = 'ttype' )
+
+si_signif <- si_anova_f1 %>%
+  select( caller, factor = Effect, p_anova = p.adj, sig_anova = sig_sym ) %>%
+  left_join( 
+    si_kruskal_f1 %>%
+      select( caller, factor, p_kruskal = p.adj, sig_kruskal = sig_sym), 
+    by = c('caller', 'factor') )
+
+p_perf_si <- plot_perf_admix_sig( df_perf_si, 'anova' )
+ggsave(plot = p_perf_si, filename = 'spike-in.perf-by-admix.pdf', width = 12, height = 9)
+ggsave(plot = p_perf_si, filename = 'spike-in.perf-by-admix.png', width = 12, height = 9)
+
+# empirical data
+#-------------------------------------------------------------------------------
+
+# generate plots
+#-------------------------------------------------------------------------------

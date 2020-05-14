@@ -82,7 +82,7 @@ plot_perf_min <- function ( df )
 plot_perf_cvg <- function ( df )
 {
   # exclude these callers from plots
-  blacklist <- c( 'Strelka1' )
+  blacklist <- c( 'Strelka1', 'MuClone_perf' )
   
   # define order of variant callers (will affect plots)
   df$caller = factor(df$caller, levels = c(
@@ -163,6 +163,216 @@ plot_perf_cvg <- function ( df )
     common.legend = TRUE, 
     legend = "bottom"
   )
+  
+  return( p_perf )
+}
+
+# plot performance at different depth of coverage
+# test significance of difference between depth levels for each caller
+# params:
+#  df     - caller, recall, precision, F1, cvg
+#  method - one of 'anova', 'kruskal'
+plot_perf_cvg_sig <- function ( df, method )
+{
+  # exclude these callers from plots
+  blacklist <- c( 'Strelka1', 'MuClone_perf' )
+  
+  # remove data for some callers (older versions of certain methods)
+  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
+  
+  # define order of variant callers (will affect plots)
+  df$caller = factor(df$caller, levels = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper',
+    'Strelka2', 
+    'VarDict', 
+    'VarScan',
+    'MuClone',
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F'))
+  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
+  
+  # format caller names for better plotting
+  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
+  df <- df %>% 
+    mutate(lbl = fct_recode(caller, 
+                            'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
+                            'Mutect2\nsingle' = 'Mutect2_single',
+                            'Neu\nSomatic' = 'NeuSomatic',
+                            'Somatic\nSniper' = 'SomaticSniper',
+                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # significance levels
+  sig_cutpoints = c(0, 1e-04, 0.001, 0.01, 0.05, 1)
+  sig_symbols = c("****","***", "**", "*", "ns")
+  sig_legend = sprintf('Group-wise comparison of means by factor; method: "%s"; p.adjust: "bonferroni"\n(%s)', method, paste(sprintf('%s: p<%s', sig_symbols, sig_cutpoints[-1]), collapse = ', '))
+  sig_legend = sprintf('Group-wise comparison of means by factor\nmethod: "A: ANOVA, K: Kruskal-Wallis"; p.adjust: "bonferroni"\n(%s)', paste(sprintf('%s: p<%s', sig_symbols, sig_cutpoints[-1]), collapse = ', '))
+  
+  # subplots for grid layout
+  p_r_cvg <- ggboxplot(df, x = 'cvg', y = 'recall', fill = 'class', yticks.by = 0.25) +
+    #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
+    facet_wrap( ~lbl, nrow = 1) +
+    rotate_x_text()
+    #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05)
+  
+  p_p_cvg <- ggboxplot(df, x = 'cvg', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
+    facet(facet.by = 'lbl', nrow = 1) +
+    rotate_x_text()
+    #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) )
+    #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05)
+
+    # group-wise comparison of differences in means
+  # gwc_f1 <- df %>% group_by( lbl ) %>%
+  # { if (method == 'anova' ) anova_test(., F1 ~ cvg) else . } %>%
+  # { if (method == 'kruskal' ) kruskal_test(., F1 ~ cvg) else . } %>%
+  #   adjust_pvalue( method = 'bonferroni' ) %>%
+  #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  gwc_f1_anova <- df %>% group_by( lbl ) %>%
+    anova_test( F1 ~ cvg) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  gwc_f1_kruskal <- df %>% group_by( lbl ) %>%
+    kruskal_test(., F1 ~ cvg) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  p_f_cvg <- ggboxplot(df, x = 'cvg', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
+    facet(facet.by = 'lbl', nrow = 1) +
+    labs(x = 'sequencing depth')  +
+    rotate_x_text() +
+    geom_text( data = gwc_f1_kruskal, aes(label = sprintf('K: %s', sig_sym), y = 1.05, x = 2.5) ) +
+    geom_text( data = gwc_f1_anova, aes(label = sprintf('A: %s', sig_sym), y = 1.15, x = 2.5) )
+    #geom_text( data = gwc_f1, aes(label = sig_sym, y = 1.05, x = 2.5) )
+    #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05) # Add pairwise comparisons p-value
+  #font("xy.text", size = 12)
+  #ggsave(plot = p_f_cvg, filename = 'de-novo.f1.kruskal-wallis.pdf', width = 12, height = 9)
+  #ggsave(plot = p_f_cvg, filename = 'de-novo.f1.kruskal-wallis.png', width = 12, height = 9)
+  
+  
+  # combine subplots
+  p_perf <- ggarrange(
+    p_r_cvg, p_p_cvg, p_f_cvg,
+    ncol = 1,
+    nrow = 3,
+    labels = "auto", 
+    common.legend = TRUE, 
+    legend = "bottom"
+  ) %>%
+  annotate_figure(
+    bottom = text_grob(sig_legend, hjust = 1, x = 1, face = "italic", size = 10))
+  
+  return( p_perf )
+}
+
+# plot performance at different depth of coverage
+# test significance of difference between depth levels for each caller
+# params:
+#  df     - caller, recall, precision, F1, cvg
+#  method - one of 'anova', 'kruskal'
+plot_perf_admix_sig <- function ( df, method )
+{
+  # define order of variant callers (will affect plots)
+  df$caller = factor(df$caller, levels = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper',
+    'Strelka2', 
+    'VarDict', 
+    'VarScan',
+    'MuClone',
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F'))
+  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
+  
+  # format caller names for better plotting
+  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
+  df <- df %>% 
+    mutate(lbl = fct_recode(caller, 
+                            'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
+                            'Mutect2\nsingle' = 'Mutect2_single',
+                            'Neu\nSomatic' = 'NeuSomatic',
+                            'Somatic\nSniper' = 'SomaticSniper',
+                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # significance levels
+  sig_cutpoints = c(0, 1e-04, 0.001, 0.01, 0.05, 1)
+  sig_symbols = c("****","***", "**", "*", "ns")
+  sig_legend = sprintf('Group-wise comparison of means by factor; method: "%s"; p.adjust: "bonferroni"\n(%s)', method, paste(sprintf('%s: p<%s', sig_symbols, sig_cutpoints[-1]), collapse = ', '))
+  sig_legend = sprintf('Group-wise comparison of means by factor\nmethod: "A: ANOVA, K: Kruskal-Wallis"; p.adjust: "bonferroni"\n(%s)', paste(sprintf('%s: p<%s', sig_symbols, sig_cutpoints[-1]), collapse = ', '))
+  
+  # subplots for grid layout
+  p_rec <- ggboxplot(df, x = 'ttype', y = 'recall', fill = 'class', yticks.by = 0.25) +
+    #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
+    facet_wrap( ~lbl, nrow = 1) +
+    rotate_x_text()
+  #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05)
+  
+  p_pre <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
+    facet(facet.by = 'lbl', nrow = 1) +
+    rotate_x_text()
+  #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) )
+  #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05)
+  
+  # group-wise comparison of differences in means
+  # gwc_f1 <- df %>% group_by( lbl ) %>%
+  # { if (method == 'anova' ) anova_test(., F1 ~ cvg) else . } %>%
+  # { if (method == 'kruskal' ) kruskal_test(., F1 ~ cvg) else . } %>%
+  #   adjust_pvalue( method = 'bonferroni' ) %>%
+  #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  gwc_f1_anova <- df %>% group_by( lbl ) %>%
+    anova_test( F1 ~ ttype) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  gwc_f1_kruskal <- df %>% group_by( lbl ) %>%
+    kruskal_test(., F1 ~ ttype) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
+  
+  p_f1 <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
+    facet(facet.by = 'lbl', nrow = 1) +
+    labs(x = 'admixture')  +
+    rotate_x_text() +
+    geom_text( data = gwc_f1_kruskal, aes(label = sprintf('K: %s', sig_sym), y = 1.05, x = 2.5) ) +
+    geom_text( data = gwc_f1_anova, aes(label = sprintf('A: %s', sig_sym), y = 1.15, x = 2.5) )
+  #geom_text( data = gwc_f1, aes(label = sig_sym, y = 1.05, x = 2.5) )
+  #stat_compare_means(label = '..p.signif..', method = method, label.y = 1.05) # Add pairwise comparisons p-value
+  #font("xy.text", size = 12)
+  #ggsave(plot = p_f_cvg, filename = 'de-novo.f1.kruskal-wallis.pdf', width = 12, height = 9)
+  #ggsave(plot = p_f_cvg, filename = 'de-novo.f1.kruskal-wallis.png', width = 12, height = 9)
+  
+  
+  # combine subplots
+  p_perf <- ggarrange(
+    p_rec, p_pre, p_f1,
+    ncol = 1,
+    nrow = 3,
+    labels = "auto", 
+    common.legend = TRUE, 
+    legend = "bottom"
+  ) %>%
+    annotate_figure(
+      bottom = text_grob(sig_legend, hjust = 1, x = 1, face = "italic", size = 10))
   
   return( p_perf )
 }
@@ -725,8 +935,8 @@ plot_pairwise_wilcoxon <- function( df ) {
                              add = 'boxplot' ) +
     rotate_x_text( 45 )
   
-  # perform pairwise Wilcoxon rank sum test (Mann-Whitney test?)
-  pwt <- pairwise.wilcox.test( df$F1, df$caller, p.adjust.method = "BH" )
+  # perform Wilcoxon rank sum test (Mann-Whitney test)
+  pwt <- paired.wilcox.test( df$F1, df$caller, p.adjust.method = "BH" )
   df_pwt <- pwt$p.value %>% 
     as_tibble( rownames = 'id1' ) %>% 
     gather( id2, p.adj, -id1) %>% dplyr::filter(!is.na(p.adj) ) %>%
@@ -737,7 +947,8 @@ plot_pairwise_wilcoxon <- function( df ) {
   p_perf_f1_pwt <- ggplot( df_pwt, aes(x = id1, y = id2) ) + 
     geom_tile( aes(fill = significance), color = "white" ) +
     geom_text( aes(label = round(-log(p.adj))) ) +
-    ggtitle( 'b) Pairwise Wilcoxon rank sum test (values: -log(p.adj))' ) + 
+    ggtitle( 'b) Pairwise Wilcoxon rank sum test',
+             subtitle = 'values: -log(p.adj)') + 
     scale_fill_manual( values = c(rev(brewer.pal(4, 'Greens')), 'grey') ) +
     coord_flip() +
     theme_minimal() +
