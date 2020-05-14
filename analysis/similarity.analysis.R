@@ -50,6 +50,38 @@ Jaccard.df <- function (data) {
   return( df_jacc )
 }
 
+Jaccard.df.lbl <- function (data, id) {
+  lbl <- names( data )
+  df_jacc <- tibble(
+    label = character(),
+    caller1 = character(),
+    caller2 = character(),
+    jaccard_idx = numeric()
+  )
+  for ( r in 1:length(lbl) ) {
+    for ( c in 1:length(lbl) ) {
+      if ( c == r ) {
+        df_jacc <- df_jacc %>% add_row(
+          label = id,
+          caller1 = lbl[r], 
+          caller2 = lbl[c], 
+          jaccard_idx = 1.0
+        )
+      }
+      else if ( c > r ) {
+        jacc_idx <- Jaccard( data[, r], data[, c] )
+        df_jacc <- df_jacc %>% add_row(
+          label = id,
+          caller1 = lbl[r], 
+          caller2 = lbl[c],
+          jaccard_idx = jacc_idx
+        )
+      }
+    }
+  }
+  return( df_jacc )
+}
+
 # get presence / absence info for given variant type
 get_var_pres <- function( df_var, df_caller, var_type ) 
 {

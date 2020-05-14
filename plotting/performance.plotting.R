@@ -24,6 +24,9 @@ plot_perf_cvg <- function ( df )
     'Mutect2_multi_F',
     'SNooPerGermres',
     'SNooPerGermres.70'))
+
+
+
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
   # format caller names for better plotting

@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-11-03
+# modified : 2020-01-29
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -382,8 +382,8 @@ p_jacc_fn <- plot_jacc_idx( df_jacc_fn %>% mutate(caller1 = factor(caller1, leve
 
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
-ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
-ggsave( file.path( plot_dir, 'FigS15.spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'spike-in.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4 )
+ggsave( file.path( plot_dir, 'spike-in.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4 )
 
 
 
@@ -449,6 +449,10 @@ dev.off()
 require(ade4) # dist.binary()
 require(ggdendro) # ggdendrogram()
 
+df_pres <- read.csv( file.path(data_dir, 'spike-in.muts_callsets.csv') )
+# annoying, but necessary... only if loaded from file
+names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
+
 df_pres <- df_pres_tp %>% bind_rows( df_pres_fn ) %>% bind_rows( df_pres_fp )
 df_pres <- df_pres %>% select (
   Bcftools, CaVEMan, HaplotypeCaller, MuClone, MultiSNV, MuTect1, Mutect2_multi_F, Mutect2_single, NeuSomatic, 
@@ -460,7 +464,8 @@ df_jacc_idx <- df_jacc_idx %>% set_rownames( df_jacc_idx$caller2 ) %>% select( -
 d <- as.dist( 1-df_jacc_idx )
 hc <- hclust(d)
 
-fn_pfx <- 'FigS16.spike-in.hclust.dendro'
+fn_pfx <- 'spike-in.hclust.dendro.tp_fn_fp'
+fn_pfx <- 'spike-in.hclust.dendro.df_pres'
 pdf( file.path(plot_dir, paste0(fn_pfx, '.pdf')), width = 8, height = 4 )
 par( mar = c(2, 0, 0, 6) )
 plot(as.dendrogram(hc), horiz = TRUE)
