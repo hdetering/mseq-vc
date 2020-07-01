@@ -226,13 +226,13 @@ plot_perf_cvg_sig <- function ( df )
   
   # subplots for grid layout
   p_r_cvg <- ggboxplot(df, x = 'cvg', y = 'recall', fill = 'class', yticks.by = 0.25) +
-    #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
     facet_wrap( ~lbl, nrow = 1) +
     labs( x = 'sequencing depth' ) +
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(recall)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_p_cvg <- ggboxplot(df, x = 'cvg', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
@@ -242,6 +242,7 @@ plot_perf_cvg_sig <- function ( df )
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(precision)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_f_cvg <- ggboxplot(df, x = 'cvg', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
@@ -251,6 +252,7 @@ plot_perf_cvg_sig <- function ( df )
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(F1)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   # combine subplots
@@ -326,7 +328,7 @@ plot_perf_admix_sig <- function ( df )
     add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
   
   # subplots for grid layout
-  p_r_cvg <- ggboxplot(df, x = 'ttype', y = 'recall', fill = 'class', yticks.by = 0.25) +
+  p_r_mix <- ggboxplot(df, x = 'ttype', y = 'recall', fill = 'class', yticks.by = 0.25) +
     #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
     facet_wrap( ~lbl, nrow = 1) +
     labs( x = 'admixture' ) +
@@ -334,29 +336,32 @@ plot_perf_admix_sig <- function ( df )
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(recall)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
-  p_p_cvg <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
+  p_p_mix <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'admixture' ) +
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(precision)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
-  p_f_cvg <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
+  p_f_mix <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'admixture' ) +
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
+    geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(F1)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   # combine subplots
   p_perf <- ggarrange(
-    p_r_cvg, p_p_cvg, p_f_cvg,
+    p_r_mix, p_p_mix, p_f_mix,
     ncol = 1,
     nrow = 3,
     labels = "auto", 

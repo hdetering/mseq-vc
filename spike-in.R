@@ -54,31 +54,6 @@ df_varcall <- readRDS( file.path(data_dir, 'RRSV.varcalls.rds') ) %>%
 df_rc <- readRDS( file.path(data_dir, 'RRSV.readcounts.rds') )
 df_snp <- readRDS( file.path(data_dir, 'RRSV.snps.rds') ) 
 
-# define variant calling tools and their properties
-#-------------------------------------------------------------------------------
-# df_caller <- tibble(
-#   name_caller = c(
-#     'Bcftools', 
-#     'CaVEMan', 
-#     'MuTect1', 
-#     'Mutect2_single', 
-#     'NeuSomatic', 
-#     'Shimmer', 
-#     'SNooPer', 
-#     'SomaticSniper', 
-#     'Strelka1', 
-#     'Strelka2', 
-#     'VarDict', 
-#     'VarScan',
-#     'MuClone', 
-#     'SNV-PPILP',
-#     'HaplotypeCaller', 
-#     'MultiSNV', 
-#     'Mutect2_multi_F'
-#   ),
-#   class = c(rep('marginal', 12), rep('two-step', 2), rep('joint', 3))
-# )
-
 # determine status of variant calls
 #   TP: true positives
 #   FP: false positives
