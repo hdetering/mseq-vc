@@ -150,13 +150,9 @@ df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
   group_by( name_caller, cvg ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf <- plot_perf_cvg( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'FigS6.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'FigS6.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
-
-# p_perf <- plot_perf_cvg_aux( df_perf %>% dplyr::filter( name_caller %in% c('MuClone', 'MuClone_perf') ) ) 
-# ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.MuClone.pdf'), plot = p_perf, width = 8, height = 10)
-# ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.Muclone.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -168,7 +164,7 @@ df_perf_mix_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
 
 df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
-p_perf_tt <- plot_perf_admix( df )
+p_perf_tt <- plot_perf_admix_sig( df )
 ggsave( file.path( plot_dir, 'FigS7.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'FigS7.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
 
