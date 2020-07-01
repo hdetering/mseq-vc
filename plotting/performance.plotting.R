@@ -229,6 +229,7 @@ plot_perf_cvg_sig <- function ( df )
     #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
     facet_wrap( ~lbl, nrow = 1) +
     labs( x = 'sequencing depth' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
@@ -237,6 +238,7 @@ plot_perf_cvg_sig <- function ( df )
   p_p_cvg <- ggboxplot(df, x = 'cvg', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'sequencing depth' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
@@ -245,6 +247,7 @@ plot_perf_cvg_sig <- function ( df )
   p_f_cvg <- ggboxplot(df, x = 'cvg', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'sequencing depth' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
@@ -327,26 +330,29 @@ plot_perf_admix_sig <- function ( df )
     #geom_text( data = gwc_rec, aes(label = sig_sym, y = 1.05, x = 2) ) +
     facet_wrap( ~lbl, nrow = 1) +
     labs( x = 'admixture' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
-    geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
+    geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_p_cvg <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'admixture' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
-    geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
+    geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_f_cvg <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
     facet(facet.by = 'lbl', nrow = 1) +
     labs( x = 'admixture' ) +
+    theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(size = 6) ) +
-    geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
+    geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   # combine subplots
   p_perf <- ggarrange(

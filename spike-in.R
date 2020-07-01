@@ -20,7 +20,6 @@ require(grid)
 require(vcfR)
 require(reshape2)
 require(plyr)
-require(tidyr)
 
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
@@ -121,9 +120,9 @@ ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width =
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
-p_perf_admix <- plot_perf_admix( df )
-ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig5.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
+p_perf_admix <- plot_perf_admix_sig( df )
+ggsave( file.path( plot_dir, 'FigS20.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'FigS20.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
 # ------------------------------------------------------------------------------
