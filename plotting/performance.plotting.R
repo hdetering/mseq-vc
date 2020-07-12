@@ -231,7 +231,7 @@ plot_perf_cvg_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(recall)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
@@ -241,7 +241,7 @@ plot_perf_cvg_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(precision)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
@@ -251,7 +251,7 @@ plot_perf_cvg_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = median(F1)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
@@ -335,7 +335,7 @@ plot_perf_admix_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(recall)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
@@ -345,7 +345,7 @@ plot_perf_admix_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(precision)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
@@ -355,7 +355,7 @@ plot_perf_admix_sig <- function ( df )
     theme_minimal() +
     rotate_x_text() +
     font( 'xy.text', size = 8 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
+    theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     geom_point(data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = median(F1)) %>% arrange(desc(m)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y=m), fill = "gold", shape = 23) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
@@ -656,7 +656,7 @@ plot_pairwise_wilcoxon <- function( df ) {
     rotate_x_text( 45 )
   
   # perform Wilcoxon rank sum test (Mann-Whitney test)
-  pwt <- paired.wilcox.test( df$F1, df$caller, p.adjust.method = "BH" )
+  pwt <- pairwise.wilcox.test( df$F1, df$caller, p.adjust.method = "BH" )
   df_pwt <- pwt$p.value %>% 
     as_tibble( rownames = 'id1' ) %>% 
     gather( id2, p.adj, -id1) %>% dplyr::filter(!is.na(p.adj) ) %>%
@@ -677,10 +677,9 @@ plot_pairwise_wilcoxon <- function( df ) {
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
   
-  
   p <- grid.arrange(
     grobs = list(p_perf_f1_box, p_perf_f1_pwt), 
-    layout_matrix = rbind(c(1,2), c(1,2))
+    layout_matrix = rbind(c(1,1), c(1,1), c(2,2), c(2,2), c(2,2))
   )
   
   return( p )

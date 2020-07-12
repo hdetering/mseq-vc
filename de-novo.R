@@ -151,8 +151,13 @@ df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
 p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path( plot_dir, 'FigS6.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'FigS6.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.cvg.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.cvg.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -165,8 +170,13 @@ df_perf_mix_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
 df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix_sig( df )
-ggsave( file.path( plot_dir, 'FigS7.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'FigS7.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.admix.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
 # ------------------------------------------------------------------------------
@@ -201,8 +211,8 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') ) %>%
   dplyr::filter( !(caller %in% noshow) )
 
 p_perf_f1 <- plot_pairwise_wilcoxon( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
-ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 8, height = 10)
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 8, height = 10)
 
 # Global F1 scores (across conditions)
 #--------------------------------------

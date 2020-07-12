@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-01-29
+# modified : 2020-07-12
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -96,8 +96,13 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix_sig( df )
-ggsave( file.path( plot_dir, 'FigS20.spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'FigS20.spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+  file.path(plot_dir, 'spike-in.performance.admix.pdf'),
+  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
+#ggsave( file.path( plot_dir, 'spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
 # ------------------------------------------------------------------------------
