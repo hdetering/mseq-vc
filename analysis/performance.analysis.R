@@ -107,7 +107,7 @@ calculate_performance_sample <- function (
 {
   df_eval <- df_vars %>% select( id_caller, id_rep, id_sample, type ) %>%
     group_by( id_caller, id_rep, id_sample, type ) %>%
-    summarise( n = n() ) %>%
+    dplyr::summarise( n = n() ) %>%
     ungroup() %>%
     complete( id_caller, id_rep, id_sample, type, fill = list(n = 0) ) %>%
     spread( type, n ) %>%
@@ -142,11 +142,12 @@ calculate_performance_freq <- function (
                                 af >= 0.2 & af < 0.3 ~ "[0.2-0.3)",
                                 af >= 0.3 & af < 0.4 ~ "[0.3-0.4)",
                                 af >= 0.4 & af < 0.5 ~ "[0.4-0.5)",
-                                af >= 0.5 & af < 0.6 ~ "[0.5-0.6)",
-                                af >= 0.6 & af < 0.7 ~ "[0.6-0.7)",
-                                af >= 0.7 & af < 0.8 ~ "[0.7-0.8)",
-                                af >= 0.8 & af < 0.9 ~ "[0.8-0.9)",
-                                af >= 0.9 ~ "[0.9-1]",)) %>%
+                                af >= 0.5  ~ "[0.5-1]")) %>%
+                                # af >= 0.5 & af < 0.6 ~ "[0.5-0.6)",
+                                # af >= 0.6 & af < 0.7 ~ "[0.6-0.7)",
+                                # af >= 0.7 & af < 0.8 ~ "[0.7-0.8)",
+                                # af >= 0.8 & af < 0.9 ~ "[0.8-0.9)",
+                                # af >= 0.9 ~ "[0.9-1]",)) %>%
     dplyr::filter(!is.na(freq_bin))
     
   df_eval <- df_vars_freqbinned %>% select( id_caller, id_rep, id_sample, type, freq_bin ) %>%
