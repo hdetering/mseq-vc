@@ -123,6 +123,50 @@ calculate_performance_sample <- function (
   return( df_eval )
 }
 
+calculate_performance_freq <- function (
+  df_vars, 
+  df_caller, 
+  df_rep,
+  df_rc
+)
+{
+  
+  df_vars_freqbinned = df_vars %>% 
+    left_join(df_rc, by = c("id_rep", "id_sample", "chrom", "pos")) %>%
+    mutate() %>%
+    mutate(af = if_else(rc_ref +rc_alt > 0, 
+                        rc_alt/(rc_alt+rc_ref), 
+                        0)) %>%
+    mutate(freq_bin = case_when(af >= 0 & af < 0.1 ~ "[0-0.1)",
+                                af >= 0.1 & af < 0.2 ~ "[0.1-0.2)",
+                                af >= 0.2 & af < 0.3 ~ "[0.2-0.3)",
+                                af >= 0.3 & af < 0.4 ~ "[0.3-0.4)",
+                                af >= 0.4 & af < 0.5 ~ "[0.4-0.5)",
+                                af >= 0.5 & af < 0.6 ~ "[0.5-0.6)",
+                                af >= 0.6 & af < 0.7 ~ "[0.6-0.7)",
+                                af >= 0.7 & af < 0.8 ~ "[0.7-0.8)",
+                                af >= 0.8 & af < 0.9 ~ "[0.8-0.9)",
+                                af >= 0.9 ~ "[0.9-1]",)) %>%
+    dplyr::filter(!is.na(freq_bin))
+    
+  df_eval <- df_vars_freqbinned %>% select( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    group_by( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    dplyr::summarise( n = n() ) %>%
+    ungroup() %>%
+    complete( id_caller, id_rep, id_sample, type, freq_bin, fill = list(n = 0) ) %>%
+    spread( type, n ) %>%
+    mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
+    mutate( F1 = 2*recall*precision/(recall+precision) )
+  # add caller information
+  df_eval <- df_eval %>%
+    inner_join( df_caller, by = c('id_caller') ) %>%
+    inner_join( df_rep, by = c('id_rep') ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
+    mutate( caller = name_caller )
+  
+  return( df_eval )
+}
+
 performance_kruskal_wallis <- function ( df_perf )
 {
   require(rstatix) # wilcox_test()
