@@ -34,7 +34,48 @@ classify_variants <- function (
   return( df_vars )
 }
 
-calculate_performance <- function (
+classify_variants_pertumor <- function ( 
+  df_varcall, 
+  df_mut, 
+  df_mut_sample,
+  df_caller
+)
+{
+  # Alternative way to produce df_vars 
+  # df_vars = df_mut_sample %>%   
+  #   left_join(df_mut, by = c("id_rep", "id_mut")) %>%
+  #   filter(is_present) %>%
+  #   crossing(df_caller) %>%
+  #   full_join(df_varcall %>% mutate(is_called = TRUE), by = c("id_rep", "id_sample", "chrom", "pos", "id_caller")) %>%
+  #   replace_na(list(is_present = FALSE, is_called = FALSE)) %>%
+  #   mutate(type = case_when(is_present & is_called ~ "TP",
+  #                           is_present & !is_called ~ "FN",
+  #                           !is_present & is_called ~ "FP")) %>%
+  #   select("id_caller", "id_rep", "id_sample", "chrom", "pos", "type")
+  
+  
+df_vars_tumor = df_mut_sample %>% 
+    left_join(df_mut, by = c("id_rep", "id_mut")) %>%
+    dplyr::filter(is_present) %>%  
+      select(-c(id_sample, vaf_exp, ref, alt)) %>%  # Mutation appears once per tumor
+      unique()%>%          
+    crossing(df_caller) %>%
+    full_join(df_varcall %>% # Call appears one per tumor and caller
+                mutate(is_called = TRUE) %>%
+                select(-c(id_sample)) %>%
+                unique() , 
+              by = c("id_rep", "chrom", "pos", "id_caller")) %>%
+    replace_na(list(is_present = FALSE, is_called = FALSE)) %>%
+    mutate(type = case_when(is_present & is_called ~ "TP",
+                            is_present & !is_called ~ "FN",
+                            !is_present & is_called ~ "FP")) %>%
+    select("id_caller", "id_rep", "chrom", "pos", "type")
+  
+  
+  return( df_vars_tumor )
+}
+
+calculate_performance_tumor <- function (
   df_vars, 
   df_caller, 
   df_rep
@@ -42,7 +83,7 @@ calculate_performance <- function (
 {
   df_eval <- df_vars %>% select( id_caller, id_rep, type ) %>%
     group_by( id_caller, id_rep, type ) %>%
-    summarise( n = n() ) %>%
+    dplyr::summarise( n = n() ) %>%
     ungroup() %>%
     complete( id_caller, id_rep, type, fill = list(n = 0) ) %>%
     spread( type, n ) %>%
