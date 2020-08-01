@@ -79,18 +79,22 @@ saveRDS( df_perf_freq, file.path(data_dir, 'df_perf_freq.rds') )
 df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 df_perf_freq <- readRDS( file.path(data_dir, 'df_perf_freq.rds') )
 # to look up median performance scores manually
-df_perf_agg <- df_perf %>% 
+df_perf_sample_agg <- df_perf_sample %>% 
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_sample <- plot_perf_min( df_perf )
-p_perf_freq <- plot_perf_freq( df_perf )
+df_perf_freq_agg <- df_perf_freq %>% 
+  group_by( name_caller ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
+p_perf_sample <- plot_perf_min( df_perf_sample )
+p_perf_freq <- plot_perf_freq( df_perf_freq )
 
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
-ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
 
 # p_perf <- plot_perf_rrsv( df_perf )
 # ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
@@ -105,7 +109,7 @@ df_vars_tumor <- classify_variants_pertumor( df_varcall, df_mut, df_mut_sample, 
 df_vars_tumor <- df_vars_tumor %>% 
   left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
   mutate( germline = (!is.na(id_mut)) ) %>%
-  select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
+  select( id_caller, id_rep, chrom, pos, type, germline )
 # store variant calls for later use
 saveRDS( df_vars_tumor, file.path(data_dir, 'df_vars_tumor.rds') )
 
@@ -117,17 +121,17 @@ df_perf_tumor <- calculate_performance_tumor( df_vars, df_caller, df_rep )
 # write summary stats to file
 saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf.rds') )
 
-# plot performance metrics
+# plot per-tumor performance metrics
 # ------------------------------------------------------------------------------
 df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
-df_perf_tumor_agg <- df_perf %>% 
+df_perf_tumor_agg <- df_perf_tumor %>% 
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
 p_perf_tumor <- plot_perf_min( df_perf_tumor )
-ggsave( file.path( plot_dir, 'spike-in.performance.tumor.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.tumor.png'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
 
 
 # performance by admixture regime
@@ -500,24 +504,3 @@ plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
 
 
-# calculate tumor-wise performance
-#-------------------------------------------------------------------------------
-
-df_vars_tw <- classify_variants_tumorwise( df_varcall, df_mut, df_caller )
-df_vars_tw <- df_vars %>% 
-  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
-  mutate( germline = (!is.na(id_mut)) ) %>%
-  select( id_caller, id_rep, chrom, pos, type, germline )
-
-
-df_perf_tw <- calculate_performance_tumorwise( df_vars_tw, df_caller, df_rep )
-
-# plot tumor-wise performance
-
-df_perf_agg <- df_perf_tw %>% 
-  group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
-
-p_perf <- plot_perf_rrsv( df_perf_tw )
-ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
