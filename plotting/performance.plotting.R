@@ -165,11 +165,15 @@ plot_perf_freq <- function ( df )
                             'Somatic\nSniper' = 'SomaticSniper',
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
+  # reorder callers by overall F1 score
+  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean) )
+  
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = freq_bin, y = recall, alpha = freq_bin) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mrec = mean(recall, na.rm = TRUE)) %>% dplyr::arrange(desc(mrec)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mrec==max(mrec)), aes(x = freq_bin, y = mrec), fill = "gold", shape = 23, alpha = 1) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6))+
@@ -178,7 +182,8 @@ plot_perf_freq <- function ( df )
   p_pre <- ggplot( df, aes(x = freq_bin, y = precision, alpha = freq_bin) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mpre = mean(precision, na.rm = TRUE)) %>% dplyr::arrange(desc(mpre)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mpre==max(mpre)), aes(x = freq_bin, y = mpre), fill = "gold", shape = 23, alpha = 1) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -187,7 +192,8 @@ plot_perf_freq <- function ( df )
   p_f1 <- ggplot( df, aes(x = freq_bin, y = F1, alpha = freq_bin) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mF1 = mean(F1, na.rm = TRUE)) %>% dplyr::arrange(desc(mF1)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mF1==max(mF1)), aes(x = freq_bin, y = mF1), fill = "gold", shape = 23, alpha = 1) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -236,8 +242,6 @@ plot_perf_cvg <- function ( df )
     'Mutect2_multi_F',
     'SNooPerGermres',
     'SNooPerGermres.70'))
-
-
 
   df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
   
