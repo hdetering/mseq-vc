@@ -56,7 +56,7 @@ classify_variants_pertumor <- function (
   
 df_vars_tumor = df_mut_sample %>% 
     left_join(df_mut, by = c("id_rep", "id_mut")) %>%
-    dplyr::filter(is_present) %>%  
+    dplyr::filter(as.logical(is_present)) %>%  
       select(-c(id_sample, vaf_exp, ref, alt)) %>%  # Mutation appears once per tumor
       unique()%>%          
     crossing(df_caller) %>%
