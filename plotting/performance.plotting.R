@@ -136,6 +136,7 @@ plot_perf_min_mean <- function ( df )
 plot_perf_freq <- function ( df )
 {
   # define order of variant callers (will affect plots)
+  df = df %>% filter(caller!= "MuClone_perf")
   df$caller = factor(df$caller, levels = c(
     'Bcftools', 
     'CaVEMan', 
