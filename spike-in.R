@@ -79,10 +79,15 @@ saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
 df_perf_agg <- df_perf %>% 
-  group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+  group_by( id_caller, name_caller ) %>% 
+  dplyr::summarise( 
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
 p_perf <- plot_perf_min( df_perf )
+ggsave( file.path( plot_dir, 'spike-in.performance.mean.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.mean.png'), plot = p_perf, width = 12, height = 4)
+
 ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
 
@@ -96,12 +101,19 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix_sig( df )
+ggsave( file.path( plot_dir, 'spike-in.performance.admix.mean.pdf'), plot = p_perf_admix, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+  file.path(plot_dir, 'spike-in.performance.admix.mean.pdf'),
+  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.mean.png')))
+
 ggsave( file.path( plot_dir, 'spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
 system(paste('convert -density 300',
-  file.path(plot_dir, 'spike-in.performance.admix.pdf'),
-  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
+             file.path(plot_dir, 'spike-in.performance.admix.pdf'),
+             '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
 #ggsave( file.path( plot_dir, 'spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
