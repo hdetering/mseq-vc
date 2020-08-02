@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-07-12
+# modified : 2020-08-02
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -86,7 +86,9 @@ df_perf_sample_agg <- df_perf_sample %>%
     avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 df_perf_freq_agg <- df_perf_freq %>%
   group_by( name_caller ) %>%
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+  dplyr::summarise(
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
 p_perf <- plot_perf_min( df_perf )
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)

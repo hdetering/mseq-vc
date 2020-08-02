@@ -124,16 +124,17 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df_perf_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller ) %>% 
   dplyr::summarise( 
-    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
-    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
+    med_rec = median(recall, na.rm = T),
+    med_pre = median(precision, na.rm = T),
+    med_F1  = median(F1, na.rm = T),
+    avg_rec = mean(recall, na.rm = T),
+    avg_pre = mean(precision, na.rm = T),
+    avg_F1  = mean(F1, na.rm = T))
 
 p_perf <- plot_perf_min( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 p_perf <- plot_perf_min_mean( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'de-novo.performance.mean.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.mean.png'), plot = p_perf, width = 12, height = 4)
-
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.png'), plot = p_perf, width = 12, height = 4)
 
 # plot F1 score histograms to check if scores are normally-distributed
 #df_perf %>% ggplot( aes(x = F1) ) + geom_histogram() + facet_wrap( ~name_caller, ncol = 1 )
@@ -145,7 +146,13 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
 df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller, cvg ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+  summarise( 
+    med_rec = median(recall, na.rm = T),
+    med_pre = median(precision, na.rm = T),
+    med_F1  = median(F1, na.rm = T),
+    avg_rec = mean(recall, na.rm = T),
+    avg_pre = mean(precision, na.rm = T),
+    avg_F1  = mean(F1, na.rm = T))
 
 p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'de-novo.performance.cvg.mean.pdf'), plot = p_perf, width = 8, height = 10)
