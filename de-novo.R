@@ -142,14 +142,14 @@ df_perf_freq_agg <- df_perf_freq %>%
 
 
 p_perf_sample <- plot_perf_min( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
-p_perf_sample <- plot_perf_min_mean( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf_sample_mean <- plot_perf_min_mean( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
 
-ggsave( file.path( plot_dir, 'de-novo.performance.mean.pdf'), plot = p_perf_sample, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'de-novo.performance.mean.png'), plot = p_perf_sample, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.pdf'), plot = p_perf_sample_mean, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.png'), plot = p_perf_sample_mean, width = 12, height = 4)
 
 
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.pdf'), plot = p_perf_sample, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.png'), plot = p_perf_sample, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
 p_perf_freq <- plot_perf_freq( df_perf_freq )
 
