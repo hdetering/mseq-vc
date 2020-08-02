@@ -26,9 +26,13 @@ plot_perf_min <- function ( df )
   p_rec <- ggplot( df, aes(x = caller, y = recall) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+<<<<<<< HEAD
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mrec = median(recall)) %>% dplyr::filter(mrec==max(mrec)), aes(x = caller, y = mrec), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+=======
+    geom_point( data = df %>% dplyr::group_by(caller) %>% dplyr::summarise(mrec = mean(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = caller, y = mrec), fill = "gold", shape = 23) + 
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
     labs( x = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -36,9 +40,13 @@ plot_perf_min <- function ( df )
   p_pre <- ggplot( df, aes(x = caller, y = precision) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+<<<<<<< HEAD
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mpre = median(precision)) %>% dplyr::filter(mpre==max(mpre)), aes(x = caller, y = mpre), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+=======
+    geom_point( data = df %>% dplyr::group_by(caller) %>% dplyr::summarise(mpre = mean(precision)) %>% arrange(desc(mpre)) %>% dplyr::filter(mpre==max(mpre)), aes(x = caller, y = mpre), fill = "gold", shape = 23) + 
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
     labs( x = 'caller' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -46,9 +54,13 @@ plot_perf_min <- function ( df )
   p_f1 <- ggplot( df, aes(x = caller, y = F1) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+<<<<<<< HEAD
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mF1 = median(F1)) %>% dplyr::filter(mF1==max(mF1)), aes(x = caller, y = mF1), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+=======
+    geom_point( data = df %>% dplyr::group_by(caller) %>% dplyr::summarise(mF1 = mean(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x = caller, y = mF1), fill = "gold", shape = 23) + 
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     theme(legend.position = 'right')
@@ -69,7 +81,11 @@ plot_perf_min <- function ( df )
   return( p_perf )
 }
 
+<<<<<<< HEAD
 plot_perf_min_mean <- function ( df )
+=======
+plot_perf_freq <- function ( df )
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
 {
   # define order of variant callers (will affect plots)
   df$caller = factor(df$caller, levels = c(
@@ -91,6 +107,7 @@ plot_perf_min_mean <- function ( df )
     'Mutect2_multi_F'))
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
+<<<<<<< HEAD
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = reorder(caller, -F1), y = recall) ) + 
     theme_minimal() +
@@ -123,6 +140,56 @@ plot_perf_min_mean <- function ( df )
     p_rec, p_pre, p_f1,
     ncol = 3,
     nrow = 1,
+=======
+  # format caller names for better plotting
+  df <- df %>% mutate( lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T) )
+  df <- df %>% 
+    mutate(lbl = fct_recode(caller, 
+                            'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
+                            'Mutect2\nsingle' = 'Mutect2_single',
+                            'Neu\nSomatic' = 'NeuSomatic',
+                            'Somatic\nSniper' = 'SomaticSniper',
+                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # subplots for grid layout
+  p_rec <- ggplot( df, aes(x = freq_bin, y = recall, alpha = freq_bin) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mrec = mean(recall, na.rm = TRUE)) %>% dplyr::arrange(desc(mrec)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mrec==max(mrec)), aes(x = freq_bin, y = mrec), fill = "gold", shape = 23, alpha = 1) +
+    labs( x = 'AF range')  +
+    facet_wrap(~lbl, nrow = 1)+
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6))+
+    guides( fill = 'none' , alpha = 'none')
+  
+  p_pre <- ggplot( df, aes(x = freq_bin, y = precision, alpha = freq_bin) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mpre = mean(precision, na.rm = TRUE)) %>% dplyr::arrange(desc(mpre)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mpre==max(mpre)), aes(x = freq_bin, y = mpre), fill = "gold", shape = 23, alpha = 1) +
+    labs( x = 'AF range')  +
+    facet_wrap(~lbl, nrow = 1)+
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
+    guides( fill = 'none', alpha = 'none' )
+  
+  p_f1 <- ggplot( df, aes(x = freq_bin, y = F1, alpha = freq_bin) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
+    geom_point( data = df %>% dplyr::group_by(lbl, freq_bin) %>% dplyr::summarise(mF1 = mean(F1, na.rm = TRUE)) %>% dplyr::arrange(desc(mF1)) %>% dplyr::group_by(freq_bin) %>%dplyr::filter(mF1==max(mF1)), aes(x = freq_bin, y = mF1), fill = "gold", shape = 23, alpha = 1) +
+    labs( x = 'AF range')  +
+    facet_wrap(~lbl, nrow = 1)+
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
+    guides(alpha = 'none')+
+    theme(legend.position = 'right')
+  
+  # theme( legend.position = 'bottom' ) +
+  # guides( colour = 'none' )+
+  # scale_fill_discrete(name="")
+  
+  p_perf <- ggarrange(
+    p_rec, p_pre, p_f1,
+    ncol = 1,
+    nrow = 3,
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
     labels = "auto" , 
     common.legend = TRUE, 
     legend = "top"
@@ -131,6 +198,10 @@ plot_perf_min_mean <- function ( df )
   return( p_perf )
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a08018286e42c1785414bf99e6d65d84572a950e
 plot_perf_cvg <- function ( df )
 {
   # exclude these callers from plots

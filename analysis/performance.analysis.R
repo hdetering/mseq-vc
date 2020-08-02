@@ -34,7 +34,48 @@ classify_variants <- function (
   return( df_vars )
 }
 
-calculate_performance <- function (
+classify_variants_pertumor <- function ( 
+  df_varcall, 
+  df_mut, 
+  df_mut_sample,
+  df_caller
+)
+{
+  # Alternative way to produce df_vars 
+  # df_vars = df_mut_sample %>%   
+  #   left_join(df_mut, by = c("id_rep", "id_mut")) %>%
+  #   filter(is_present) %>%
+  #   crossing(df_caller) %>%
+  #   full_join(df_varcall %>% mutate(is_called = TRUE), by = c("id_rep", "id_sample", "chrom", "pos", "id_caller")) %>%
+  #   replace_na(list(is_present = FALSE, is_called = FALSE)) %>%
+  #   mutate(type = case_when(is_present & is_called ~ "TP",
+  #                           is_present & !is_called ~ "FN",
+  #                           !is_present & is_called ~ "FP")) %>%
+  #   select("id_caller", "id_rep", "id_sample", "chrom", "pos", "type")
+  
+  
+df_vars_tumor = df_mut_sample %>% 
+    left_join(df_mut, by = c("id_rep", "id_mut")) %>%
+    dplyr::filter(is_present) %>%  
+      select(-c(id_sample, vaf_exp, ref, alt)) %>%  # Mutation appears once per tumor
+      unique()%>%          
+    crossing(df_caller) %>%
+    full_join(df_varcall %>% # Call appears one per tumor and caller
+                mutate(is_called = TRUE) %>%
+                select(-c(id_sample)) %>%
+                unique() , 
+              by = c("id_rep", "chrom", "pos", "id_caller")) %>%
+    replace_na(list(is_present = FALSE, is_called = FALSE)) %>%
+    mutate(type = case_when(is_present & is_called ~ "TP",
+                            is_present & !is_called ~ "FN",
+                            !is_present & is_called ~ "FP")) %>%
+    select("id_caller", "id_rep", "chrom", "pos", "type")
+  
+  
+  return( df_vars_tumor )
+}
+
+calculate_performance_tumor <- function (
   df_vars, 
   df_caller, 
   df_rep
@@ -42,7 +83,7 @@ calculate_performance <- function (
 {
   df_eval <- df_vars %>% select( id_caller, id_rep, type ) %>%
     group_by( id_caller, id_rep, type ) %>%
-    summarise( n = n() ) %>%
+    dplyr::summarise( n = n() ) %>%
     ungroup() %>%
     complete( id_caller, id_rep, type, fill = list(n = 0) ) %>%
     spread( type, n ) %>%
@@ -66,9 +107,54 @@ calculate_performance_sample <- function (
 {
   df_eval <- df_vars %>% select( id_caller, id_rep, id_sample, type ) %>%
     group_by( id_caller, id_rep, id_sample, type ) %>%
-    summarise( n = n() ) %>%
+    dplyr::summarise( n = n() ) %>%
     ungroup() %>%
     complete( id_caller, id_rep, id_sample, type, fill = list(n = 0) ) %>%
+    spread( type, n ) %>%
+    mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
+    mutate( F1 = 2*recall*precision/(recall+precision) )
+  # add caller information
+  df_eval <- df_eval %>%
+    inner_join( df_caller, by = c('id_caller') ) %>%
+    inner_join( df_rep, by = c('id_rep') ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
+    mutate( caller = name_caller )
+  
+  return( df_eval )
+}
+
+calculate_performance_freq <- function (
+  df_vars, 
+  df_caller, 
+  df_rep,
+  df_rc
+)
+{
+  
+  df_vars_freqbinned = df_vars %>% 
+    left_join(df_rc, by = c("id_rep", "id_sample", "chrom", "pos")) %>%
+    mutate() %>%
+    mutate(af = if_else(rc_ref +rc_alt > 0, 
+                        rc_alt/(rc_alt+rc_ref), 
+                        0)) %>%
+    mutate(freq_bin = case_when(af >= 0 & af < 0.1 ~ "[0-0.1)",
+                                af >= 0.1 & af < 0.2 ~ "[0.1-0.2)",
+                                af >= 0.2 & af < 0.3 ~ "[0.2-0.3)",
+                                af >= 0.3 & af < 0.4 ~ "[0.3-0.4)",
+                                af >= 0.4 & af < 0.5 ~ "[0.4-0.5)",
+                                af >= 0.5  ~ "[0.5-1]")) %>%
+                                # af >= 0.5 & af < 0.6 ~ "[0.5-0.6)",
+                                # af >= 0.6 & af < 0.7 ~ "[0.6-0.7)",
+                                # af >= 0.7 & af < 0.8 ~ "[0.7-0.8)",
+                                # af >= 0.8 & af < 0.9 ~ "[0.8-0.9)",
+                                # af >= 0.9 ~ "[0.9-1]",)) %>%
+    dplyr::filter(!is.na(freq_bin))
+    
+  df_eval <- df_vars_freqbinned %>% select( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    group_by( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    dplyr::summarise( n = n() ) %>%
+    ungroup() %>%
+    complete( id_caller, id_rep, id_sample, type, freq_bin, fill = list(n = 0) ) %>%
     spread( type, n ) %>%
     mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
     mutate( F1 = 2*recall*precision/(recall+precision) )
