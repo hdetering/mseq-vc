@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-01-29
+# modified : 2020-08-01
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -75,32 +75,23 @@ callers <- tibble(
     'MultiSNV', 
     'Mutect2_multi_F'
   ),
-  sh = c(
-    'Bt', 
-    'CM', 
-    'M1', 
-    'M2s', 
-    'Ns', 
-    'Sh', 
-    'SN', 
-    'SS',
-    'S2', 
-    'VD', 
-    'VS',
-    'MC', 
-    'MCp',
-    'SP',
-    'HC', 
-    'MS', 
-    'M2m'
-  ),
   class = c(rep('marginal', 11), rep('two-step', 3), rep('joint', 3))
 )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
-df_caller %>% saveRDS( file.path(data_dir, 'df_caller.rds') )
 # do not show these callers in main plots
 noshow <- c( 'MuClone_perf' )
+
+# store data frames on file system
+# df_caller %>% saveRDS( file.path(data_dir, 'df_caller.rds') )
+# df_rep %>% saveRDS( file.path(data_dir, 'df_rep.rds') )
+# df_mut %>% saveRDS( file.path(data_dir, 'df_mut.rds') )
+# df_mut_sample %>% saveRDS( file.path(data_dir, 'df_mut_sample.rds') )
+# df_mut_clone %>% saveRDS( file.path(data_dir, 'df_mut_clone.rds') )
+# df_prev %>% saveRDS( file.path(data_dir, 'df_prev.rds') )
+# df_varcall %>% saveRDS( file.path(data_dir, 'df_varcall.rds') )
+# df_rc %>% saveRDS( file.path(data_dir, 'df_rc.rds') )
+# df_snp %>% saveRDS( file.path(data_dir, 'df_snp.rds') )
 
 ################################################################################
 # Performance metrics (recall, precision, F1 score)
@@ -132,9 +123,15 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
 df_perf_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+  dplyr::summarise( 
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
 p_perf <- plot_perf_min( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf <- plot_perf_min_mean( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.mean.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.mean.png'), plot = p_perf, width = 12, height = 4)
+
 ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'Fig1.de-novo.performance.png'), plot = p_perf, width = 12, height = 4)
 
@@ -151,6 +148,13 @@ df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
 p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.cvg.mean.pdf'), plot = p_perf, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.cvg.mean.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.cvg.mean.png')))
+
 ggsave( file.path( plot_dir, 'de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
@@ -170,6 +174,15 @@ df_perf_mix_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
 df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix_sig( df )
+
+ggsave( file.path( plot_dir, 'de-novo.performance.admix.mean.pdf'), plot = p_perf_tt, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.admix.mean.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.mean.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+
 ggsave( file.path( plot_dir, 'de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)

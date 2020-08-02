@@ -80,19 +80,19 @@ df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 df_perf_freq <- readRDS( file.path(data_dir, 'df_perf_freq.rds') )
 # to look up median performance scores manually
 df_perf_sample_agg <- df_perf_sample %>% 
-  group_by( name_caller ) %>% 
+  group_by( id_caller, name_caller ) %>% 
+  dplyr::summarise( 
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
+df_perf_freq_agg <- df_perf_freq %>%
+  group_by( name_caller ) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-df_perf_freq_agg <- df_perf_freq %>% 
-  group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+p_perf <- plot_perf_min( df_perf )
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf, width = 12, height = 4)
 
-p_perf_sample <- plot_perf_min( df_perf_sample )
 p_perf_freq <- plot_perf_freq( df_perf_freq )
-
-ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
-
 ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
 ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
 
@@ -140,12 +140,19 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix_sig( df )
+ggsave( file.path( plot_dir, 'spike-in.performance.admix.mean.pdf'), plot = p_perf_admix, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+  file.path(plot_dir, 'spike-in.performance.admix.mean.pdf'),
+  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.mean.png')))
+
 ggsave( file.path( plot_dir, 'spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
 system(paste('convert -density 300',
-  file.path(plot_dir, 'spike-in.performance.admix.pdf'),
-  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
+             file.path(plot_dir, 'spike-in.performance.admix.pdf'),
+             '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
 #ggsave( file.path( plot_dir, 'spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
