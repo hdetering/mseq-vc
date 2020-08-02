@@ -3,6 +3,7 @@ require(rstatix)
 plot_perf_min <- function ( df )
 {
   # define order of variant callers (will affect plots)
+  df = df %>% filter(caller!= "MuClone_perf")
   df$caller = factor(df$caller, levels = c(
     'Bcftools', 
     'CaVEMan', 
