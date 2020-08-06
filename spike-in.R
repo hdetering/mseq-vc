@@ -90,7 +90,7 @@ df_perf_freq_agg <- df_perf_freq %>%
     med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
     avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
-p_perf <- plot_perf_min( df_perf )
+p_perf <- plot_perf_min_mean( df_perf_sample )
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf, width = 12, height = 4)
 

@@ -29,7 +29,7 @@ plot_perf_min <- function ( df )
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mrec = median(recall, na.rm = T)) %>% dplyr::filter(mrec==max(mrec, na.rm = T)), aes(x = caller, y = mrec), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -39,7 +39,7 @@ plot_perf_min <- function ( df )
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mpre = median(precision, na.rm = T)) %>% dplyr::filter(mpre==max(mpre, na.rm = T)), aes(x = caller, y = mpre), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = 'caller' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -49,7 +49,7 @@ plot_perf_min <- function ( df )
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mF1 = median(F1, na.rm = T)) %>% dplyr::filter(mF1==max(mF1, na.rm = T)), aes(x = caller, y = mF1), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     theme(legend.position = 'right')
@@ -97,7 +97,7 @@ plot_perf_min_mean <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -106,7 +106,7 @@ plot_perf_min_mean <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = 'caller' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -115,7 +115,7 @@ plot_perf_min_mean <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     theme( legend.position = 'right' )
@@ -175,7 +175,7 @@ plot_perf_freq <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6))+
@@ -185,7 +185,7 @@ plot_perf_freq <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -195,7 +195,7 @@ plot_perf_freq <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -379,7 +379,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_p_cvg <- ggplot( df, aes(x = factor(cvg), y = precision), yticks.by = 0.25) +
@@ -391,7 +391,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_f_cvg <- ggplot( df, aes(x = factor(cvg), y = F1), yticks.by = 0.25) +
@@ -403,7 +403,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   # combine subplots
@@ -491,7 +491,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_p_mix <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
@@ -502,7 +502,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_f_mix <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
@@ -513,7 +513,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m), na.rm = T), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   # combine subplots
