@@ -13,5 +13,8 @@ plot_upset_empirical <- function( df, lbl_sets ) {
         keep.order = FALSE, 
         order.by = 'freq',
         mb.ratio = c(0.5, 0.5),
-        number.angles = 320)
+        number.angles = 320,
+        #scale.sets = 'log10'
+        set_size.show = TRUE
+  )
 }

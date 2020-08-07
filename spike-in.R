@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-07-12
+# modified : 2020-08-02
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -25,15 +25,12 @@ require(tidyr)
 
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
-# source( file.path('analysis', 'tumor-wise.analysis.R') )
-source("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/05_SCRIPTS/new_version_paper_20200514/tumor-wise.analysis.R")
 source( file.path('analysis', 'ITH.analysis.R') )
 source( file.path('analysis', 'admixture.analysis.R') )
 source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('analysis', 'upset.analysis.R') )
 source( file.path('analysis', 'af.spike-in.analysis.R') )
 source( file.path('plotting', 'performance.plotting.R') )
-source( file.path('plotting', 'tumor-wise.plotting.R') )
 source( file.path('plotting', 'ITH.plotting.R') )
 source( file.path('plotting', 'rc_alt.plotting.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
@@ -56,7 +53,7 @@ df_varcall <- readRDS( file.path(data_dir, 'RRSV.varcalls.rds') ) %>%
 df_rc <- readRDS( file.path(data_dir, 'RRSV.readcounts.rds') )
 df_snp <- readRDS( file.path(data_dir, 'RRSV.snps.rds') ) 
 
-# determine status of variant calls
+# determine status of variant calls for the per-sample performance 
 #   TP: true positives
 #   FP: false positives
 #   FN: false negatives
@@ -69,28 +66,77 @@ df_vars <- df_vars %>%
 # store variant calls for later use
 saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 
-# calculate performance metrics
+# calculate per-sample performance metrics  (global and by AF bins)
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf <- calculate_performance_sample( df_vars, df_caller, df_rep )
-# write summary stats to file
-saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
 
+df_perf_sample <- calculate_performance_sample( df_vars, df_caller, df_rep )
+df_perf_freq <- calculate_performance_freq( df_vars, df_caller, df_rep, df_rc ) 
+
+# write summary stats to file
+saveRDS( df_perf_sample, file.path(data_dir, 'df_perf_sample.rds') )
+saveRDS( df_perf_freq, file.path(data_dir, 'df_perf_freq.rds') )
 # plot performance metrics
 # ------------------------------------------------------------------------------
-df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
+df_perf_freq <- readRDS( file.path(data_dir, 'df_perf_freq.rds') )
 # to look up median performance scores manually
-df_perf_agg <- df_perf %>% 
-  group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+df_perf_sample_agg <- df_perf_sample %>% 
+  group_by( id_caller, name_caller ) %>% 
+  dplyr::summarise( 
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
+df_perf_freq_agg <- df_perf_freq %>%
+  group_by( name_caller ) %>%
+  dplyr::summarise(
+    med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1),
+    avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
-p_perf <- plot_perf_min( df_perf )
-ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
+p_perf <- plot_perf_min_mean( df_perf_sample )
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf, width = 12, height = 4)
+
+p_perf_freq <- plot_perf_freq( df_perf_freq )
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
 
 # p_perf <- plot_perf_rrsv( df_perf )
 # ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
 # ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+
+# determine status of variant calls for the per-tumor performance 
+#   TP: true positives
+#   FP: false positives
+#   FN: false negatives
+#-------------------------------------------------------------------------------
+df_vars_tumor <- classify_variants_pertumor( df_varcall, df_mut, df_mut_sample, df_caller )
+df_vars_tumor <- df_vars_tumor %>% 
+  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
+  mutate( germline = (!is.na(id_mut)) ) %>%
+  select( id_caller, id_rep, chrom, pos, type, germline )
+# store variant calls for later use
+saveRDS( df_vars_tumor, file.path(data_dir, 'df_vars_tumor.rds') )
+
+# calculate per-tumor performance metrics
+# ------------------------------------------------------------------------------
+df_vars_tumor <- readRDS( file.path(data_dir, 'df_vars.rds') )
+df_perf_tumor <- calculate_performance_tumor( df_vars, df_caller, df_rep )
+
+# write summary stats to file
+saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf.rds') )
+
+# plot per-tumor performance metrics
+# ------------------------------------------------------------------------------
+df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf.rds') )
+# to look up median performance scores manually
+df_perf_tumor_agg <- df_perf_tumor %>% 
+  group_by( name_caller ) %>% 
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
+p_perf_tumor <- plot_perf_min( df_perf_tumor )
+ggsave( file.path( plot_dir, 'spike-in.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
+
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -98,12 +144,19 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 df <- df_perf %>% mutate( ttype = fct_recode(ttype, 'med'='medium') )
 df$ttype <- factor(df$ttype, levels = c('low', 'med', 'high') )
 p_perf_admix <- plot_perf_admix_sig( df )
+ggsave( file.path( plot_dir, 'spike-in.performance.admix.mean.pdf'), plot = p_perf_admix, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+  file.path(plot_dir, 'spike-in.performance.admix.mean.pdf'),
+  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.mean.png')))
+
 ggsave( file.path( plot_dir, 'spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
 system(paste('convert -density 300',
-  file.path(plot_dir, 'spike-in.performance.admix.pdf'),
-  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
+             file.path(plot_dir, 'spike-in.performance.admix.pdf'),
+             '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.png')))
 #ggsave( file.path( plot_dir, 'spike-in.performance.admix.png'), plot = p_perf_admix, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
@@ -462,24 +515,3 @@ plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
 
 
-# calculate tumor-wise performance
-#-------------------------------------------------------------------------------
-
-df_vars_tw <- classify_variants_tumorwise( df_varcall, df_mut, df_caller )
-df_vars_tw <- df_vars %>% 
-  left_join( df_snp, by = c( 'chrom', 'pos') ) %>% 
-  mutate( germline = (!is.na(id_mut)) ) %>%
-  select( id_caller, id_rep, chrom, pos, type, germline )
-
-
-df_perf_tw <- calculate_performance_tumorwise( df_vars_tw, df_caller, df_rep )
-
-# plot tumor-wise performance
-
-df_perf_agg <- df_perf_tw %>% 
-  group_by( name_caller ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
-
-p_perf <- plot_perf_rrsv( df_perf_tw )
-ggsave( file.path( plot_dir, 'spike-in.performance.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.png'), plot = p_perf, width = 12, height = 4)
