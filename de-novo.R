@@ -114,10 +114,8 @@ saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 
-
 df_perf_sample <- calculate_performance_sample( df_vars, df_caller, df_rep )
 df_perf_freq <- calculate_performance_freq( df_vars, df_caller, df_rep, df_rc ) 
-
 
 # write summary stats to file
 saveRDS( df_perf_sample, file.path(data_dir, 'df_perf_sample.rds') )
@@ -140,6 +138,18 @@ df_perf_sample_agg <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow
     avg_pre = mean(precision, na.rm = T),
     avg_F1  = mean(F1, na.rm = T))
 
+# DELETE ME!!
+x <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+  group_by( name_rep, name_caller ) %>% 
+  dplyr::summarise( 
+    med_rec = median(recall, na.rm = T),
+    med_pre = median(precision, na.rm = T),
+    med_F1  = median(F1, na.rm = T),
+    avg_rec = mean(recall, na.rm = T),
+    avg_pre = mean(precision, na.rm = T),
+    avg_F1  = mean(F1, na.rm = T))
+
+
 df_perf_freq_agg <- df_perf_freq %>%
   group_by( name_caller ) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
@@ -151,6 +161,8 @@ p_perf_sample_mean <- plot_perf_min_mean( df_perf_sample %>% dplyr::filter(!(nam
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.pdf'), plot = p_perf_sample_mean, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.png'), plot = p_perf_sample_mean, width = 12, height = 4)
 
+# I MUST BE DELETED!!! (just some mystery solving... nothing to see here... move along...)
+p <- plot_perf_tmp( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
 
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
@@ -179,21 +191,21 @@ saveRDS( df_vars_tumor, file.path(data_dir, 'df_vars_tumor.rds') )
 
 # calculate per-tumor performance metrics
 # ------------------------------------------------------------------------------
-df_vars_tumor <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf_tumor <- calculate_performance_tumor( df_vars, df_caller, df_rep )
+df_vars_tumor <- readRDS( file.path(data_dir, 'df_vars_tumor.rds') )
+df_perf_tumor <- calculate_performance_tumor( df_vars_tumor, df_caller, df_rep )
 
 # write summary stats to file
-saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf.rds') )
+saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf_tumor.rds') )
 
 # plot per-tumor performance metrics
 # ------------------------------------------------------------------------------
-df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf_tumor.rds') )
 # to look up median performance scores manually
 df_perf_tumor_agg <- df_perf_tumor %>% 
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_tumor <- plot_perf_min( df_perf_tumor )
+p_perf_tumor <- plot_perf_min_mean( df_perf_tumor %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
 
