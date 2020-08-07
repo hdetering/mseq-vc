@@ -22,7 +22,7 @@ plot_dir = 'plot/joint'
 
 source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
-
+source( file.path('plotting', 'afDistance.plotting.R') )
 source( file.path('plotting', 'performance.plotting.R') )
 
 # load variant call sets
