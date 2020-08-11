@@ -3,13 +3,20 @@ gdir_spikein="/Users/tama/Google Drive/PHYLOGENOMICS/M-seq Variant Calling Bench
 gdir_plots="/Users/tama/Google Drive/PHYLOGENOMICS/M-seq Variant Calling Benchmarking/Figures for the manuscript/PLOS_CompBiol/"
 
 ########
-# RRSV #
+# SRSV #
 ########
 
 AF_Results <- readRDS(paste(gdir_denovo,"df_AFdistances.rds",sep=""))
 CallersInfo <- readRDS(paste(gdir_denovo,"df_caller.rds",sep=""))
-AF_Results$type <- sapply(AF_Results$name_caller_pub, function(x) CallersInfo$`class.x`[match(x, CallersInfo$name_caller)])
-#AF_Results$name_caller_pub <- sub("_","\n",AF_Results$name_caller_pub)
+CallersInfo <- CallersInfo[which(CallersInfo$name_caller!="MuClone_perf"),]
+colnames(CallersInfo)[2] <- "name_caller_pub"
+
+
+AF_Results <- AF_Results %>%
+  left_join(CallersInfo, by = "name_caller_pub") %>%
+  select (name_caller_pub, Replicate, Distance, class.x) %>%
+  rename(type=class.x)
+
 AF_Results$name_caller_sorted <- with(AF_Results, reorder(name_caller_pub , Distance, mean , na.rm=T))
 # ('hs': highly structured/low admixture, 'ms': moderately structured, 'us': unstructured/high admixture)
 
@@ -28,7 +35,7 @@ AF_Results_SRSV <- AF_Results
 SRSV_plot <- ggplot(na.omit(AF_Results_SRSV)) +
   geom_boxplot(aes(name_caller_sorted, Distance, col=type, middle = mean(Distance))) +
   facet_grid(. ~ name_caller_sorted, scales = "free") +
-  labs(x="", y="Euclidean distance between\ncalled and simualted VAFs", title = "de novo") +
+  labs(x="", y="Euclidean distance between\nsimulated and estimated VAFs", title = "de novo") +
   scale_color_manual(values = mycols) +
   theme_minimal() +
   ylim(0,55) +
@@ -39,12 +46,16 @@ SRSV_plot <- ggplot(na.omit(AF_Results_SRSV)) +
         plot.title = element_text(hjust = 0.5))
 
 ########
-# SRSV #
+# RRSV #
 ########
 
 AF_Results <- readRDS(paste(gdir_spikein,"RRSV.AFdistances.rds",sep=""))
 CallersInfo <- readRDS(paste(gdir_spikein,"RRSV.callers.rds",sep=""))
-AF_Results$type <- sapply(AF_Results$name_caller, function(x) CallersInfo$class[match(x, CallersInfo$name_caller)])
+
+AF_Results <- AF_Results %>%
+  left_join(CallersInfo, by = "name_caller") %>%
+  select (name_caller, Replicate, Distance, class) %>%
+  rename(type=class)
 
 AF_Results$name_caller_sorted <- with(AF_Results, reorder(name_caller , Distance, mean , na.rm=T))
 AF_Results$type <- factor(AF_Results$type, levels = c("marginal","joint"))

@@ -2,6 +2,10 @@ data_dir="/Users/tama/Google\ Drive/PHYLOGENOMICS/M-seq Variant Calling Benchmar
 data_root="/Users/tama/Downloads/VAFs/"
 
 
+####################################
+#       Obtain reported VAFs      #
+####################################
+
 getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
       print(SOFTWARE)
       print(REPLICATE_ID)
@@ -221,27 +225,6 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
     return(output)
 }
 
-####################################
-# Obtain info about simulated data #
-####################################
-True_VAFs_muts<- readRDS(paste(data_dir,"RRSV.mutations_samples.rds",sep=""))
-mutations <- readRDS(paste(data_dir,"RRSV.mutations.rds",sep=""))
-Replicates_Info <- readRDS(paste(data_dir,"RRSV.replicates.rds",sep=""))
-True_VAFs_muts$chrom <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$chrom[match(x, mutations$id_mut)])
-True_VAFs_muts$pos <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$pos[match(x, mutations$id_mut)])
-True_VAFs_muts$ref <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$ref[match(x, mutations$id_mut)])
-True_VAFs_muts$alt <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$alt[match(x, mutations$id_mut)])
-# create a new column mutinfo with the four columns collapsed together
-cols <- c( 'chrom' , 'pos' , 'ref', 'alt' )
-True_VAFs_muts$mut_info <- apply( True_VAFs_muts[ , cols ] , 1 , paste , collapse = "_" )
-# create a new column mutinfo with the four columns collapsed together
-cols <- c( 'chrom' , 'pos')
-True_VAFs_muts$chrom_pos <- apply( True_VAFs_muts[ , cols ] , 1 , paste , collapse = "_" )
-
-
-#####################################
-# Prepare data to run main function #
-#####################################
 # Create a table with all the combinations of factors we want to get the distance of allele frequencies
 CallersInfo <- readRDS(paste(data_dir,"RRSV.callers.rds",sep=""))
 CallersInfo$name_caller
@@ -278,38 +261,58 @@ Strategy <- sub("\\..*","",caller_AFtags_repli_info$Replicate)
 AFs <- do.call("rbind", apply(caller_AFtags_repli_info, 1, function(x) getVAFs(SOFTWARE = x['name_caller'],TAG = x['AF_TAG'], REPLICATE_ID = x['Replicate'])))
 saveRDS(AFs, file = paste(data_dir,"RRSV.AFs.rds",sep=""))
 
+
+####################################
+#      Obtain simulated VAFs       #
+####################################
+
+True_VAFs_muts<- readRDS(paste(data_dir,"RRSV.mutations_samples.rds",sep=""))
+mutations <- readRDS(paste(data_dir,"RRSV.mutations.rds",sep=""))
+Replicates_Info <- readRDS(paste(data_dir,"RRSV.replicates.rds",sep=""))
+
+
+df_vaf_exp <- True_VAFs_muts %>%
+  inner_join( mutations, by = c('id_rep', 'id_mut') ) %>%
+  inner_join( Replicates_Info, by = c('id_rep') ) %>%
+  unite( 'chrom_pos', chrom, pos) %>%
+  mutate( vaf_exp = as.numeric(vaf_exp) ) %>%
+  select( name_rep, id_sample, chrom_pos, vaf_exp)
+
+
+
+#####################################
+# Merge reported and simulated VAFs #
+#####################################
+
+AFs <-readRDS(paste(data_dir,"RRSV.AFs.rds",sep=""))
+AFs$name_rep <- as.character( AFs$replicate )
+df_vaf_obs <- AFs %>% pivot_longer( cols = paste0('T', 1:5), names_to = 'id_sample', values_to = 'vaf' ) %>%
+  mutate( vaf_obs = as.numeric(vaf) ) %>%
+  select( -mut_info, -replicate, -vaf )
+
+df_vaf <- df_vaf_obs %>% 
+  dplyr::left_join( df_vaf_exp, by = c('name_rep', 'id_sample', 'chrom_pos') )
+
+
 getDistances <-  function(SOFTWARE, REPLICATE_ID){
   
-    print(SOFTWARE)
-    print(REPLICATE_ID)
-    freq_data <- AFs %>%
-      dplyr::filter(grepl(REPLICATE_ID,replicate)) %>%
-      dplyr::filter(grepl(SOFTWARE,software))
-    
-    emp_data<- reshape2::melt(freq_data, id.vars = c("mut_info","chrom_pos","software","replicate"))
-    colnames(emp_data) <- c("mut_info","chrom_pos","software","replicate","id_sample","AF")
-
-    # OBTAIN SIMULATED VAFS   
-    # Select only the Replicate correspondent with the empirical data
-    VcfEquivalentTruereplicate <-     Replicates_Info[which(Replicates_Info$name_rep==REPLICATE_ID),]
-    id_equiv <- as.character(VcfEquivalentTruereplicate["id_rep"])
-    True_VAFs_muts_equivalentreplicate <-     True_VAFs_muts[which(True_VAFs_muts$id_rep==id_equiv),]
-
-    #emp_data_small <- emp_data[,c("chrom_pos","id_sample","AF")]
-    emp_data_small <- emp_data[,c("chrom_pos","mut_info","id_sample","AF")]
-    
-    emp_data_small_noNA <- emp_data_small[!is.na(emp_data_small$AF),]
-    True_VAFs_muts_equivalentreplicate_small <-     True_VAFs_muts_equivalentreplicate[,c("vaf_exp","mut_info","chrom_pos", "id_sample")]
-    
-    True_VAFs_muts_selected <- join(emp_data_small_noNA, True_VAFs_muts_equivalentreplicate_small,     by = c("chrom_pos", "id_sample","mut_info"), type="left", match="first")
-    
-    # substitute NA values by zeros
-    True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_exp),"vaf_exp"] <- 0
-    True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$AF),]
-
-    matrixfordist <- rbind(as.numeric(True_VAFs_muts_selected$AF), as.numeric(True_VAFs_muts_selected$vaf_exp))
-    distance <- dist(matrixfordist, method = "euclidean") 
-    return(distance)
+  print (SOFTWARE)
+  print (REPLICATE_ID)
+  True_VAFs_muts_selected <- df_vaf %>%
+    dplyr::filter(grepl(REPLICATE_ID,name_rep)) %>%
+    dplyr::filter(grepl(SOFTWARE,software))
+  
+  ##############################################
+  # Substitute NAs by 0s at FPs and remove TNs #
+  ##############################################
+  True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_exp),"vaf_exp"] <- 0
+  True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$vaf_obs),]
+  
+  
+  matrixfordist <- rbind(True_VAFs_muts_selected$vaf_obs, True_VAFs_muts_selected$vaf_exp)
+  distance <- dist(matrixfordist, method = "euclidean") 
+  return(distance)
+  
 }
 
 
