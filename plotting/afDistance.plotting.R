@@ -32,8 +32,10 @@ mycols=c(cols[1],cols[3])
 AF_Results$type <- factor(AF_Results$type,levels=c("marginal","joint"))
 AF_Results_SRSV <- AF_Results
 
-SRSV_plot <- ggplot(na.omit(AF_Results_SRSV)) +
-  geom_boxplot(aes(name_caller_sorted, Distance, col=type, middle = mean(Distance))) +
+SRSV_plot <- ggplot(na.omit(AF_Results_SRSV),aes(name_caller_sorted, Distance)) +
+  geom_boxplot(aes(col=type)) +
+  stat_summary(fun=mean, geom="point", 
+               shape=22,fill="black") +
   facet_grid(. ~ name_caller_sorted, scales = "free") +
   labs(x="", y="Euclidean distance between\nsimulated and estimated VAFs", title = "de novo") +
   scale_color_manual(values = mycols) +
@@ -61,8 +63,10 @@ AF_Results$name_caller_sorted <- with(AF_Results, reorder(name_caller , Distance
 AF_Results$type <- factor(AF_Results$type, levels = c("marginal","joint"))
 AF_Results_RRSV <- AF_Results
 
-RRSV_plot <- ggplot(na.omit(AF_Results_RRSV)) +
-  geom_boxplot(aes(name_caller, Distance, col=type, middle = mean(Distance))) + # middle = mean(Distance) plots mean instead of median I think
+RRSV_plot <- ggplot(na.omit(AF_Results_RRSV),aes(name_caller, Distance,)) +
+  geom_boxplot(aes(col=type)) + 
+  stat_summary(fun=mean, geom="point", 
+               shape=22,fill="black") +
   facet_grid(. ~ name_caller_sorted, scales = "free") +
   labs(x="", y="",col="", title = "spike-in") +
   scale_color_manual(values = mycols) +

@@ -247,8 +247,8 @@ TAGS <-  c(
   "AF") # Mutect2_multi_F
 caller_AFtags <- cbind.data.frame(CallersInfo$name_caller, TAGS)
 colnames(caller_AFtags) <- c("name_caller", "AF_TAG")
+Replicates_Info <- readRDS(paste(data_dir,"RRSV.replicates.rds",sep=""))
 Replicates_row<- as.data.frame(t(Replicates_Info$name_rep))
-library(dplyr)
 replicates_rep <- Replicates_row %>% slice(rep(1:n(), each = nrow(caller_AFtags)))
 caller_AFtags_repli <- cbind.data.frame(caller_AFtags, replicates_rep)
 caller_AFtags_repli_info <- reshape2::melt(caller_AFtags_repli, id.vars=c("name_caller", "AF_TAG"))
@@ -268,13 +268,13 @@ saveRDS(AFs, file = paste(data_dir,"RRSV.AFs.rds",sep=""))
 
 True_VAFs_muts<- readRDS(paste(data_dir,"RRSV.mutations_samples.rds",sep=""))
 mutations <- readRDS(paste(data_dir,"RRSV.mutations.rds",sep=""))
-Replicates_Info <- readRDS(paste(data_dir,"RRSV.replicates.rds",sep=""))
+#Replicates_Info <- readRDS(paste(data_dir,"RRSV.replicates.rds",sep=""))
 
 
 df_vaf_exp <- True_VAFs_muts %>%
   inner_join( mutations, by = c('id_rep', 'id_mut') ) %>%
   inner_join( Replicates_Info, by = c('id_rep') ) %>%
-  unite( 'chrom_pos', chrom, pos) %>%
+  tidyr::unite( 'chrom_pos', chrom, pos) %>%
   mutate( vaf_exp = as.numeric(vaf_exp) ) %>%
   select( name_rep, id_sample, chrom_pos, vaf_exp)
 
@@ -286,12 +286,12 @@ df_vaf_exp <- True_VAFs_muts %>%
 
 AFs <-readRDS(paste(data_dir,"RRSV.AFs.rds",sep=""))
 AFs$name_rep <- as.character( AFs$replicate )
-df_vaf_obs <- AFs %>% pivot_longer( cols = paste0('T', 1:5), names_to = 'id_sample', values_to = 'vaf' ) %>%
+df_vaf_obs <- AFs %>% tidyr::pivot_longer( cols = paste0('T', 1:5), names_to = 'id_sample', values_to = 'vaf' ) %>%
   mutate( vaf_obs = as.numeric(vaf) ) %>%
   select( -mut_info, -replicate, -vaf )
 
 df_vaf <- df_vaf_obs %>% 
-  dplyr::left_join( df_vaf_exp, by = c('name_rep', 'id_sample', 'chrom_pos') )
+  dplyr::full_join( df_vaf_exp, by = c('name_rep', 'id_sample', 'chrom_pos') )
 
 
 getDistances <-  function(SOFTWARE, REPLICATE_ID){
@@ -302,11 +302,14 @@ getDistances <-  function(SOFTWARE, REPLICATE_ID){
     dplyr::filter(grepl(REPLICATE_ID,name_rep)) %>%
     dplyr::filter(grepl(SOFTWARE,software))
   
-  ##############################################
-  # Substitute NAs by 0s at FPs and remove TNs #
-  ##############################################
+  #######################################################################
+  # Substitute simulated NAs by 0s at FPs and observed NAs by 0s at TNs #
+  #######################################################################
   True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_exp),"vaf_exp"] <- 0
-  True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$vaf_obs),]
+  # Line to remove TNs
+  #True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$vaf_obs),]
+  # At the end we decided to keep TNs
+  True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_obs),"vaf_obs"] <- 0
   
   
   matrixfordist <- rbind(True_VAFs_muts_selected$vaf_obs, True_VAFs_muts_selected$vaf_exp)

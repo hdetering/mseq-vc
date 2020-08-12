@@ -223,8 +223,8 @@ TAGS <-  c(
 
 caller_AFtags <- cbind.data.frame(name_caller_pub, TAGS)
 colnames(caller_AFtags) <- c("name_caller_pub","AF_TAG")
+Replicates_Info <- readRDS(paste(data_dir,"df_rep.rds",sep=""))
 Replicates_row<- as.data.frame(t(Replicates_Info$name_rep))
-library(dplyr)
 replicates_rep <- Replicates_row %>% slice(rep(1:n(), each = nrow(caller_AFtags)))
 caller_AFtags_repli <- cbind.data.frame(caller_AFtags, replicates_rep)
 caller_AFtags_repli_info <- reshape2::melt(caller_AFtags_repli, id.vars=c("name_caller_pub", "AF_TAG"))
@@ -232,8 +232,6 @@ caller_AFtags_repli_info <- caller_AFtags_repli_info[,-3]
 colnames(caller_AFtags_repli_info) <- c("name_caller_pub","AF_TAG", "Replicate")
 Strategy <- sapply(caller_AFtags_repli_info$Replicate, function(x)  Replicates_Info$ttype[match(x, Replicates_Info$name_rep)])
 
-
-getVAFs(SOFTWARE = as.character(caller_AFtags_repli_info$name_caller_pub[2]),  TAG = as.character(caller_AFtags_repli_info$AF_TAG[2]), REPLICATE = as.character(caller_AFtags_repli_info$Replicate[2]))
 
 AFs <- do.call("rbind", apply(caller_AFtags_repli_info, 1, function(x) getVAFs(SOFTWARE = x['name_caller_pub'],TAG = x['AF_TAG'], REPLICATE_ID = x['Replicate'])))
 saveRDS(AFs, file = paste(data_dir,"SRSV.AFs.rds",sep=""))
@@ -244,14 +242,14 @@ saveRDS(AFs, file = paste(data_dir,"SRSV.AFs.rds",sep=""))
 
 True_VAFs_muts <- readRDS(paste(data_dir,"df_mut_sample.rds",sep=""))
 mutations <- readRDS(paste(data_dir,"df_mut.rds",sep=""))
-Replicates_Info <- readRDS(paste(data_dir,"df_rep.rds",sep=""))
+#Replicates_Info <- readRDS(paste(data_dir,"df_rep.rds",sep=""))
 
 
 df_vaf_exp <- True_VAFs_muts %>%
   inner_join( mutations, by = c('id_rep', 'id_mut') ) %>%
   inner_join( Replicates_Info, by = c('id_rep') ) %>%
-  unite( 'chrom_pos', chrom, pos) %>%
-  select( name_rep, id_sample, chrom_pos, vaf_exp, rc_tot, rc_alt )
+  tidyr::unite( 'chrom_pos', chrom, pos) %>%
+  select( name_rep, id_sample, chrom_pos, vaf_exp )
 
 ########################################
 #   MERGE SIMULATED AND REPORTED VAFs  #
@@ -260,19 +258,13 @@ df_vaf_exp <- True_VAFs_muts %>%
 AFs <-readRDS(paste(data_dir,"SRSV.AFs.rds",sep=""))
 AFs$name_rep <- as.character( AFs$replicate )
 AFs <- AFs %>% rename( R1 = T1, R2 = T2, R3 = T3, R4 = T4, R5 = T5 )
-df_vaf_obs <- AFs %>% pivot_longer( cols = paste0('R', 1:5), names_to = 'id_sample', values_to = 'vaf' ) %>%
+df_vaf_obs <- AFs %>% tidyr::pivot_longer( cols = paste0('R', 1:5), names_to = 'id_sample', values_to = 'vaf' ) %>%
   mutate( vaf_obs = as.numeric(vaf) ) %>%
   select( -mut_info, -replicate, -vaf )
 
 df_vaf <- df_vaf_obs %>% 
-  dplyr::left_join( df_vaf_exp, by = c('name_rep', 'id_sample', 'chrom_pos') )
+  dplyr::full_join( df_vaf_exp, by = c('name_rep', 'id_sample', 'chrom_pos') )
 
-
-####
-# EQUIVALENT PLOTS TO FIGURE S8
-#SimulatedvsReportedVAFs %>%
-#  mutate(TP=!is.na(SimulatedvsReportedVAFs$vaf_exp))
-####
 
 
 getDistances <- function(SOFTWARE,REPLICATE_ID) {
@@ -284,11 +276,14 @@ getDistances <- function(SOFTWARE,REPLICATE_ID) {
       dplyr::filter(grepl(REPLICATE_ID,name_rep)) %>%
       dplyr::filter(grepl(SOFTWARE,software))
       
-    ##############################################
-    # Substitute NAs by 0s at FPs and remove TNs #
-    ##############################################
+    #######################################################################
+    # Substitute simulated NAs by 0s at FPs and observed NAs by 0s at TNs #
+    #######################################################################
     True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_exp),"vaf_exp"] <- 0
-    True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$vaf_obs),]
+    # Line to remove TNs
+    #True_VAFs_muts_selected <- True_VAFs_muts_selected[!is.na(True_VAFs_muts_selected$vaf_obs),]
+    # At the end we decided to keep TNs
+    True_VAFs_muts_selected[is.na(True_VAFs_muts_selected$vaf_obs),"vaf_obs"] <- 0
   
     
     matrixfordist <- rbind(True_VAFs_muts_selected$vaf_obs, True_VAFs_muts_selected$vaf_exp)
