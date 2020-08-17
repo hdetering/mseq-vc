@@ -89,3 +89,96 @@ combined_plot <- ggarrange(plotlist = list(SRSV_plot,RRSV_plot),
                            legend = "bottom")
 
 ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.png",sep=""), height = 6, width = 12)
+
+
+###########################
+# Correlation F1-distance #
+###########################
+
+#----- SRSV --------------#
+
+df_perf_sample <- readRDS( file.path(gdir_denovo, 'df_perf.rds') )
+F1_SRSV<- df_perf_sample %>%
+  select(name_caller,name_rep,F1) %>%
+  rename(Replicate=name_rep) %>%
+  rename(name_caller_sorted=name_caller)
+dist_F1 <- AF_Results_SRSV %>%
+  select(-type,-name_caller_pub) %>%
+  dplyr::inner_join(F1_SRSV, by=c("name_caller_sorted", "Replicate")) %>%
+  reshape2::melt(id.vars=c("Replicate","name_caller_sorted","Distance"))
+
+dist_F1_forcor <- dist_F1[which(dist_F1$variable=="F1"),]
+correlation <- cor.test(dist_F1_forcor$Distance, dist_F1_forcor$value)
+
+# Define the number of colors you want
+library(RColorBrewer)
+#nb.cols <- 13
+#mycolors <- colorRampPalette(brewer.pal(12, "Paired"))(nb.cols)
+mycolors <- c(brewer.pal(12, "Paired"),"grey")
+
+
+cor_F1_dist_SRSV <- ggplot(dist_F1 %>% filter(variable %in% c("F1")) %>% filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
+  geom_point(aes(color=name_caller_sorted)) +
+  geom_smooth(method='lm',col="black") +
+  scale_colour_manual(values = mycolors) +
+  ylim(0,1) +
+  labs(x="Euclidean distances between\nestimated and simulated VAFs", y="F1",color="caller", title = "de novo") +
+  theme_linedraw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate("text", x=8,y=0.8, label=paste("p.value = ",formatC(correlation$p.value, format = "e", digits = 2),"\nr = ",round(correlation$estimate,2),sep=""), size=3)
+
+#----- RRSV --------------#
+
+perf_RRSV <- readRDS( file.path(gdir_spikein, 'df_perf.rds') )
+F1_RRSV<- perf_RRSV %>%
+  #select(name_caller,name_rep,F1) %>%
+  select(-id_caller,-id_rep,-class,-nclones,-nsamples,-caller,-cvg,-ttype) %>%
+  rename(Replicate=name_rep) %>%
+  rename(name_caller_sorted=name_caller)
+dist_F1 <- AF_Results_RRSV %>%
+  select(-type,-name_caller) %>%
+  dplyr::inner_join(F1_RRSV, by=c("name_caller_sorted", "Replicate")) %>%
+  reshape2::melt(id.vars=c("Replicate","name_caller_sorted","Distance"))
+
+dist_F1_forcor <- dist_F1[which(dist_F1$variable=="F1"),]
+correlation <- cor.test(dist_F1_forcor$Distance, dist_F1_forcor$value)
+
+cor_F1_dist_RRSV <- ggplot(dist_F1 %>% filter(variable %in% c("F1")) %>% filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
+  geom_point(aes(color=name_caller_sorted)) +
+  geom_smooth(method='lm',col="black") +
+  scale_colour_manual(values = mycolors) +
+  ylim(0,1) +
+  labs(x="Euclidean distances between\nestimated and simulated VAFs", y="", color="caller", title = "spike-in") +
+  theme_linedraw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  annotate("text", x=40,y=0.8, label=paste("p.value = ",formatC(correlation$p.value, format = "e", digits = 2),"\nr  = ",round(correlation$estimate,2),sep=""), size=3)
+
+
+
+combined_cor_plot <- ggarrange(plotlist = list(cor_F1_dist_SRSV,cor_F1_dist_RRSV),
+                           labels = c("a","b"),
+                           common.legend = T,
+                           legend = "right")
+
+ggsave(plot = combined_cor_plot,filename = paste(gdir_plots, "DistanceAF-F1.correlation.png",sep=""), height = 6, width = 12)
+
+
+#ggplot(dist_F1 %>% filter(variable %in% c("F1","precision","recall")),aes(x=Distance, y=as.numeric(value))) +
+#  geom_point(aes(color=name_caller_sorted,shape=name_caller_sorted)) +
+#  #geom_smooth() +  # method='lm') +
+#  labs(x="Euclidean distance between\nsimulated and estimated VAFs", y="F1",color="caller") +
+#  theme_linedraw() +
+#  facet_grid(. ~ variable, scales = "free")
+#
+#ggplot(dist_F1 %>% filter(variable %in% c("FN","FP","TP")) %>% filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),
+#       aes(x=name_caller_sorted, y=as.numeric(value))) +
+#  geom_col(aes(fill=name_caller_sorted)) +
+#  #geom_smooth() +  # method='lm') +
+#  labs(x="caller", y="Counts",color="caller") +
+#  theme_linedraw() +
+#  facet_grid(variable ~ ., scales = "free") +
+#  theme(axis.text.x = element_text(angle = 45, hjust=1),
+#        legend.position = "none")
+  
+
+
