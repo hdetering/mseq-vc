@@ -13,9 +13,9 @@ colnames(CallersInfo)[2] <- "name_caller_pub"
 
 
 AF_Results <- AF_Results %>%
-  left_join(CallersInfo, by = "name_caller_pub") %>%
-  select (name_caller_pub, Replicate, Distance, class.x) %>%
-  rename(type=class.x)
+  dplyr::left_join(CallersInfo, by = "name_caller_pub") %>%
+  dplyr::select (name_caller_pub, Replicate, Distance, class.x) %>%
+  dplyr::rename(type=class.x)
 
 AF_Results$name_caller_sorted <- with(AF_Results, reorder(name_caller_pub , Distance, mean , na.rm=T))
 # ('hs': highly structured/low admixture, 'ms': moderately structured, 'us': unstructured/high admixture)
@@ -55,9 +55,9 @@ AF_Results <- readRDS(paste(gdir_spikein,"RRSV.AFdistances.rds",sep=""))
 CallersInfo <- readRDS(paste(gdir_spikein,"RRSV.callers.rds",sep=""))
 
 AF_Results <- AF_Results %>%
-  left_join(CallersInfo, by = "name_caller") %>%
-  select (name_caller, Replicate, Distance, class) %>%
-  rename(type=class)
+  dplyr::left_join(CallersInfo, by = "name_caller") %>%
+  dplyr::select (name_caller, Replicate, Distance, class) %>%
+  dplyr::rename(type=class)
 
 AF_Results$name_caller_sorted <- with(AF_Results, reorder(name_caller , Distance, mean , na.rm=T))
 AF_Results$type <- factor(AF_Results$type, levels = c("marginal","joint"))
@@ -88,7 +88,7 @@ combined_plot <- ggarrange(plotlist = list(SRSV_plot,RRSV_plot),
                            common.legend = T,
                            legend = "bottom")
 
-ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.png",sep=""), height = 6, width = 12)
+ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.tif",sep=""),device = 'tiff', width = 7, height = 5, dpi = 300)
 
 
 ###########################
@@ -99,11 +99,11 @@ ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.pn
 
 df_perf_sample <- readRDS( file.path(gdir_denovo, 'df_perf.rds') )
 F1_SRSV<- df_perf_sample %>%
-  select(name_caller,name_rep,F1) %>%
-  rename(Replicate=name_rep) %>%
-  rename(name_caller_sorted=name_caller)
+  dplyr::select(name_caller,name_rep,F1) %>%
+  dplyr::rename(Replicate=name_rep) %>%
+  dplyr::rename(name_caller_sorted=name_caller)
 dist_F1 <- AF_Results_SRSV %>%
-  select(-type,-name_caller_pub) %>%
+  dplyr::select(-type,-name_caller_pub) %>%
   dplyr::inner_join(F1_SRSV, by=c("name_caller_sorted", "Replicate")) %>%
   reshape2::melt(id.vars=c("Replicate","name_caller_sorted","Distance"))
 
@@ -117,7 +117,7 @@ library(RColorBrewer)
 mycolors <- c(brewer.pal(12, "Paired"),"grey")
 
 
-cor_F1_dist_SRSV <- ggplot(dist_F1 %>% filter(variable %in% c("F1")) %>% filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
+cor_F1_dist_SRSV <- ggplot(dist_F1 %>% dplyr::filter(variable %in% c("F1")) %>% dplyr::filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
   geom_point(aes(color=name_caller_sorted)) +
   geom_smooth(method='lm',col="black") +
   scale_colour_manual(values = mycolors) +
@@ -132,18 +132,18 @@ cor_F1_dist_SRSV <- ggplot(dist_F1 %>% filter(variable %in% c("F1")) %>% filter(
 perf_RRSV <- readRDS( file.path(gdir_spikein, 'df_perf.rds') )
 F1_RRSV<- perf_RRSV %>%
   #select(name_caller,name_rep,F1) %>%
-  select(-id_caller,-id_rep,-class,-nclones,-nsamples,-caller,-cvg,-ttype) %>%
-  rename(Replicate=name_rep) %>%
-  rename(name_caller_sorted=name_caller)
+  dplyr::select(-id_caller,-id_rep,-class,-nclones,-nsamples,-caller,-cvg,-ttype) %>%
+  dplyr::rename(Replicate=name_rep) %>%
+  dplyr::rename(name_caller_sorted=name_caller)
 dist_F1 <- AF_Results_RRSV %>%
-  select(-type,-name_caller) %>%
+  dplyr::select(-type,-name_caller) %>%
   dplyr::inner_join(F1_RRSV, by=c("name_caller_sorted", "Replicate")) %>%
   reshape2::melt(id.vars=c("Replicate","name_caller_sorted","Distance"))
 
 dist_F1_forcor <- dist_F1[which(dist_F1$variable=="F1"),]
 correlation <- cor.test(dist_F1_forcor$Distance, dist_F1_forcor$value)
 
-cor_F1_dist_RRSV <- ggplot(dist_F1 %>% filter(variable %in% c("F1")) %>% filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
+cor_F1_dist_RRSV <- ggplot(dist_F1 %>% dplyr::filter(variable %in% c("F1")) %>% dplyr::filter(!name_caller_sorted %in% c("Shimmer","SNV-PPILP","MuClone")),aes(x=Distance, y=as.numeric(value))) +
   geom_point(aes(color=name_caller_sorted)) +
   geom_smooth(method='lm',col="black") +
   scale_colour_manual(values = mycolors) +
@@ -160,7 +160,7 @@ combined_cor_plot <- ggarrange(plotlist = list(cor_F1_dist_SRSV,cor_F1_dist_RRSV
                            common.legend = T,
                            legend = "right")
 
-ggsave(plot = combined_cor_plot,filename = paste(gdir_plots, "DistanceAF-F1.correlation.png",sep=""), height = 6, width = 12)
+ggsave(plot = combined_cor_plot,filename = paste(gdir_plots, "DistanceAF-F1.correlation.tif",sep=""),device = 'tiff', width = 7, height = 5, dpi = 300)
 
 
 #ggplot(dist_F1 %>% filter(variable %in% c("F1","precision","recall")),aes(x=Distance, y=as.numeric(value))) +
