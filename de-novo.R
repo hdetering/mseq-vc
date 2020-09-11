@@ -140,32 +140,11 @@ df_perf_sample_agg <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow
     avg_pre = mean(precision, na.rm = T),
     avg_F1  = mean(F1, na.rm = T))
 
-# DELETE ME!!
-x <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
-  group_by( name_rep, name_caller ) %>% 
-  dplyr::summarise( 
-    med_rec = median(recall, na.rm = T),
-    med_pre = median(precision, na.rm = T),
-    med_F1  = median(F1, na.rm = T),
-    avg_rec = mean(recall, na.rm = T),
-    avg_pre = mean(precision, na.rm = T),
-    avg_F1  = mean(F1, na.rm = T))
-
-
 df_perf_freq_agg <- df_perf_freq %>%
   group_by( name_caller ) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-
 p_perf_sample <- plot_perf_min( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
-p_perf_sample_mean <- plot_perf_min_mean( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
-
-ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.pdf'), plot = p_perf_sample_mean, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'de-novo.performance.sample.mean.png'), plot = p_perf_sample_mean, width = 12, height = 4)
-
-# I MUST BE DELETED!!! (just some mystery solving... nothing to see here... move along...)
-p <- plot_perf_tmp( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
-
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
@@ -207,7 +186,7 @@ df_perf_tumor_agg <- df_perf_tumor %>%
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_tumor <- plot_perf_min_mean( df_perf_tumor %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf_tumor <- plot_perf_min_sig( df_perf_tumor %>% dplyr::filter(!(name_caller %in% noshow)) )
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
 
