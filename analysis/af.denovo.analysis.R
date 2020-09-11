@@ -1,5 +1,6 @@
-data_dir="/Users/tama/Google Drive/PHYLOGENOMICS/M-seq Variant Calling Benchmarking/de-novo/data/"
-data_root="/Users/tama/Downloads/VCFs_SRSV/"
+#data_dir="/Users/tama/Google Drive/PHYLOGENOMICS/M-seq Variant Calling Benchmarking/de-novo/data/"
+#data_root="/Users/tama/Downloads/VCFs_SRSV/"
+data_root <- file.path( 'data', 'de-novo', 'vcf' )
 
 
 #########################################################################
@@ -10,6 +11,7 @@ data_root="/Users/tama/Downloads/VCFs_SRSV/"
 
 
 getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
+  library(vcfR)
       print(SOFTWARE)
       print(REPLICATE_ID)
   # Obtain the vcf file name    
@@ -203,9 +205,9 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
 ########################################
 # OBTAIN TABLE WITH ALL SIMULATED VAFs #
 ########################################
-True_VAFs_muts <- readRDS(paste(data_dir,"df_mut_sample.rds",sep=""))
-mutations <- readRDS(paste(data_dir,"df_mut.rds",sep=""))
-Replicates_Info <- readRDS(paste(data_dir,"df_rep.rds",sep=""))
+True_VAFs_muts <- readRDS( file.path(data_dir, "df_mut_sample.rds") )
+mutations <- readRDS( file.path(data_dir, "df_mut.rds") )
+Replicates_Info <- readRDS( file.path(data_dir, "df_rep.rds") )
 True_VAFs_muts$chrom <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$chrom[match(x, mutations$id_mut)])
 True_VAFs_muts$pos <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$pos[match(x, mutations$id_mut)])
 True_VAFs_muts$ref <- sapply(True_VAFs_muts$id_mut, function(x)  mutations$ref[match(x, mutations$id_mut)])
@@ -220,7 +222,7 @@ True_VAFs_muts$chrom_pos <- apply( True_VAFs_muts[ , cols ] , 1 , paste , collap
 
 
 # Create a table with all the combinations of factors we want to get the distance of allele frequencies
-CallersInfo <- readRDS(paste(data_dir,"df_caller.rds",sep=""))
+CallersInfo <- readRDS( file.path(data_dir, "df_caller.rds") )
 name_caller_pub <- CallersInfo$name_caller[which(CallersInfo$name_caller!="MuClone_perf")]
 
 TAGS <-  c(
@@ -245,7 +247,7 @@ TAGS <-  c(
 
 caller_AFtags <- cbind.data.frame(name_caller_pub, TAGS)
 colnames(caller_AFtags) <- c("name_caller_pub","AF_TAG")
-Replicates_row<- as.data.frame(t(Replicates_Info$name_rep))
+Replicates_row <- as.data.frame(t(Replicates_Info$name_rep))
 library(dplyr)
 replicates_rep <- Replicates_row %>% slice(rep(1:n(), each = nrow(caller_AFtags)))
 caller_AFtags_repli <- cbind.data.frame(caller_AFtags, replicates_rep)
@@ -256,7 +258,7 @@ Strategy <- sapply(caller_AFtags_repli_info$Replicate, function(x)  Replicates_I
 
 
 AFs <- do.call("rbind", apply(caller_AFtags_repli_info, 1, function(x) getVAFs(SOFTWARE = x['name_caller_pub'],TAG = x['AF_TAG'], REPLICATE_ID = x['Replicate'])))
-saveRDS(AFs, file = paste(data_dir,"SRSV.AFs.rds",sep=""))
+saveRDS(AFs, file = file.path(data_dir, "SRSV.AFs.rds"))
 
 
 getDistances <-  function(SOFTWARE, REPLICATE_ID){
