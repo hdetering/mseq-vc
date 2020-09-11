@@ -66,7 +66,7 @@ df_vars <- df_vars %>%
 # store variant calls for later use
 saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 
-# calculate per-sample performance metrics  (global and by AF bins)
+# calculate per-sample performance metrics (global and by AF bins)
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 
@@ -76,6 +76,7 @@ df_perf_freq <- calculate_performance_freq( df_vars, df_caller, df_rep, df_rc )
 # write summary stats to file
 saveRDS( df_perf_sample, file.path(data_dir, 'df_perf_sample.rds') )
 saveRDS( df_perf_freq, file.path(data_dir, 'df_perf_freq.rds') )
+
 # plot performance metrics
 # ------------------------------------------------------------------------------
 df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
@@ -96,13 +97,13 @@ p_perf <- plot_perf_min_mean( df_perf_sample )
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf, width = 12, height = 4)
 
+p_perf <- plot_perf_min_sig( df_perf_sample )
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.sig.pdf'), plot = p_perf, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.sig.png'), plot = p_perf, width = 12, height = 4)
+
 p_perf_freq <- plot_perf_freq( df_perf_freq )
 ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
 ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
-
-# p_perf <- plot_perf_rrsv( df_perf )
-# ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-# ggsave( file.path( plot_dir, 'Fig4.spike-in.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # determine status of variant calls for the per-tumor performance 
 #   TP: true positives
@@ -120,20 +121,20 @@ saveRDS( df_vars_tumor, file.path(data_dir, 'df_vars_tumor.rds') )
 # calculate per-tumor performance metrics
 # ------------------------------------------------------------------------------
 df_vars_tumor <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf_tumor <- calculate_performance_tumor( df_vars, df_caller, df_rep )
+df_perf_tumor <- calculate_performance_tumor( df_vars_tumor, df_caller, df_rep )
 
 # write summary stats to file
-saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf.rds') )
+saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf_tumor.rds') )
 
 # plot per-tumor performance metrics
 # ------------------------------------------------------------------------------
-df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf_tumor.rds') )
 # to look up median performance scores manually
 df_perf_tumor_agg <- df_perf_tumor %>% 
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_tumor <- plot_perf_min( df_perf_tumor )
+p_perf_tumor <- plot_perf_min_sig( df_perf_tumor )
 ggsave( file.path( plot_dir, 'spike-in.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
 
@@ -190,6 +191,8 @@ cor.test( df$F1, df$precision )
 # Two-out-of-two performance
 # ------------------------------------------------------------------------------
 
+# calculate performance metrics
+# ------------------------------------------------------------------------------
 # enumerate all possible pairs of callers
 df_caller_pairs <- df_caller  %>% 
   mutate(name_caller = as.character(name_caller)) %>%
@@ -211,30 +214,49 @@ df_vars_pairs <- df_vars_pairs %>%
   select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
 
 df_perf_pairs <- calculate_performance_sample( df_vars_pairs, df_caller_pairs, df_rep )
+# write summary stats to file
+saveRDS( df_perf_pairs, file.path(data_dir, 'df_perf_pairs.rds') )
+
+# plot performance metrics
+# ------------------------------------------------------------------------------
+# to compare with best single caller
+df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
+df_perf_single_top <- df_perf_sample %>% 
+  group_by( caller ) %>% 
+  dplyr::mutate( m = mean(F1, na.rm = T) ) %>%
+  dplyr::ungroup() %>% 
+  dplyr::filter( m == max(m, na.rm = T) ) %>%
+  mutate( group = 'single' ) %>%
+  select( caller, id_rep, id_sample, recall, precision, F1, cvg, group )
+
+df_perf_pairs <- readRDS( file.path(data_dir, 'df_perf_pairs.rds') )
 df_perf_pairs_agg <- df_perf_pairs %>% group_by( id_caller ) %>%
-  summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) ) %>%
+  dplyr::summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) ) %>%
   separate( id_caller, c('id1', 'id2'), sep = '_') %>%
   mutate( id_caller1 = as.numeric(id1), id_caller2 = as.numeric(id2) ) %>%
   inner_join( df_caller, by = c('id_caller1' = 'id_caller')) %>%
   inner_join( df_caller, by = c('id_caller2' = 'id_caller')) %>%
   select( id_caller1, id_caller2, caller1 = name_caller.x, caller2 = name_caller.y, med_F1, med_prec, med_rec ) %>%
   ungroup()
-
 df_perf_pairs_top <- df_perf_pairs %>%
   inner_join(
     df_perf_pairs %>% 
     group_by( id_caller ) %>%
-    summarise( med_F1 = median(F1) ) %>% 
-    mutate( rank_mF1 = rank(desc(med_F1)) ) %>%
+    dplyr::summarise( mean_F1 = mean(F1, na.rm = T) ) %>% 
+    mutate( rank_mF1 = rank(desc(mean_F1)) ) %>%
     dplyr::filter( rank_mF1 <= 10 ) %>% 
     select( id_caller, rank_mF1 ),
     by = c('id_caller')
-  )
+  ) %>%
+  mutate( group = 'paired' )
 
-# plot performance metrics
-# ------------------------------------------------------------------------------
-
-p_perf <- plot_perf_pairs( df_perf_pairs_top )
+# combine best 10 pairs with best single caller
+df_perf_pairs_plot <- df_perf_pairs_top %>%
+  select( caller, id_rep, id_sample, recall, precision, F1, cvg, group ) %>%
+  bind_rows( df_perf_single_top ) %>%
+  mutate( group = fct_relevel(group, 'single', 'paired') )
+  
+p_perf <- plot_perf_pairs( df_perf_pairs_plot )
 ggsave( file.path( plot_dir, 'spike-in.performance.pairs.pdf'), plot = p_perf, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'spike-in.performance.pairs.png'), plot = p_perf, width = 8, height = 10)
 
@@ -249,7 +271,7 @@ ggsave( file.path( plot_dir, 'spike-in.performance.pairs.admix.png'), plot = p_p
 # plot heat map
 # ------------------------------------------------------------------------------
 
-p_mF1_hm <- plot_perf_pairs_hm( df_perf_pairs_agg )
+p_mF1_hm <- plot_perf_pairs_heatmap( df_perf_pairs_agg )
 ggsave( file.path( plot_dir, 'spike-in.median_F1.pairs.hm.pdf'), plot = p_mF1_hm, width = 8, height = 8)
 ggsave( file.path( plot_dir, 'spike-in.median_F1.pairs.hm.png'), plot = p_mF1_hm, width = 8, height = 8)
 
@@ -312,8 +334,20 @@ saveRDS( df_vars_trip, file.path(data_dir, 'df_vars_trip.rds') )
 df_perf_trip <- calculate_performance_sample( df_vars_trip, df_caller_trip, df_rep )
 saveRDS( df_perf_trip, file.path(data_dir, 'df_perf_trip.rds') )
 
-df_perf_trip <- readRDS( file.path(data_dir, 'df_perf_trip.rds') )
+# plot performance metrics
+# ------------------------------------------------------------------------------
 
+# to compare with best single caller
+df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
+df_perf_single_top <- df_perf_sample %>% 
+  group_by( caller ) %>% 
+  dplyr::mutate( m = mean(F1, na.rm = T) ) %>%
+  dplyr::ungroup() %>% 
+  dplyr::filter( m == max(m, na.rm = T) ) %>%
+  mutate( group = 'single' ) %>%
+  select( caller, id_rep, id_sample, recall, precision, F1, cvg, group )
+
+df_perf_trip <- readRDS( file.path(data_dir, 'df_perf_trip.rds') )
 df_perf_trip_agg <- df_perf_trip %>% group_by( id_caller ) %>%
   summarise( med_F1 = median(F1), med_prec = median(precision), med_rec = median(recall) ) %>%
   separate( id_caller, c('id1', 'id2', 'id3') ) %>%
@@ -339,16 +373,20 @@ df_perf_trip_top <- df_perf_trip %>%
       dplyr::filter( rank_mF1 <= 10 ) %>% 
       select( id_caller, rank_mF1 ),
     by = c('id_caller')
-  )
+  ) %>%
+  mutate( group = 'triplet' )
 
-# plot performance metrics
-# ------------------------------------------------------------------------------
+# combine best 10 triplets with best single caller
+df_perf_trip_plot <- df_perf_trip_top %>%
+  select( caller, id_rep, id_sample, recall, precision, F1, cvg, group ) %>%
+  bind_rows( df_perf_single_top ) %>%
+  mutate( group = fct_relevel(group, 'single', 'triplet') )
 
-p_perf <- plot_perf_pairs( df_perf_trip_top )
+p_perf <- plot_perf_pairs( df_perf_trip_plot )
 ggsave( file.path( plot_dir, 'spike-in.performance.trip.pdf'), plot = p_perf, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'spike-in.performance.trip.png'), plot = p_perf, width = 8, height = 10)
 
-p_perf <- plot_perf_trip_hm( df_perf_trip_agg )
+p_perf <- plot_perf_trip_heatmap( df_perf_trip_agg )
 ggsave( file.path( plot_dir, 'spike-in.performance.trip.all.pdf'), plot = p_perf, width = 16, height = 14)
 ggsave( file.path( plot_dir, 'spike-in.performance.trip.all.png'), plot = p_perf, width = 16, height = 14)
 
