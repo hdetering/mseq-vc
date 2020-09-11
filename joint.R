@@ -56,6 +56,27 @@ callers = c(
   'Mutect2_multi_F'
 )
 
+# Performance by tumor
+#-------------------------------------------------------------------------------
+df_perf_dn <- readRDS( file.path(data_dn, 'df_perf_tumor.rds') ) %>%
+  dplyr::filter( caller %in% callers )
+df_perf_si <- readRDS( file.path(data_si, 'df_perf_tumor.rds') )
+p_perf_tum <- plot_perf_min( df_perf_dn, df_perf_si )
+ggsave( file.path( plot_dir, 'joint.performance.tumor.pdf'), plot = p_perf_tum, width = 12, height = 8)
+ggsave( file.path( plot_dir, 'joint.performance.tumor.png'), plot = p_perf_tum, width = 12, height = 8)
+
+# Performance by sample
+#-------------------------------------------------------------------------------
+df_perf_dn <- readRDS( file.path(data_dn, 'df_perf_sample.rds') ) %>%
+  dplyr::filter( caller %in% callers )
+df_perf_si <- readRDS( file.path(data_si, 'df_perf_sample.rds') )
+
+p_perf_smp <- plot_perf_min( df_perf_dn, df_perf_si )
+ggsave( file.path( plot_dir, 'joint.performance.sample.pdf'), plot = p_perf_smp, width = 12, height = 8)
+ggsave( file.path( plot_dir, 'joint.performance.sample.png'), plot = p_perf_smp, width = 12, height = 8)
+
+# Jaccard index
+#-------------------------------------------------------------------------------
 df_jacc_dn <- Jaccard.df( df_pres_dn %>% select(sort(callers)) )
 df_jacc_si <- Jaccard.df( df_pres_si %>% select(sort(callers)) )
 df_jacc_em <- Jaccard.df( df_pres_em %>% select(sort(callers)) )
