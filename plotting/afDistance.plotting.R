@@ -88,7 +88,7 @@ combined_plot <- ggarrange(plotlist = list(SRSV_plot,RRSV_plot),
                            common.legend = T,
                            legend = "bottom")
 
-ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.tif",sep=""),device = 'tiff', width = 7, height = 5, dpi = 300)
+ggsave(plot = combined_plot,filename = paste(gdir_plots, "DistanceAF.combined.pdf",sep=""), width = 7, height = 5, dpi = 300)
 
 
 ###########################
@@ -160,7 +160,7 @@ combined_cor_plot <- ggarrange(plotlist = list(cor_F1_dist_SRSV,cor_F1_dist_RRSV
                            common.legend = T,
                            legend = "right")
 
-ggsave(plot = combined_cor_plot,filename = paste(gdir_plots, "DistanceAF-F1.correlation.tif",sep=""),device = 'tiff', width = 7, height = 5, dpi = 300)
+ggsave(plot = combined_cor_plot,filename = paste(gdir_plots, "DistanceAF-F1.correlation.pdf",sep=""), width = 7, height = 5, dpi = 300)
 
 
 #ggplot(dist_F1 %>% filter(variable %in% c("F1","precision","recall")),aes(x=Distance, y=as.numeric(value))) +
