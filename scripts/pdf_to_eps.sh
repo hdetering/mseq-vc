@@ -2,11 +2,11 @@
 # vim: syntax=sh tabstop=2 expandtab
 # coding: utf-8
 #------------------------------------------------------------------------------
-# Convert PDF file to TIFF with specified resolution and geometry.
+# Convert PDF file to EPS with specified geometry.
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2020-09-11
+# modified : 2020-09-12
 #------------------------------------------------------------------------------
 
 PDF=$1
