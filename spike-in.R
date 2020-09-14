@@ -88,9 +88,9 @@ df_perf_freq_agg <- df_perf_freq %>%
   group_by( name_caller ) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf <- plot_perf_min( df_perf )
-ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf, width = 12, height = 4)
+p_perf_sample <- plot_perf_min( df_perf_sample )
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
 p_perf_freq <- plot_perf_freq( df_perf_freq )
 ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
@@ -511,3 +511,9 @@ plot(as.dendrogram(hc), horiz = TRUE)
 dev.off()
 
 
+################################################################################
+# Genetic distance
+################################################################################
+
+
+fst <- calculate_fst(df_varcall , df_af)
