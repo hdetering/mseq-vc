@@ -55,8 +55,9 @@ classify_variants_pertumor <- function (
   
   
 df_vars_tumor = df_mut_sample %>% 
+    mutate( is_present = as.logical(is_present) ) %>%
     left_join(df_mut, by = c("id_rep", "id_mut")) %>%
-    dplyr::filter(as.logical(is_present)) %>%  
+    dplyr::filter( is_present ) %>%  
       select(-c(id_sample, vaf_exp, ref, alt)) %>%  # Mutation appears once per tumor
       unique()%>%          
     crossing(df_caller) %>%
@@ -93,7 +94,7 @@ calculate_performance_tumor <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    replace_na( list(precision = 0, F1 = 0) ) %>%
+    #replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )
@@ -117,7 +118,7 @@ calculate_performance_sample <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    replace_na( list(precision = 0, F1 = 0) ) %>%
+    #replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )
@@ -162,7 +163,7 @@ calculate_performance_freq <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    replace_na( list(precision = 0, F1 = 0) ) %>%
+    #replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )

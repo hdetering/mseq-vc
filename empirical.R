@@ -269,10 +269,18 @@ df_pres <- read.csv( file.path(data_dir, 'df_pres.csv') )
 # annoying, but necessary... only if loaded from file
 names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 n <- c('Bcftools', 'CaVEMan', 'HaplotypeCaller', 'MuClone', 'MultiSNV', 'MuTect1', 
-       'Mutect2_multi', 'Mutect2_single', 'NeuSomatic', 'Shimmer', 'SNV-PPILP', 
+       'Mutect2_multi_F', 'Mutect2_single', 'NeuSomatic', 'Shimmer', 'SNV-PPILP',
        'SNooPer', 'SomaticSniper', 'Strelka2', 'VarDict', 'VarScan')
 #png( 'plots/empirical.upset.all.png', width = 10, height = 4.5 ) # does produce empty output...
 fn_pfx <- file.path( plot_dir, 'empirical.upset')
+pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
+plot_upset_empirical( df_pres, n )
+dev.off()
+png( paste0(fn_pfx, '.png'), width = 8, height = 6, units = 'in', res = 300 )
+plot_upset_empirical( df_pres, n )
+dev.off()
+
+fn_pfx <- file.path( plot_dir, 'empirical.upset.set_size_num')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset_empirical( df_pres, n )
 dev.off()

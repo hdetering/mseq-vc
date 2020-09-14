@@ -1,6 +1,6 @@
 require(rstatix)
 
-plot_perf_min <- function ( df )
+plot_perf_min_OLD <- function ( df )
 {
   # define order of variant callers (will affect plots)
   df = df %>% filter(caller!= "MuClone_perf")
@@ -27,9 +27,9 @@ plot_perf_min <- function ( df )
   p_rec <- ggplot( df, aes(x = caller, y = recall) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mrec = median(recall)) %>% dplyr::filter(mrec==max(mrec)), aes(x = caller, y = mrec), fill = 'gold', shape = 23) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mrec = median(recall, na.rm = T)) %>% dplyr::filter(mrec==max(mrec, na.rm = T)), aes(x = caller, y = mrec), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -37,9 +37,9 @@ plot_perf_min <- function ( df )
   p_pre <- ggplot( df, aes(x = caller, y = precision) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mpre = median(precision)) %>% dplyr::filter(mpre==max(mpre)), aes(x = caller, y = mpre), fill = 'gold', shape = 23) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mpre = median(precision, na.rm = T)) %>% dplyr::filter(mpre==max(mpre, na.rm = T)), aes(x = caller, y = mpre), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = 'caller' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
@@ -47,9 +47,9 @@ plot_perf_min <- function ( df )
   p_f1 <- ggplot( df, aes(x = caller, y = F1) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mF1 = median(F1)) %>% dplyr::filter(mF1==max(mF1)), aes(x = caller, y = mF1), fill = 'gold', shape = 23) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(mF1 = median(F1, na.rm = T)) %>% dplyr::filter(mF1==max(mF1, na.rm = T)), aes(x = caller, y = mF1), fill = 'gold', shape = 23) + 
     stat_summary(fun='mean', shape=15) + # TODO: make changes permanent or remove
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     theme(legend.position = 'right')
@@ -93,32 +93,32 @@ plot_perf_min_mean <- function ( df )
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
   # subplots for grid layout
-  p_rec <- ggplot( df, aes(x = reorder(caller, -F1), y = recall) ) + 
+  p_rec <- ggplot( df, aes(x = reorder(caller, -F1, na.rm = T), y = recall) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
   
-  p_pre <- ggplot( df, aes(x = reorder(caller, -F1), y = precision) ) + 
+  p_pre <- ggplot( df, aes(x = reorder(caller, -F1, na.rm = T), y = precision) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = 'caller' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
     guides( fill = 'none' )
   
-  p_f1 <- ggplot( df, aes(x = reorder(caller, -F1), y = F1) ) + 
+  p_f1 <- ggplot( df, aes(x = reorder(caller, -F1, na.rm = T), y = F1) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
-    theme(legend.position = 'right')
+    theme( legend.position = 'right' )
   
   p_perf <- ggarrange(
     p_rec, p_pre, p_f1,
@@ -132,7 +132,99 @@ plot_perf_min_mean <- function ( df )
   return( p_perf )
 }
 
-    
+plot_perf_min_sig <- function ( df )
+{
+  # define order of variant callers (will affect plots)
+  df$caller = factor(df$caller, levels = c(
+    'Bcftools',
+    'CaVEMan',
+    'MuTect1',
+    'Mutect2_single',
+    'NeuSomatic',
+    'Shimmer',
+    'SNooPer',
+    'SomaticSniper',
+    'Strelka2',
+    'VarDict',
+    'VarScan',
+    'MuClone',
+    'SNV-PPILP',
+    'HaplotypeCaller',
+    'MultiSNV',
+    'Mutect2_multi_F'))
+  df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
+
+  # reorder callers by overall F1 score
+  df <- df %>% mutate( caller = fct_reorder(caller, -F1, .fun = mean, na.rm = T) )
+
+  # perform group-wise comparisons for differences between distributions
+  pairs <- cbind(head(levels(df$caller), -1), levels(df$caller)[-1]) %>%
+    t() %>% as_tibble() %>% as.list()
+  # gwc_rec_wilcox <- df %>%
+  #   wilcox_test( ., recall ~ caller, comparisons = pairs ) %>%
+  #   adjust_pvalue( method = 'bonferroni' ) %>%
+  #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  #   add_xy_position( x = 'caller', step.increase = 0 ) %>%
+  #   mutate( y.position = y.position + 0.02 )
+  # gwc_pre_wilcox <- df %>%
+  #   wilcox_test( ., precision ~ caller, comparisons = pairs ) %>%
+  #   adjust_pvalue( method = 'bonferroni' ) %>%
+  #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  #   add_xy_position( x = 'caller', step.increase = 0 ) %>%
+  #   mutate( y.position = y.position + 0.02 )
+  gwc_f1_wilcox <- df %>%
+    wilcox_test( ., F1 ~ caller, comparisons = pairs ) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+    add_xy_position( x = 'caller', step.increase = 0 ) %>%
+    mutate( y.position = y.position + 0.02 )
+
+  # subplots for grid layout
+  p_rec <- ggplot( df, aes(x = caller, y = recall) ) +
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) +
+    #stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = '' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    guides( fill = 'none' )
+
+  p_pre <- ggplot( df, aes(x = caller, y = precision) ) +
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) +
+    #stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = 'caller' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    guides( fill = 'none' )
+
+  p_f1 <- ggplot( df, aes(x = caller, y = F1) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = '', fill = '' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    theme( legend.position = 'right' )
+
+  p_perf <- ggarrange(
+    p_rec, p_pre, p_f1,
+    ncol = 3,
+    nrow = 1,
+    labels = "auto" , 
+    common.legend = TRUE, 
+    legend = "top"
+  )
+  
+  return( p_perf )
+}
+ 
 plot_perf_freq <- function ( df )
 {
   # define order of variant callers (will affect plots)
@@ -168,14 +260,14 @@ plot_perf_freq <- function ( df )
                             'SNV-\nPPILP' = 'SNV-PPILP'))
   
   # reorder callers by overall F1 score
-  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean) )
+  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean, na.rm = T) )
   
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = freq_bin, y = recall, alpha = freq_bin) ) + 
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6))+
@@ -185,7 +277,7 @@ plot_perf_freq <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -195,7 +287,7 @@ plot_perf_freq <- function ( df )
     theme_minimal() +
     geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
-    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
     facet_wrap(~lbl, nrow = 1)+
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6) ) +
@@ -264,7 +356,7 @@ plot_perf_cvg <- function ( df )
   # subplots for grid layout
   p_r_cvg <- ggplot(df, aes(x = as.factor(cvg), y = recall)) + 
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(cvg), y=mrec), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall, na.rm = T)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec, na.rm = T)), aes(x = factor(cvg), y=mrec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'sequencing depth') +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -276,7 +368,7 @@ plot_perf_cvg <- function ( df )
   
   p_p_cvg <- ggplot(df, aes(x = as.factor(cvg), y = precision)) + 
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(cvg), y = mprec), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mprec = median(precision, na.rm = T)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec, na.rm = T)), aes(x = factor(cvg), y = mprec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'sequencing depth')  +
     facet_grid(.~lbl) +
@@ -287,7 +379,7 @@ plot_perf_cvg <- function ( df )
   
   p_f_cvg <- ggplot(df, aes(x = as.factor(cvg), y = F1)) + 
     geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(cvg), y=mF1), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1, na.rm = T)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1, na.rm = T)), aes(x=factor(cvg), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'sequencing depth', y = 'F1 score', fill = '') +
     facet_grid(.~lbl) +
@@ -367,7 +459,7 @@ plot_perf_cvg_sig <- function ( df )
     add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
   
   # reorder callers by overall F1 score
-  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean) )
+  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean, na.rm = T) )
   
   # subplots for grid layout
   p_r_cvg <- ggplot( df, aes(x = factor(cvg), y = recall), yticks.by = 0.25) +
@@ -379,7 +471,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_p_cvg <- ggplot( df, aes(x = factor(cvg), y = precision), yticks.by = 0.25) +
@@ -391,7 +483,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   p_f_cvg <- ggplot( df, aes(x = factor(cvg), y = F1), yticks.by = 0.25) +
@@ -403,7 +495,7 @@ plot_perf_cvg_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2.5) )
   
   # combine subplots
@@ -479,7 +571,7 @@ plot_perf_admix_sig <- function ( df )
     add_significance( p.col = 'p.adj', output.col = 'sig_sym' )
   
   # reorder callers by overall F1 score
-  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean) )
+  df <- df %>% mutate( lbl = fct_reorder(lbl, -F1, .fun = mean, na.rm = T) )
   
   # subplots for grid layout
   p_r_mix <- ggboxplot(df, x = 'ttype', y = 'recall', fill = 'class', yticks.by = 0.25) +
@@ -491,7 +583,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(recall)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_rec_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_p_mix <- ggboxplot(df, x = 'ttype', y = 'precision', fill = 'class', yticks.by = 0.25) %>%
@@ -502,7 +594,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(precision)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_pre_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   p_f_mix <- ggboxplot(df, x = 'ttype', y = 'F1', fill = 'class', yticks.by = 0.25) %>%
@@ -513,7 +605,7 @@ plot_perf_admix_sig <- function ( df )
     font( 'xy.text', size = 8 ) +
     theme( strip.text.x = element_text(family='Helvetica-Narrow', size = 8) ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
-    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(F1)) %>% dplyr::filter(m==max(m)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
+    geom_point( data = df %>% group_by(ttype, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = ttype, y = m), color = 'gold', shape = 15) + 
     geom_text( data = gwc_f1_kruskal, aes(label = sig_sym, y = 1.05, x = 2) )
   
   # combine subplots
@@ -527,99 +619,6 @@ plot_perf_admix_sig <- function ( df )
   ) %>%
     annotate_figure(
       bottom = text_grob(sig_legend, hjust = 1, x = 1, face = "italic", size = 8))
-  
-  return( p_perf )
-}
-
-plot_perf_rrsv <- function ( df )
-{
-  # exclude these callers from plots
-  blacklist <- c( 'Strelka1' )
-  
-  # define order of variant callers (will affect plots)
-  df$caller = factor(df$caller, levels = c(
-    'Bcftools', 
-    'CaVEMan', 
-    'MuTect1', 
-    'Mutect2_single', 
-    'NeuSomatic', 
-    'Shimmer', 
-    'SNooPer', 
-    'SomaticSniper', 
-    'Strelka1', 
-    'Strelka2', 
-    'VarDict', 
-    'VarScan',
-    'MuClone', 
-    'SNV-PPILP',
-    'HaplotypeCaller', 
-    'MultiSNV', 
-    'Mutect2_multi_F',
-    'SNooPerGermres',
-    'SNooPerGermres.70'))
-  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
-  
-  # format caller names for better plotting
-  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
-  df <- df %>% 
-    mutate(lbl = fct_recode(caller, 
-                            'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
-                            'Mutect2\nsingle' = 'Mutect2_single',
-                            'Neu\nSomatic' = 'NeuSomatic',
-                            'Somatic\nSniper' = 'SomaticSniper',
-                            'SNV-\nPPILP' = 'SNV-PPILP'))
-  
-  # remove data for some callers (older versions of certain methods)
-  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
-  
-  # subplots for grid layout
-  p_r_cvg <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
-    theme_minimal()+
-    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = as.factor(cvg), y=mrec), fill = "gold", shape = 23) + 
-    labs( x = 'caller', fill = '' )  +
-    facet_wrap( ~ lbl, nrow = 1 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
-    theme( axis.text.x = element_blank(),
-           axis.ticks.x = element_blank()) + 
-    guides( colour = "none", fill = 'none' )
-  
-  p_p_cvg <- ggplot( df, aes(x = as.factor(cvg), y = precision) ) + 
-    theme_minimal()+
-    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mpre = median(precision)) %>% arrange(desc(mpre)) %>% dplyr::filter(mpre==max(mpre)), aes(x = as.factor(cvg), y=mpre), fill = "gold", shape = 23) + 
-    labs( x = 'caller' ) + 
-    facet_wrap( ~ lbl, nrow = 1 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
-    theme( axis.text.x = element_blank(),
-           axis.ticks.x = element_blank() ) + 
-    guides( colour = "none", fill = 'none' )
-  
-  p_f_cvg <- ggplot( df, aes(x = as.factor(cvg), y = F1) ) + 
-    theme_minimal()+
-    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
-    geom_point( data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=as.factor(cvg), y=mF1), fill = "gold", shape = 23) + 
-    labs( x = 'caller', y = 'F1 score' )  +
-    facet_wrap( ~ lbl, nrow = 1 ) +
-    theme( strip.text.x = element_text(size = 6) ) +
-    theme( axis.text.x = element_blank(),
-           axis.ticks.x = element_blank() ) +
-    #theme( axis.text.x = element_text(angle = 45, hjust = 1) ) +
-    theme( legend.position = 'bottom' ) +
-    guides( colour = 'none' )+
-    scale_fill_discrete(name="")
-  
-  p_perf <- ggarrange(
-    p_r_cvg, p_p_cvg, p_f_cvg,
-    ncol = 1,
-    nrow = 3,
-    labels = "auto" , 
-    common.legend = TRUE, 
-    legend = "bottom"
- 
-
-  )
   
   return( p_perf )
 }
@@ -669,7 +668,7 @@ plot_perf_admix <- function ( df )
   # subplots for grid layout
   p_r_ttype <- ggplot(df, aes(x = as.factor(ttype), y = recall)) + 
     geom_boxplot(aes(alpha = ttype, fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(ttype), y=mrec), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mrec = median(recall, na.rm = T)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec, na.rm = T)), aes(x = factor(ttype), y=mrec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'admixture') +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -681,7 +680,7 @@ plot_perf_admix <- function ( df )
   
   p_p_ttype <- ggplot(df, aes(x = as.factor(ttype), y = precision)) + 
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(ttype), y = mprec), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mprec = median(precision, na.rm = T)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec, na.rm = T)), aes(x = factor(ttype), y = mprec), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'admixture') + 
     facet_grid(.~lbl) +
@@ -692,99 +691,7 @@ plot_perf_admix <- function ( df )
   
   p_f_ttype <- ggplot(df, aes(x = as.factor(ttype), y = F1)) + 
     geom_boxplot(aes(alpha = factor(ttype), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture', y = 'F1 score', fill = '') + 
-    facet_grid(.~lbl) +
-    theme_minimal()+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
-    theme(strip.text.x = element_text(size = 6)) +
-    theme(legend.position = 'bottom') +
-    guides(colour = "none", alpha = "none")
-  
-  p_perf <- ggarrange(
-    p_r_ttype, p_p_ttype, p_f_ttype,
-    ncol = 1,
-    nrow = 3,
-    labels = "auto", 
-    common.legend = TRUE, 
-    legend = "bottom"
-  )
-  return( p_perf )
-}
-
-plot_perf_admix_rrsv <- function ( df )
-{
-  # exclude these callers from plots
-  blacklist <- c( 'Strelka1' )
-  
-  # define order of variant callers (will affect plots)
-  df$caller = factor(df$caller, levels = c(
-    'Bcftools', 
-    'CaVEMan', 
-    'MuTect1', 
-    'Mutect2_single', 
-    'NeuSomatic', 
-    'Shimmer', 
-    'SNooPer', 
-    'SomaticSniper', 
-    'Strelka1', 
-    'Strelka2', 
-    'VarDict', 
-    'VarScan',
-    'MuClone', 
-    'SNV-PPILP',
-    'HaplotypeCaller', 
-    'MultiSNV', 
-    'Mutect2_multi_F',
-    'SNooPerGermres',
-    'SNooPerGermres.70'))
-  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
-  
-  # format caller names for better plotting
-  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
-  df <- df %>% 
-    mutate(lbl = fct_recode(caller, 
-                            'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
-                            'Mutect2\nsingle' = 'Mutect2_single',
-                            'Neu\nSomatic' = 'NeuSomatic',
-                            'Somatic\nSniper' = 'SomaticSniper',
-                            'SNV-\nPPILP' = 'SNV-PPILP'))
-  
-  # remove data for some callers (older versions of certain methods)
-  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
-  
-  # subplots for grid layout
-  p_r_ttype <- ggplot(df, aes(x = as.factor(ttype), y = recall)) + 
-    geom_boxplot(aes(alpha = ttype, fill = class)) +
-    geom_jitter(aes(color = class),size =0.5)+ ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(ttype), y=mrec), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture') +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_grid(.~lbl) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 6)) + 
-    guides(colour = "none", fill = 'none', alpha = "none")
-  
-  p_p_ttype <- ggplot(df, aes(x = as.factor(ttype), y = precision)) + 
-    geom_boxplot(aes(alpha = factor(ttype), fill = class)) +
-    geom_jitter(aes(color = class),size =0.5)+ ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(ttype), y = mprec), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'admixture') + 
-    facet_grid(.~lbl) +
-    theme_minimal()+
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 6)) + 
-    guides(colour = "none", fill = "none", alpha = "none")
-  
-  p_f_ttype <- ggplot(df, aes(x = as.factor(ttype), y = F1)) + 
-    geom_boxplot(aes(alpha = factor(ttype), fill = class)) +
-    geom_jitter(aes(color = class),size =0.5)+ ylim(0, 1) +
-    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
+    geom_point(data = df %>% group_by(ttype, lbl) %>% summarise(mF1 = median(F1, na.rm = T)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1, na.rm = T)), aes(x=factor(ttype), y=mF1), fill = "gold", shape = 23) + 
     scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
     labs(x = 'admixture', y = 'F1 score', fill = '') + 
     facet_grid(.~lbl) +
@@ -842,11 +749,12 @@ plot_pairwise_wilcoxon <- function( df ) {
   return( p )
 }
 
-plot_perf_cvg_aux <- function ( df )
+# Create subplots for recall, precision, F1 score.
+# Returns: 
+#   vector of subplots c(p_rec, p_pre, p_f1)
+#   to be combined in subsequent step
+plot_perf_min_internal <- function ( df )
 {
-  # exclude these callers from plots
-  blacklist <- c( 'Strelka1' )
-  
   # define order of variant callers (will affect plots)
   df$caller = factor(df$caller, levels = c(
     'Bcftools', 
@@ -857,75 +765,217 @@ plot_perf_cvg_aux <- function ( df )
     'Shimmer', 
     'SNooPer', 
     'SomaticSniper', 
-    'Strelka1', 
     'Strelka2', 
     'VarDict', 
     'VarScan',
     'MuClone', 
-    'MuClone_perf', 
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi',
-    'SNooPerGermres',
-    'SNooPerGermres.70'))
-  df$class <- factor(df$class, levels = c('marginal', 'two-step', 'joint'))
+    'Mutect2_multi_F'))
+  df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
-  # format caller names for better plotting
-  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T))
-  df <- df %>% 
-    mutate(lbl = fct_recode(caller, 
-                            'Haplotype\nCaller' = 'HaplotypeCaller',
-                            'Mutect2\nmulti' = 'Mutect2_multi',
-                            'Mutect2\nsingle' = 'Mutect2_single',
-                            'Neu\nSomatic' = 'NeuSomatic',
-                            'Somatic\nSniper' = 'SomaticSniper',
-                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  # reorder callers by overall F1 score
+  df <- df %>% mutate( caller = fct_reorder(caller, -F1, .fun = mean, na.rm = T) )
   
-  # remove data for some callers (older versions of certain methods)
-  df <- df %>% dplyr::filter( !(caller %in% blacklist) )
+  # perform group-wise comparisons for differences between distributions
+  pairs <- cbind(head(levels(df$caller), -1), levels(df$caller)[-1]) %>% 
+    t() %>% as_tibble() %>% as.list()
+  gwc_f1_wilcox <- df %>%
+    wilcox_test( ., F1 ~ caller, comparisons = pairs ) %>%
+    adjust_pvalue( method = 'bonferroni' ) %>%
+    add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+    add_xy_position( x = 'caller', step.increase = 0 ) %>%
+    mutate( y.position = y.position + 0.02 )
   
   # subplots for grid layout
-  p_r_cvg <- ggplot(df, aes(x = as.factor(cvg), y = recall)) + 
-    geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mrec = median(recall)) %>% arrange(desc(mrec)) %>% dplyr::filter(mrec==max(mrec)), aes(x = factor(cvg), y=mrec), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth') + ggtitle( 'a' ) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_grid(.~lbl) +
-    theme_gray() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 6)) + 
-    guides(colour = "none", fill = 'none', alpha = "none")
+  p_rec <- ggplot( df, aes(x = caller, y = recall) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = '' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    guides( fill = 'none' )
   
-  p_p_cvg <- ggplot(df, aes(x = as.factor(cvg), y = precision)) + 
-    geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mprec = median(precision)) %>% arrange(desc(mprec)) %>% dplyr::filter(mprec==max(mprec)), aes(x = factor(cvg), y = mprec), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth') + ggtitle( 'b' ) +
-    facet_grid(.~lbl) +
-    theme_gray() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-          strip.text.x = element_text(size = 6)) + 
-    guides(colour = "none", fill = "none", alpha = "none")
+  p_pre <- ggplot( df, aes(x = caller, y = precision) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = 'caller' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    guides( fill = 'none' )
   
-  p_f_cvg <- ggplot(df, aes(x = as.factor(cvg), y = F1)) + 
-    geom_boxplot(aes(alpha = factor(cvg), fill = class)) + ylim(0, 1) +
-    geom_point(data = df %>% group_by(cvg, lbl) %>% summarise(mF1 = median(F1)) %>% arrange(desc(mF1)) %>% dplyr::filter(mF1==max(mF1)), aes(x=factor(cvg), y=mF1), fill = "gold", shape = 23) + 
-    scale_alpha_manual(values = c(0.2, 0.5, 0.8, 1)) +
-    labs(x = 'sequencing depth', y = 'F1 score', fill = '') + ggtitle( 'c' ) +
-    facet_grid(.~lbl) +
-    theme_gray() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
-    theme(strip.text.x = element_text(size = 6)) +
-    theme(legend.position = 'bottom') +
-    guides(colour = "none", fill = "none", alpha = "none")
+  p_f1 <- ggplot( df, aes(x = caller, y = F1) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
+    stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
+    scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
+    labs( x = '', fill = '' )  +
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
+    theme( legend.position = 'right' )
+
+  p_perf <- ggarrange(
+    p_rec, p_pre, p_f1,
+    ncol = 3,
+    nrow = 1,
+    labels = "auto" , 
+    common.legend = TRUE, 
+    legend = "top"
+  )
   
-  p_perf <- grid.arrange(
-    grobs = list(p_r_cvg, p_p_cvg, p_f_cvg), 
-    layout_matrix = rbind(c(1,1), c(2,2), c(3,3), c(3,3)),
-    #top = textGrob("Performance of variant callers at different sequencing depths", gp = gpar(fontsize=16,font=3))
+  return( list(p_rec, p_pre, p_f1, p_perf) )  
+}
+
+plot_perf_min <- function ( df1, df2 )
+{
+  subplots1 <- plot_perf_min_internal( df1 )
+  subplots2 <- plot_perf_min_internal( df2 )
+  
+  p_perf <- ggarrange(
+    subplots1[[1]], subplots1[[2]], subplots1[[3]],
+    subplots2[[1]], subplots2[[2]], subplots2[[3]],
+    ncol = 3,
+    nrow = 2,
+    labels = "auto" , 
+    common.legend = TRUE, 
+    legend = "top"
   )
   
   return( p_perf )
+}
+
+plot_perf_pairs <- function ( df )
+{
+  # format caller names for better plotting
+  df <- df %>% mutate(lbl = gsub("(?<=[a-z]{5}|-|_)([A-Z])", "\n\\1", df$caller, perl = T))
+  # df <- df %>% 
+  #   mutate(lbl = fct_recode(caller, 
+  #                           'Haplotype\nCaller' = 'HaplotypeCaller',
+  #                           'Mutect2\nmulti_F' = 'Mutect2_multi_F',
+  #                           'Mutect2\nsingle' = 'Mutect2_single',
+  #                           'Neu\nSomatic' = 'NeuSomatic',
+  #                           'Somatic\nSniper' = 'SomaticSniper',
+  #                           'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # reorder callers by mean F1 score
+  df$lbl <- factor( df$lbl, levels = df %>% group_by(lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% arrange(desc(m)) %>% pull(lbl) )
+  
+  # subplots for grid layout
+  p_rec <- ggplot( df, aes(x = as.factor(cvg), y = recall) ) + 
+    theme_minimal()+
+    geom_boxplot( aes(fill = group) ) + 
+    ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_hline( color = 'red', yintercept = df %>% dplyr::filter(group == 'single') %>% summarise(m = mean(recall, na.rm = T)) %>% pull(m) ) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    labs( x = 'caller', fill = '' )  +
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank()) + 
+    scale_fill_manual( name = '', values = c('tomato', 'white') ) +
+    guides( colour = "none", fill = 'none' )
+  
+  p_pre <- ggplot( df, aes(x = as.factor(cvg), y = precision) ) + 
+    theme_minimal()+
+    geom_boxplot( aes(fill = group) ) + 
+    ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_hline( color = 'red', yintercept = df %>% dplyr::filter(group == 'single') %>% summarise(m = mean(precision, na.rm = T)) %>% pull(m) ) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(precision, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    labs( x = 'caller' ) + 
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank() ) + 
+    scale_fill_manual( name = '', values = c('tomato', 'white') ) +
+    guides( colour = "none", fill = 'none' )
+  
+  p_f1 <- ggplot( df, aes(x = as.factor(cvg), y = F1) ) + 
+    theme_minimal()+
+    geom_boxplot( aes(fill = group) ) + 
+    ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
+    geom_hline( color = 'red', yintercept = df %>% dplyr::filter(group == 'single') %>% summarise(m = mean(F1, na.rm = T)) %>% pull(m) ) + 
+    geom_point( data = df %>% group_by(cvg, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = factor(cvg), y = m), color = 'gold', shape = 15) + 
+    labs( x = 'caller', y = 'F1 score' )  +
+    facet_wrap( ~ lbl, nrow = 1 ) +
+    theme( strip.text.x = element_text(size = 6) ) +
+    theme( axis.text.x = element_blank(),
+           axis.ticks.x = element_blank() ) +
+    #theme( axis.text.x = element_text(angle = 45, hjust = 1) ) +
+    theme( legend.position = 'bottom' ) +
+    scale_fill_manual( name = '', values = c('tomato', 'white') ) +
+    guides( colour = 'none' )
+    
+  p_perf <- ggarrange(
+    p_rec, p_pre, p_f1,
+    ncol = 1,
+    nrow = 3,
+    labels = "auto" , 
+    common.legend = TRUE, 
+    legend = "bottom"
+  )
+  
+  return( p_perf )
+}
+
+plot_perf_pairs_heatmap <- function ( df )
+{
+  # format caller names for better plotting
+  df <- df %>% mutate(
+    lbl1 = gsub("(?<=\\w{5}|-|_)([A-Z])(?=\\w{3})", "\n\\1", df$caller1, perl = T),
+    lbl2 = gsub("(?<=\\w{5}|-|_)([A-Z])(?=\\w{3})", "\n\\1", df$caller2, perl = T)
+  )
+  
+  # define plotting  order of callers (by id)
+  df$lbl1 <- factor( df$lbl1, levels = df %>% select(id_caller1, lbl1) %>% unique() %>% arrange((id_caller1)) %>% pull(lbl1) )
+  df$lbl2 <- factor( df$lbl2, levels = df %>% select(id_caller2, lbl2) %>% unique() %>% arrange(desc(id_caller2)) %>% pull(lbl2) )
+  
+  p_mF1_hm <- ggplot( df, aes(x = lbl1, y = lbl2, fill = med_F1) ) + 
+    geom_tile() +
+    geom_text( aes(label = round(med_F1, 2)) ) +
+    scale_fill_distiller( palette = 'Spectral' ) +
+    labs( x = 'caller1', y = 'caller2', fill = 'median\nF1' ) +
+    theme_minimal() +
+    theme( axis.text.x = element_text(angle = 20) )
+  
+  return( p_mF1_hm )
+}
+
+plot_perf_trip_heatmap <- function ( df )
+{
+  library(ggpubr)  # as_ggplot()
+  
+  # format caller names for better plotting
+  regex_str <- '(?<=\\w{5}|-|_)([A-Z])(?=\\w{3})'
+  df <- df %>% mutate(
+    #lbl1 = gsub( regex_str, '\n\\1', df$caller1, perl = T),
+    lbl1 = df$caller1,
+    lbl2 = gsub( regex_str, '\n\\1', df$caller2, perl = T),
+    lbl3 = gsub( regex_str, '\n\\1', df$caller3, perl = T)
+  )
+  
+  # define plotting  order of callers (by id)
+  df$lbl1 <- factor( df$lbl1, levels = df %>% select(id_caller1, lbl1) %>% unique() %>% arrange((id_caller1)) %>% pull(lbl1) )
+  df$lbl2 <- factor( df$lbl2, levels = df %>% select(id_caller2, lbl2) %>% unique() %>% arrange(desc(id_caller2)) %>% pull(lbl2) )
+  df$lbl3 <- factor( df$lbl3, levels = df %>% select(id_caller3, lbl3) %>% unique() %>% arrange(desc(id_caller3)) %>% pull(lbl3) )
+  
+  p <- ggplot( df, aes(x = lbl1, y = med_F1, fill = med_F1) ) + 
+    geom_col() +
+    ylim( c(0, 1) ) +
+    #geom_text( aes(label = round(med_F1, 2)) ) +
+    #scale_fill_distiller( palette = 'Spectral' ) +
+    labs( x = 'caller1', fill = 'median\nF1' ) +
+    facet_grid( lbl3 ~ lbl2 ) +
+    theme_minimal() +
+    theme( axis.text.x = element_text(angle = 90) )
+  
+  return( p )
 }
