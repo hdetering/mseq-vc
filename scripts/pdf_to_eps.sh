@@ -10,8 +10,8 @@
 #------------------------------------------------------------------------------
 
 PDF=$1
-X_MAX_PX="2250"
-Y_MAX_PX="2625"
+X_MAX_PX="2250" # maximum width in pixels
+Y_MAX_PX="2625" # maximum height in pixels
 FORMAT="eps" # output format
 
 # calculate width/height ratio of max size
@@ -29,5 +29,5 @@ else
   x_px=$(awk -v y=${y_px} -v r=${pdf_dim_xratio} 'BEGIN{printf "%.0f",y*r}')
 fi
 
-# convert from PDF to TIFF
+# convert from PDF to target format
 convert -resize ${x_px}x${y_px} ${PDF} ${PDF%.pdf}.${FORMAT}

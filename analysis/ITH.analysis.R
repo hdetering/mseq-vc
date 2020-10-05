@@ -82,11 +82,6 @@ calculate_fst <- function( df_varcall ,
     group_by(name_caller, name_rep) %>%
     dplyr::summarise(fst = mean(fst))
     
-  data.frame(caller = c("Mutect2", "Mutect2", "Mutect2", "Mutect2","Mutect2", "Mutect2", "MultiSNV", "MultiSNV","MultiSNV", "MultiSNV", "MultiSNV", "MultiSNV"),
-     tumor = rep("S1.R1", 12),
-     sample_A = c("T1", "T1", "T2","T1", "T1", "T2","T1", "T1", "T2","T1", "T1", "T2" ),
-     sample_B = c("T2", "T3", "T3","T2", "T3", "T3","T2", "T3", "T3","T2", "T3", "T3" ),
-     mut = c(1,1,1,2,2,2,1,1,1,2,2,2),
-     fst = c("a","b","c","d","e","f","g","h","i","j","k","l")) 
+
   
 }
