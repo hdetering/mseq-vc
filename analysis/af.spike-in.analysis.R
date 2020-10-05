@@ -6,6 +6,38 @@ data_root="/Users/tama/Downloads/VAFs/"
 #       Obtain reported VAFs      #
 ####################################
 
+SOFTWARE="Bcftools"
+REPLICATE_ID="S1.R1"
+TAG="AD"
+# freq_data["21_9484558",]
+
+
+SOFTWARE="SomaticSniper"
+REPLICATE_ID="S1.R1"
+TAG="BCOUNT-DP"
+
+######################################
+### FOR SOMATIC SNIPER, WHEN THERE TWO ALTERNATIVE ALLELES CHECK THE REFERENCE GENOTYPE AND IF IT
+# CONTAINS THE first alternative allele (genotype 0/1 and 1/1) The I will take VAF for the second allele
+# TAKING ONLY SS=2 AND USE ALSO SET INFO  tag(variant)
+
+
+### APPLY ALL CHANGES TO DE NOVO TOO
+
+### Use SnooPerCorrected after Laura fix them  (gemres?)
+
+
+### VarScan: remove % from FREQ!!!not working?  9483746
+
+### SUBSTITUTE FUNCTION AD BY ANOTHER ONE
+
+SOFTWARE="VarScan"
+REPLICATE_ID="S1.R1"
+TAG="FREQ"
+
+
+#######################################
+
 getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
       print(SOFTWARE)
       print(REPLICATE_ID)
@@ -54,11 +86,14 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
     extract = TRUE,
     convertNA = TRUE)
     #remove % symbol and divide percentage to get proportion
-     tmp = freq_matrix %>% data.frame(stringsAsFactors = FALSE) %>% mutate(mut = rownames(freq_matrix)) %>% gather(key = "sample", value = "vaf", 1:ncol(freq_matrix)) %>%
-        mutate(vaf = as.numeric(sub("%","", vaf))/100)      %>%
-        spread(key = sample, value = vaf)
-      freq_matrix = as.matrix.data.frame(tmp %>% select(-c(mut)))
+     tmp = freq_matrix %>% data.frame(stringsAsFactors = FALSE) %>%
+       dplyr::mutate(mut = rownames(freq_matrix)) %>%
+       tidyr::gather(key = "sample", value = "vaf", 1:ncol(freq_matrix)) %>%
+        dplyr::mutate(vaf = as.numeric(sub("%","", vaf))/100)      %>%
+        tidyr::spread(key = sample, value = vaf)
+      freq_matrix <- as.matrix.data.frame(tmp %>% select(-c(mut)))
       rownames(freq_matrix) = tmp$mut
+      
     } else if (TAG=="VR-DP") {
     vr_matrix <- extract.gt(
     vcf,
@@ -100,7 +135,14 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
                               mask = FALSE, as.numeric = FALSE,
                               return.alleles = FALSE, IDtoRowNames = TRUE,
                               extract = TRUE, convertNA = TRUE) 
+    
+    
+    ###### THIS FUNCTION BELOW IS NOT DOING WHAT I WAS EXPECTING
+    # CHANGE ALSO IN de novo!!!!
     freq_matrix <- AD_frequency(freq_matrix, delim = ",", allele = 2L, sum_type = 1L, decreasing = 1L)
+    ######
+  
+    
       } else {
     freq_matrix <- extract.gt(
     vcf,
@@ -149,14 +191,14 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
       select (-FILTER,-STATUS)
     # --- VarScan ---------------------------------------------------------------
     } else if ( SOFTWARE == 'VarScan' ) {
-      freq_data <- vcf_table$gt %>% select(ChromKey,POS,gt_SS,Indiv) %>%
+      freq_data <- vcf_table$gt %>% dplyr::select(ChromKey,POS,gt_SS,Indiv) %>%
         dplyr::mutate(ChromKey=21) %>%
         dplyr::mutate(chrom_pos=paste(ChromKey,"_",POS,sep="")) %>%
-        inner_join(freq_data, by=c('chrom_pos')) %>%
+        dplyr::inner_join(freq_data, by=c('chrom_pos')) %>%
         dplyr::filter( FILTER == 'PASS') %>%
         dplyr::filter( gt_SS == 2 ) %>%
-        select (-FILTER,-gt_SS,-ChromKey,-POS,-Indiv) %>%
-        select (ChineseSon.T1,ChineseSon.T2,ChineseSon.T3,ChineseSon.T4,ChineseSon.T5,mut_info,chrom_pos)
+        dplyr::select(-FILTER,-gt_SS,-ChromKey,-POS,-Indiv) %>%
+        dplyr::select(ChineseSon.T1,ChineseSon.T2,ChineseSon.T3,ChineseSon.T4,ChineseSon.T5,mut_info,chrom_pos)
     # --- MultiSNV --------------------------------------------------------------
     } else if ( SOFTWARE == 'MultiSNV' ) {
         freq_data <- freq_data %>%
@@ -184,7 +226,7 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
         dplyr::filter(Indiv!="ChineseSon.H") %>%
         mutate(Indiv=sub("\\..*","",Indiv)) %>%
         inner_join(freq_data, by=c('chrom_pos','Indiv')) %>%
-        dplyr::filter(gt_GT!='0/0') %>%
+        dplyr::filter(gt_GT!='0/0' | gt_GT!='0|0') %>%
         dplyr::filter( INDEL == FALSE ) %>%
         select (-FILTER,-gt_GT,-ChromKey,-POS,-INDEL) %>%
         spread(key = Indiv,value = value, convert = FALSE) %>%
@@ -196,7 +238,7 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
         mutate(Indiv=sub("\\..*","",Indiv)) %>%
         inner_join(freq_data, by=c('chrom_pos','Indiv')) %>%
         #mutate(value = ifelse (gt_GT!='0/0',NA,value)) %>%
-        dplyr::filter( gt_GT != '0/0' ) %>%
+        dplyr::filter( gt_GT != '0/0' | gt_GT!='0|0' ) %>%
         dplyr::filter( grepl('^21', chrom_pos)) %>%
         select(-gt_GT) %>%
         spread(key = Indiv,value=value) %>%
@@ -210,7 +252,7 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
         mutate(Indiv=sub("\\..*","",Indiv)) %>%
         inner_join(freq_data, by=c('chrom_pos','Indiv')) %>%
         dplyr::filter( FILTER == 'PASS' ) %>%
-        dplyr::filter( gt_GT == '0/1' ) %>%
+        dplyr::filter( gt_GT == '0/1' | gt_GT == '0|1' ) %>%
         rowwise() %>% 
         mutate( rc_alt = as.numeric(str_split(gt_AD, ',', simplify=T)[2]) ) %>%
         dplyr::filter( rc_alt > 0 ) %>%
