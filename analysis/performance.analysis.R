@@ -124,7 +124,7 @@ calculate_performance_sample <- function (
   return( df_eval )
 }
 
-calculate_performance_freq <- function (
+calculate_performance_freq_rc <- function (
   df_vars, 
   df_caller, 
   df_rep,
@@ -159,6 +159,54 @@ calculate_performance_freq <- function (
     spread( type, n ) %>%
     mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
     mutate( F1 = 2*recall*precision/(recall+precision) )
+  # add caller information
+  df_eval <- df_eval %>%
+    inner_join( df_caller, by = c('id_caller') ) %>%
+    inner_join( df_rep, by = c('id_rep') ) %>%
+    #replace_na( list(precision = 0, F1 = 0) ) %>%
+    mutate( caller = name_caller )
+  
+  return( df_eval )
+}
+
+calculate_performance_freq_simvaf <- function (
+  df_vars, 
+  df_caller, 
+  df_rep,
+  df_mut_clone,
+  df_prev,
+  df_mut
+)
+{
+  
+  simulated_vafs = df_mut_clone %>%
+    full_join(df_prev) %>%
+    filter(is_present == 1) %>%
+    filter(prev>0) %>%
+    group_by(id_rep, id_mut, id_sample) %>% 
+    dplyr::summarise(af = sum(prev)) %>% 
+    mutate(af = af/2) %>%
+    mutate(freq_bin = case_when(af >= 0 & af < 0.1 ~ "[0-0.1)",
+                                af >= 0.1 & af < 0.2 ~ "[0.1-0.2)",
+                                af >= 0.2 & af < 0.3 ~ "[0.2-0.3)",
+                                af >= 0.3 & af < 0.4 ~ "[0.3-0.4)",
+                                af >= 0.4 & af < 0.5 ~ "[0.4-0.5)",
+                                af >= 0.5  ~ "[0.5-1]")) %>%
+    left_join(df_mut)
+    
+  
+  df_vars_freqbinned = df_vars %>% 
+    left_join(simulated_vafs) %>%
+    filter(type!="FP")
+    
+  
+  df_eval <- df_vars_freqbinned %>% select( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    group_by( id_caller, id_rep, id_sample, type, freq_bin ) %>%
+    dplyr::summarise( n = n() ) %>%
+    ungroup() %>%
+    complete( id_caller, id_rep, id_sample, type, freq_bin, fill = list(n = 0) ) %>%
+    spread( type, n ) %>%
+    mutate( recall = TP/(TP+FN) ) 
   # add caller information
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%

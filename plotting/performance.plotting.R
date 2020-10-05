@@ -225,7 +225,7 @@ plot_perf_min_sig <- function ( df )
   return( p_perf )
 }
  
-plot_perf_freq <- function ( df )
+plot_perf_freq_OLD <- function ( df )
 {
   # define order of variant callers (will affect plots)
   df = df %>% filter(caller!= "MuClone_perf")
@@ -265,7 +265,7 @@ plot_perf_freq <- function ( df )
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = freq_bin, y = recall, alpha = freq_bin) ) + 
     theme_minimal() +
-    geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
+    geom_boxplot( aes(fill = class, middle = mean(recall)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
     geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
@@ -285,7 +285,7 @@ plot_perf_freq <- function ( df )
   
   p_f1 <- ggplot( df, aes(x = freq_bin, y = F1, alpha = freq_bin) ) + 
     theme_minimal() +
-    geom_boxplot( aes(fill = class, middle = mean(precision)) ) + ylim( 0, 1 ) +
+    geom_boxplot( aes(fill = class, middle = mean(F1)) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
     geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
     labs( x = 'AF range')  +
@@ -309,6 +309,68 @@ plot_perf_freq <- function ( df )
   
   return( p_perf )
 }
+
+plot_perf_freq <- function ( df )
+{
+  # define order of variant callers (will affect plots)
+  df = df %>% filter(caller!= "MuClone_perf")
+  df$caller = factor(df$caller, levels = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan',
+    'MuClone', 
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F'))
+  df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
+  
+  # format caller names for better plotting
+  df <- df %>% mutate( lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T) )
+  df <- df %>% 
+    mutate(lbl = fct_recode(caller, 
+                            'Haplotype\nCaller' = 'HaplotypeCaller',
+                            'Mutect2\nmulti_F' = 'Mutect2_multi_F',
+                            'Mutect2\nsingle' = 'Mutect2_single',
+                            'Neu\nSomatic' = 'NeuSomatic',
+                            'Somatic\nSniper' = 'SomaticSniper',
+                            'SNV-\nPPILP' = 'SNV-PPILP'))
+  
+  # reorder callers by overall F1 score
+  df <- df %>% mutate( lbl = fct_reorder(lbl, -recall, .fun = mean, na.rm = T) )
+  
+  # subplots for grid layout
+  p_perf <- ggplot( df, aes(x = freq_bin, y = recall, alpha = freq_bin) ) + 
+    theme_minimal() +
+    geom_boxplot( aes(fill = class, middle = mean(recall)) ) + ylim( 0, 1 ) +
+    stat_summary( fun = 'mean', fill = 'white', shape = 22, alpha = 1 ) +
+    geom_point( data = df %>% group_by(freq_bin, lbl) %>% dplyr::summarise(m = mean(recall, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = freq_bin, y = m), color = 'gold', shape = 15, alpha = 1) + 
+    labs( x = 'AF range')  +
+    facet_wrap(~lbl, nrow = 1)+
+    theme( axis.text.x = element_text(angle = 45, hjust = 0.95, size = 6))+
+    guides( fill = 'none' , alpha = 'none')+
+    xlab("Simulated AF")
+  
+  
+  
+  # theme( legend.position = 'bottom' ) +
+  # guides( colour = 'none' )+
+  # scale_fill_discrete(name="")
+  
+ 
+  
+  
+  return( p_perf )
+}
+
 
 plot_perf_cvg <- function ( df )
 {

@@ -52,6 +52,7 @@ df_varcall <- readRDS( file.path(data_dir, 'RRSV.varcalls.rds') ) %>%
   mutate(chrom = as.character(chrom), id_caller = as.integer(id_caller))
 df_rc <- readRDS( file.path(data_dir, 'RRSV.readcounts.rds') )
 df_snp <- readRDS( file.path(data_dir, 'RRSV.snps.rds') ) 
+df_af <- readRDS( file.path(data_dir, 'RRSV.AFs.rds') ) 
 
 # determine status of variant calls for the per-sample performance 
 #   TP: true positives
@@ -71,7 +72,12 @@ saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 
 df_perf_sample <- calculate_performance_sample( df_vars, df_caller, df_rep )
-df_perf_freq <- calculate_performance_freq( df_vars, df_caller, df_rep, df_rc ) 
+df_perf_freq <- calculate_performance_freq_simvaf( df_vars, 
+                                                   df_caller, 
+                                                   df_rep,
+                                                   df_mut_clone,
+                                                   df_prev,
+                                                   df_mut ) 
 
 # write summary stats to file
 saveRDS( df_perf_sample, file.path(data_dir, 'df_perf_sample.rds') )
@@ -104,8 +110,8 @@ ggsave( file.path( plot_dir, 'spike-in.performance.sample.sig.pdf'), plot = p_pe
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.sig.png'), plot = p_perf, width = 12, height = 4)
 
 p_perf_freq <- plot_perf_freq( df_perf_freq )
-ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
-ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'spike-in.performance.freq.png'), plot = p_perf_freq, width = 12, height = 4)
 
 # determine status of variant calls for the per-tumor performance 
 #   TP: true positives
