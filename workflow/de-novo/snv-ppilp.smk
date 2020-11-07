@@ -3,7 +3,8 @@
 
 rule snv_ppilp:
   input:
-    "haplotypecaller.filt.vcf"
+    # "haplotypecaller.filt.vcf"
+    "haplotypecaller.vcf"
   output:
     "snv-ppilp.out.txt"
   log:
@@ -14,6 +15,7 @@ rule snv_ppilp:
     """
     time (
     python2 {config[tools][snv-ppilp]} \
+      -hc \
       -i {input} \
       -o {output}
     ) 1>{log} 2>&1

@@ -2,7 +2,7 @@
 # coding: utf-8
 
 import os
-ROOT = "/mnt/lustre/scratch/home/uvi/be/posadalustre/mseq-vc/de-novo"
+ROOT = "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo"
 
 configfile: os.path.join(ROOT, "flow", "config.json")
 #REPS, SAMS = glob_wildcards("sims/{replicate}/output/bam/{sample, R\d+}.sam")
