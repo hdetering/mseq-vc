@@ -43,11 +43,38 @@ plot_vaf_bar_empirical_sample <- function( df_vars, df_rc, df_sample ) {
   p_rc_alt <- ggplot( df, aes(x = vaf) ) + 
     geom_histogram( aes(y = ..density..), binwidth = 0.02, fill = 'grey' ) +
     geom_density( aes(color = id_sample) ) +
-    scale_color_manual( values = cbPal ) +
+    scale_color_manual( values = c('steelblue', 'red') ) +
     facet_grid( caller~patient, scale = 'free_y' ) +
     theme_dark() +
     theme( strip.text.y = element_text(angle = 0) )
   
+}
+
+# VAF spectrum for private vs. shared calls
+plot_vaf_bar_empirical_private <- function( df_vars, df_rc, df_pres ) {
+  
+  df <- df_vars %>%
+    inner_join( df_rc, by = c('id_sample', 'chrom', 'pos') ) %>%
+    unite( id_mut, id_sample, chrom, pos ) %>%
+    inner_join( df_pres, by = c('id_mut') ) %>%
+    mutate( private = rowSums(select(., -c(1:7))) == 1 ) %>%
+    select( caller = name_caller, id_mut, rc_ref, rc_alt, private ) %>%
+    mutate( vaf = if_else(rc_ref+rc_alt==0, 0, (rc_alt)/(rc_ref+rc_alt) ))
+  
+  p <- ggplot( df, aes(x = vaf) ) + 
+    geom_histogram( aes(fill = private), bins = 50, position = 'dodge' ) +
+    facet_wrap( ~caller, ncol = 4, scales = 'free_y' ) +
+    #ggtitle( 'VAF distribution for classes of variant calls' ) + 
+    labs( x = 'variant allele frequency' ) +
+    theme_minimal() +
+    scale_fill_manual(
+      labels = c('shared', 'private'),
+      values = c('steelblue', 'red')
+    ) +
+    theme( legend.position = 'bottom' ) +
+    labs( fill = '' )
+  
+  p
 }
 
 plot_vaf_bar_ybreak <- function( df_vars, df_rc, df_rep, lbl_caller, break_at = 5000 ) {

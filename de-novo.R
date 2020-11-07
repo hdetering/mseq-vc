@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------
 # author   : Harald Detering
 # email    : harald.detering@gmail.com
-# modified : 2019-11-03
+# modified : 2020-08-01
 #------------------------------------------------------------------------------
 
 require(tidyverse)
@@ -18,12 +18,15 @@ require(RColorBrewer)
 require(gridExtra)
 require(grid)
 require(broom) # tidy()
+require(rstatix) # wilcox_test()
+require(stringr)
 
 # source required scripts
 source( file.path('analysis', 'performance.analysis.R') )
 source( file.path('analysis', 'admixture.analysis.R') )
 source( file.path('analysis', 'similarity.analysis.R') )
 source( file.path('analysis', 'upset.analysis.R') )
+source( file.path('analysis', 'af.denovo.analysis.R') )
 source( file.path('plotting', 'performance.plotting.R') )
 source( file.path('plotting', 'rc_alt.plotting.R') )
 source( file.path('plotting', 'similarity.plotting.R') )
@@ -72,26 +75,7 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi'
-  ),
-  sh = c(
-    'Bt', 
-    'CM', 
-    'M1', 
-    'M2s', 
-    'Ns', 
-    'Sh', 
-    'SN', 
-    'SS',
-    'S2', 
-    'VD', 
-    'VS',
-    'MC', 
-    'MCp',
-    'SP',
-    'HC', 
-    'MS', 
-    'M2m'
+    'Mutect2_multi_F'
   ),
   class = c(rep('marginal', 11), rep('two-step', 3), rep('joint', 3))
 )
@@ -99,6 +83,17 @@ df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
 # do not show these callers in main plots
 noshow <- c( 'MuClone_perf' )
+
+# store data frames on file system
+# df_caller %>% saveRDS( file.path(data_dir, 'df_caller.rds') )
+# df_rep %>% saveRDS( file.path(data_dir, 'df_rep.rds') )
+# df_mut %>% saveRDS( file.path(data_dir, 'df_mut.rds') )
+# df_mut_sample %>% saveRDS( file.path(data_dir, 'df_mut_sample.rds') )
+# df_mut_clone %>% saveRDS( file.path(data_dir, 'df_mut_clone.rds') )
+# df_prev %>% saveRDS( file.path(data_dir, 'df_prev.rds') )
+# df_varcall %>% saveRDS( file.path(data_dir, 'df_varcall.rds') )
+# df_rc %>% saveRDS( file.path(data_dir, 'df_rc.rds') )
+# df_snp %>% saveRDS( file.path(data_dir, 'df_snp.rds') )
 
 ################################################################################
 # Performance metrics (recall, precision, F1 score)
@@ -120,21 +115,81 @@ saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 # calculate performance metrics
 # ------------------------------------------------------------------------------
 df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
-df_perf <- calculate_performance_sample( df_vars, df_caller, df_rep )
+
+df_perf_sample <- calculate_performance_sample( df_vars, df_caller, df_rep )
+df_perf_freq <- calculate_performance_freq( df_vars, df_caller, df_rep, df_rc ) 
+
 # write summary stats to file
-saveRDS( df_perf, file.path(data_dir, 'df_perf.rds') )
+saveRDS( df_perf_sample, file.path(data_dir, 'df_perf_sample.rds') )
+saveRDS( df_perf_freq, file.path(data_dir, 'df_perf_freq.rds') )
+
 
 # plot performance metrics
 # ------------------------------------------------------------------------------
-df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
+df_perf_freq <- readRDS( file.path(data_dir, 'df_perf_freq.rds') )
+
 # to look up median performance scores manually
-df_perf_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+df_perf_sample_agg <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+  group_by( name_caller ) %>% 
+  dplyr::summarise( 
+    med_rec = median(recall, na.rm = T),
+    med_pre = median(precision, na.rm = T),
+    med_F1  = median(F1, na.rm = T),
+    avg_rec = mean(recall, na.rm = T),
+    avg_pre = mean(precision, na.rm = T),
+    avg_F1  = mean(F1, na.rm = T))
+
+df_perf_freq_agg <- df_perf_freq %>%
+  group_by( name_caller ) %>%
+  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+
+p_perf_sample <- plot_perf_min( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
+
+p_perf_freq <- plot_perf_freq( df_perf_freq )
+ggsave( file.path( plot_dir, 'de-novo.performance.freq.pdf'), plot = p_perf_freq, width = 12, height = 12)
+ggsave( file.path( plot_dir, 'de-novo.performance.freq.png'), plot = p_perf_freq, width = 12, height = 12)
+
+# plot F1 score histograms to check if scores are normally-distributed
+#df_perf %>% ggplot( aes(x = F1) ) + geom_histogram() + facet_wrap( ~name_caller, ncol = 1 )
+#ggsave( filename = 'de-novo.F1.hist.pdf', width = 4, height = 20 )
+
+
+# determine status of variant calls for the per-tumor performance 
+#   TP: true positives
+#   FP: false positives
+#   FN: false negatives
+#-------------------------------------------------------------------------------
+df_vars_tumor <- classify_variants_pertumor( df_varcall, df_mut, df_mut_sample, df_caller )
+df_vars_tumor <- df_vars_tumor %>% 
+  left_join( df_snp ) %>% 
+  mutate( germline = (!is.na(id_mut)) ) %>% 
+  select( id_caller, id_rep, chrom, pos, type, germline )
+# store variant calls for later use
+saveRDS( df_vars_tumor, file.path(data_dir, 'df_vars_tumor.rds') )
+
+# calculate per-tumor performance metrics
+# ------------------------------------------------------------------------------
+df_vars_tumor <- readRDS( file.path(data_dir, 'df_vars_tumor.rds') )
+df_perf_tumor <- calculate_performance_tumor( df_vars_tumor, df_caller, df_rep )
+
+# write summary stats to file
+saveRDS( df_perf_tumor, file.path(data_dir, 'df_perf_tumor.rds') )
+
+# plot per-tumor performance metrics
+# ------------------------------------------------------------------------------
+df_perf_tumor <- readRDS( file.path(data_dir, 'df_perf_tumor.rds') )
+# to look up median performance scores manually
+df_perf_tumor_agg <- df_perf_tumor %>% 
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf <- plot_perf_min( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path( plot_dir, 'de-novo.performance.pdf'), plot = p_perf, width = 12, height = 4)
-ggsave( file.path( plot_dir, 'de-novo.performance.png'), plot = p_perf, width = 12, height = 4)
+p_perf_tumor <- plot_perf_min_sig( df_perf_tumor %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
+ggsave( file.path( plot_dir, 'de-novo.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
+
 
 # performance by coverage
 # ------------------------------------------------------------------------------
@@ -142,15 +197,29 @@ df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
 # to look up median performance scores manually
 df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller, cvg ) %>% 
-  summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
+  summarise( 
+    med_rec = median(recall, na.rm = T),
+    med_pre = median(precision, na.rm = T),
+    med_F1  = median(F1, na.rm = T),
+    avg_rec = mean(recall, na.rm = T),
+    avg_pre = mean(precision, na.rm = T),
+    avg_F1  = mean(F1, na.rm = T))
 
-p_perf <- plot_perf_cvg( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig2.de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
+p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+ggsave( file.path( plot_dir, 'de-novo.performance.cvg.mean.pdf'), plot = p_perf, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.cvg.mean.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.cvg.mean.png')))
 
-p_perf <- plot_perf_cvg_aux( df_perf %>% dplyr::filter( name_caller %in% c('MuClone', 'MuClone_perf') ) ) 
-ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.MuClone.pdf'), plot = p_perf, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'FigS17.de-novo.performance.cvg.Muclone.png'), plot = p_perf, width = 8, height = 10)
+ggsave( file.path( plot_dir, 'de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.cvg.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.cvg.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.cvg.png'), plot = p_perf, width = 8, height = 10)
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
@@ -162,9 +231,23 @@ df_perf_mix_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
 
 df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
-p_perf_tt <- plot_perf_admix( df )
-ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
-ggsave( file.path( plot_dir, 'Fig3.de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+p_perf_tt <- plot_perf_admix_sig( df )
+
+ggsave( file.path( plot_dir, 'de-novo.performance.admix.mean.pdf'), plot = p_perf_tt, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.admix.mean.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.mean.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+
+ggsave( file.path( plot_dir, 'de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.admix.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
 # ------------------------------------------------------------------------------
@@ -192,16 +275,45 @@ cor.test( df$F1, df$precision )
 # 0.685457 
 # ------------------------------------------------------------------------------
 
+
 # check for significant performance differences
 # ------------------------------------------------------------------------------
-
-# Kruskal-Wallis rank sum test
-kruskal.test(F1 ~ caller, data = df_perf)
+df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') ) %>%
+  dplyr::filter( !(caller %in% noshow) )
 
 p_perf_f1 <- plot_pairwise_wilcoxon( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 14, height = 4.5)
-ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 14, height = 4.5)
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 8, height = 10)
+ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 8, height = 10)
 
+# Global F1 scores (across conditions)
+#--------------------------------------
+# one-sided ANOVA (parametric)
+aov(F1 ~ caller, data = df_perf) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+kruskal.test(F1 ~ caller, data = df_perf)
+
+# F1 scores interaction with factors
+#------------------------------------
+# two-sided ANOVA (parametric)
+aov(F1 ~ caller * cvg, data = df_perf) %>% summary()
+aov(F1 ~ caller * ttype, data = df_perf) %>% summary()
+# Kruskal-Wallis rank sum test (non-parametric)
+df_perf %>%
+  group_by( name_caller ) %>%
+  kruskal_test( F1 ~ cvg ) %>%
+  adjust_pvalue( method = 'BH' )
+df_perf %>%
+  group_by( name_caller ) %>%
+  kruskal_test( F1 ~ ttype ) %>%
+  adjust_pvalue( method = 'BH' )
+
+p_cvg_sig <- plot_perf_cvg_sig( df_perf, 'anova' )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.anova.pdf', device = 'pdf', width = 12, height = 10 )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.anova.png', device = 'png', width = 12, height = 10 )
+
+p_cvg_sig <- plot_perf_cvg_sig( df_perf, 'kruskal.test' )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.kruskal.pdf', device = 'pdf', width = 12, height = 10 )
+ggsave( plot = p_cvg_sig, filename = 'de-novo.perf.cvg.kruskal.png', device = 'png', width = 12, height = 10 )
 
 ################################################################################
 # Variant allele freqs for TP, FP, FN variants
@@ -211,8 +323,8 @@ df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
 df_vars <- df_caller %>% inner_join( df_vars, by = 'id_caller' )
 
 p_vaf <- plot_vaf_bar_srsv( df_vars %>% dplyr::filter(!(name_caller %in% noshow)), df_rc, df_rep )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
-ggsave( file.path( plot_dir, 'Fig4.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS8.de-novo.vaf.bar.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
+ggsave( file.path( plot_dir, 'FigS8.de-novo.vaf.bar.png'), plot = p_vaf, device = png(), width = 8, height = 8 )
 
 # p_vaf <- plot_vaf_bar_ybreak( df_vars, df_rc, df_rep, 'SNooPer', 3000 )
 # ggsave( file.path( plot_dir, 'Fig3.de-novo.vaf.bar.SNooPer.pdf'), plot = p_vaf, device = pdf(), width = 8, height = 8 )
@@ -270,8 +382,8 @@ p_jacc_fp <- plot_jacc_idx( df_jacc_fp %>% mutate(caller1 = factor(caller1, leve
 ## multi-plot
 p_jacc_multi <- plot_jacc_idx_multi( p_jacc_tp, p_jacc_fn, p_jacc_fp )
 
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4.2 )
-ggsave( file.path( plot_dir, 'FigS3.de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4.2 )
+ggsave( file.path( plot_dir, 'de-novo.jaccard.pdf'), plot = p_jacc_multi, device = pdf(), width = 10.5, height = 4.2 )
+ggsave( file.path( plot_dir, 'de-novo.jaccard.png'), plot = p_jacc_multi, device = png(), width = 10.5, height = 4.2 )
 
 
 # hierarchical clustering based on varcalls
@@ -312,10 +424,10 @@ df_pres <- read.csv( file.path(data_dir, 'de-novo.muts_callsets.csv') )
 names(df_pres)[names(df_pres)=='SNV.PPILP'] <- 'SNV-PPILP'
 
 # plot variant calls in relation to TRUE somatic variants
-df <- df_pres
+df <- df_pres %>% as.data.frame()
 lbl_callers <- setdiff(callers$name_caller, noshow)
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS2.de-novo.upset.som')
+fn_pfx <- file.path( plot_dir, 'FigS12.de-novo.upset.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -325,10 +437,10 @@ dev.off()
 #system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
-df <- df_pres %>% dplyr::filter( type == 'FP' )
+df <- df_pres %>% dplyr::filter( type == 'FP' ) %>% as.data.frame()
 lbl_callers <- setdiff(callers$name_caller, noshow)
 n <- c(lbl_callers, 'TRUE_germline')
-fn_pfx <- file.path( plot_dir, 'FigS3.de-novo.upset.FP.GL')
+fn_pfx <- file.path( plot_dir, 'FigS9.de-novo.upset.FP.GL')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
@@ -338,10 +450,10 @@ dev.off()
 #system( sprintf('pdftoppm %s.pdf %s -png', fn_pfx, fn_pfx) )
 
 # plot FP variant calls in relation to germline vars
-df <- df_pres %>% dplyr::filter( type == 'TP' )
+df <- df_pres %>% dplyr::filter( type == 'TP' ) %>% as.data.frame()
 lbl_callers <- setdiff(callers$name_caller, noshow)
 n <- c(lbl_callers, 'TRUE_somatic')
-fn_pfx <- file.path( plot_dir, 'FigS4.de-novo.upset.TP.som')
+fn_pfx <- file.path( plot_dir, 'FigS13.de-novo.upset.TP.som')
 pdf( paste0(fn_pfx, '.pdf'), width = 8, height = 6, onefile = FALSE )
 plot_upset( df, n )
 dev.off()
