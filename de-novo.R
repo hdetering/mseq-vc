@@ -51,8 +51,8 @@ df_rc <- tbl( con, 'readcounts' ) %>% collect()
 df_snp <- tbl( con, 'snps' ) %>% collect()
 
 # rename Mutect2 sub-modes
-# df_caller <- df_caller %>% 
-#   mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") ) %>%
+df_caller <- df_caller %>% 
+  mutate( name_caller = str_replace(name_caller, "Mutect2$", "Mutect2_single") )
 #   mutate( name_caller = str_replace(name_caller, "Mutect2_mseq$", "Mutect2_multi") )
 
 # define variant calling tools and their properties
@@ -70,19 +70,20 @@ callers <- tibble(
     'Strelka2', 
     'VarDict', 
     'VarScan',
-    'MuClone', 
-    'MuClone_perf',
+    'MuClone',
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
     'Mutect2_multi_F'
   ),
-  class = c(rep('marginal', 11), rep('two-step', 3), rep('joint', 3))
+  class = c(rep('marginal', 11), rep('two-step', 2), rep('joint', 3))
 )
 df_caller <- df_caller %>%
   inner_join( callers, by = 'name_caller' )
+#df_caller <- df_caller %>% 
+#  mutate(name_caller = replace(name_caller, name_caller == 'Mutect2', 'Mutect2_single'))
 # do not show these callers in main plots
-noshow <- c( 'MuClone_perf' )
+#noshow <- c( 'MuClone_perf' )
 
 # store data frames on file system
 # df_caller %>% saveRDS( file.path(data_dir, 'df_caller.rds') )
@@ -108,7 +109,9 @@ df_vars <- classify_variants( df_varcall, df_mut, df_mut_sample, df_caller )
 df_vars <- df_vars %>% 
   left_join( df_snp, by = c('id_rep', 'chrom', 'pos') ) %>% 
   mutate( germline = (!is.na(id_mut)) ) %>%
-  select( id_caller, id_rep, id_sample, chrom, pos, type, germline )
+  select( id_caller, id_rep, id_sample, chrom, pos, type, germline ) %>%
+  # NOTE: germline vars can coincide with somatic ones!
+  dplyr::filter( !(type %in% c('FN','TP') & germline == TRUE) ) 
 # store variant calls for later use
 saveRDS( df_vars, file.path(data_dir, 'df_vars.rds') )
 
@@ -130,7 +133,8 @@ df_perf_sample <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 df_perf_freq <- readRDS( file.path(data_dir, 'df_perf_freq.rds') )
 
 # to look up median performance scores manually
-df_perf_sample_agg <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+#df_perf_sample_agg <- df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+df_perf_sample_agg <- df_perf_sample %>% 
   group_by( name_caller ) %>% 
   dplyr::summarise( 
     med_rec = median(recall, na.rm = T),
@@ -144,7 +148,8 @@ df_perf_freq_agg <- df_perf_freq %>%
   group_by( name_caller ) %>%
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_sample <- plot_perf_min( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
+#p_perf_sample <- plot_perf_min_sig( df_perf_sample %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf_sample <- plot_perf_min_sig( df_perf_sample )
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
@@ -186,16 +191,16 @@ df_perf_tumor_agg <- df_perf_tumor %>%
   group_by( name_caller ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-p_perf_tumor <- plot_perf_min_sig( df_perf_tumor %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf_tumor <- plot_perf_min_sig( df_perf_tumor )
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.pdf'), plot = p_perf_tumor, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'de-novo.performance.tumor.png'), plot = p_perf_tumor, width = 12, height = 4)
 
 
 # performance by coverage
 # ------------------------------------------------------------------------------
-df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 # to look up median performance scores manually
-df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+df_perf_cvg_agg <- df_perf %>% 
   group_by( name_caller, cvg ) %>% 
   summarise( 
     med_rec = median(recall, na.rm = T),
@@ -205,14 +210,7 @@ df_perf_cvg_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>%
     avg_pre = mean(precision, na.rm = T),
     avg_F1  = mean(F1, na.rm = T))
 
-p_perf <- plot_perf_cvg_sig( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
-ggsave( file.path( plot_dir, 'de-novo.performance.cvg.mean.pdf'), plot = p_perf, width = 8, height = 10)
-# convert PDF to PNG (R png device does not support fonts)
-# command works on Linux (MacOS not tested)
-system(paste('convert -density 300',
-             file.path(plot_dir, 'de-novo.performance.cvg.mean.pdf'),
-             '-quality 90', file.path(plot_dir, 'de-novo.performance.cvg.mean.png')))
-
+p_perf <- plot_perf_cvg_sig( df_perf )
 ggsave( file.path( plot_dir, 'de-novo.performance.cvg.pdf'), plot = p_perf, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
@@ -223,30 +221,50 @@ system(paste('convert -density 300',
 
 # performance by admixture regime
 # ------------------------------------------------------------------------------
-df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') )
+df_perf <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 # to look up median performance scores manually
 df_perf_mix_agg <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
   group_by( name_caller, ttype ) %>% 
   summarise( med_rec = median(recall), med_pre = median(precision), med_F1 = median(F1) )
 
-df <- df_perf %>% dplyr::filter(!(name_caller %in% noshow)) %>% 
+df <- df_perf %>%
   mutate( ttype = fct_recode(ttype, 'high'='us', 'med'='ms', 'low'='hs') )
 p_perf_tt <- plot_perf_admix_sig( df )
-
-ggsave( file.path( plot_dir, 'de-novo.performance.admix.mean.pdf'), plot = p_perf_tt, width = 8, height = 10)
-# convert PDF to PNG (R png device does not support fonts)
-# command works on Linux (MacOS not tested)
-system(paste('convert -density 300',
-             file.path(plot_dir, 'de-novo.performance.admix.mean.pdf'),
-             '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.mean.png')))
-#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
-
 ggsave( file.path( plot_dir, 'de-novo.performance.admix.pdf'), plot = p_perf_tt, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
 system(paste('convert -density 300',
              file.path(plot_dir, 'de-novo.performance.admix.pdf'),
              '-quality 90', file.path(plot_dir, 'de-novo.performance.admix.png')))
+#ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
+
+# performance by VAF
+# ------------------------------------------------------------------------------
+df_vars <- readRDS( file.path(data_dir, 'df_vars.rds') )
+df_vars_rc <- df_vars %>%
+  inner_join( df_rc, by = c('id_rep', 'id_sample', 'chrom', 'pos') ) %>%
+  mutate( vaf = rc_alt / (rc_alt+rc_ref) )
+df_perf <- df_vars_rc %>%
+  dplyr::filter( vaf > 0 & vaf < 1 ) %>%
+  group_by( id_caller, id_rep, id_sample, type, freq_bin = cut(vaf, seq(0, 1, by = 0.1)) ) %>%
+  summarize( n = n() ) %>%
+  pivot_wider( names_from = type, values_from = n, values_fill = 0 ) %>%
+  mutate( recall = TP/(TP+FN), precision = TP/(TP+FP) ) %>%
+  mutate( F1 = 2*recall*precision/(recall+precision) ) %>%
+  inner_join( df_caller, by = 'id_caller' ) %>%
+  rename( caller = name_caller )
+p_perf_vaf <- plot_perf_freq( df_perf )
+# to look up median performance scores manually
+df_perf_vaf_agg <- df_perf %>% 
+  group_by( caller, freq_bin ) %>% 
+  summarise( m_rec = mean(recall, na.rm=T), m_pre = mean(precision, na.rm=T), m_F1 = mean(F1, na.rm=T) )
+
+ggsave( file.path( plot_dir, 'de-novo.performance.vaf.pdf'), plot = p_perf_vaf, width = 16, height = 8)
+# convert PDF to PNG (R png device does not support fonts)
+# command works on Linux (MacOS not tested)
+system(paste('convert -density 300',
+             file.path(plot_dir, 'de-novo.performance.vaf.pdf'),
+             '-quality 90', file.path(plot_dir, 'de-novo.performance.vaf.png')))
 #ggsave( file.path( plot_dir, 'de-novo.performance.admix.png'), plot = p_perf_tt, width = 8, height = 10)
 
 # correlation between F1 score and recall, precision
@@ -278,10 +296,9 @@ cor.test( df$F1, df$precision )
 
 # check for significant performance differences
 # ------------------------------------------------------------------------------
-df_perf <- readRDS( file.path(data_dir, 'df_perf.rds') ) %>%
-  dplyr::filter( !(caller %in% noshow) )
+df_perf <- readRDS( file.path(data_dir, 'df_perf_sample.rds') )
 
-p_perf_f1 <- plot_pairwise_wilcoxon( df_perf %>% dplyr::filter(!(name_caller %in% noshow)) )
+p_perf_f1 <- plot_pairwise_wilcoxon( df_perf )
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.pdf'), plot = p_perf_f1, width = 8, height = 10)
 ggsave( file.path(plot_dir, 'de-novo.f1.pwt.png'), plot = p_perf_f1, width = 8, height = 10)
 
