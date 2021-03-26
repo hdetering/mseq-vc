@@ -16,8 +16,14 @@ filterVcf <- function( vcf, caller, mseq ) {
       mutate(id_sample = Indiv)
   } 
   # --- Pre-filtered variants -------------------------------------------------
-  else if ( caller %in% c('CaVEMan', 'Shimmer', 'SomaticSniper') ) {
+  else if ( caller %in% c('CaVEMan', 'Shimmer') ) {
     vcf$fix %>%
+      filterSetField( mseq )
+  }
+  # --- SomaticSniper ---------------------------------------------------------
+  else if ( caller == 'SomaticSniper' ) {
+    vcf$fix %>%
+      dplyr::filter( gt_SS == 2 ) %>%
       filterSetField( mseq )
   }
   # --- Mutect, Strelka -------------------------------------------------------
@@ -76,7 +82,7 @@ filterVcf <- function( vcf, caller, mseq ) {
     vcf$fix %>% 
       dplyr::filter( FILTER == 'PASS' ) %>%
       inner_join(vcf$gt, by=c('ChromKey', 'POS')) %>%
-      dplyr::filter(Indiv != 'RN' & gt_GT == '0/1') %>%
+      dplyr::filter(Indiv != 'RN' & (gt_GT == '0/1' | gt_GT == '0|1') ) %>%
       mutate( id_sample = Indiv ) %>%
       rowwise() %>% 
       mutate( rc_alt = as.numeric(str_split(gt_AD, ',', simplify=T)[2]) ) %>%

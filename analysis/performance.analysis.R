@@ -94,7 +94,7 @@ calculate_performance_tumor <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    #replace_na( list(precision = 0, F1 = 0) ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )
@@ -118,7 +118,7 @@ calculate_performance_sample <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    #replace_na( list(precision = 0, F1 = 0) ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )
@@ -163,7 +163,7 @@ calculate_performance_freq <- function (
   df_eval <- df_eval %>%
     inner_join( df_caller, by = c('id_caller') ) %>%
     inner_join( df_rep, by = c('id_rep') ) %>%
-    #replace_na( list(precision = 0, F1 = 0) ) %>%
+    replace_na( list(precision = 0, F1 = 0) ) %>%
     mutate( caller = name_caller )
   
   return( df_eval )
