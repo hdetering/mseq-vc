@@ -172,7 +172,7 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
       freq_data <- vcf_table$gt %>% select(ChromKey,POS,gt_GT,Indiv) %>%
         dplyr::mutate(chrom_pos=paste("chr",ChromKey,"_",POS,sep="")) %>%
         inner_join(freq_data, by=c('chrom_pos')) %>%
-        dplyr::filter( gt_GT != '0/0' ) %>%
+        dplyr::filter( gt_GT != '0/0' | gt_GT!='0|0' ) %>%
         select (-FILTER,-gt_GT,-ChromKey,-POS,-Indiv)  %>%
         select (R1,R2,R3,R4,R5,mut_info,chrom_pos)
     # --- Mutect2 multi-sample --------------------------------------------------
@@ -181,7 +181,7 @@ getVAFs <- function(SOFTWARE, TAG, REPLICATE_ID){
         dplyr::mutate(chrom_pos=paste("chr",ChromKey,"_",POS,sep="")) %>%
         inner_join(freq_data, by=c('chrom_pos')) %>%
         dplyr::filter( FILTER == 'PASS' ) %>%
-        dplyr::filter( gt_GT == '0/1' ) %>%
+        dplyr::filter( gt_GT == '0/1' | gt_GT!='0|1' ) %>%
         rowwise() %>% 
         mutate( rc_alt = as.numeric(str_split(gt_AD, ',', simplify=T)[2]) ) %>%
         dplyr::filter( rc_alt > 0 ) %>%

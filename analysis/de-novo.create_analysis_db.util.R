@@ -78,7 +78,7 @@ filterVcf <- function( vcf, caller, mseq ) {
       mutate( id_sample = Indiv )
   }
   # --- Mutect2 multi-sample --------------------------------------------------
-  else if ( caller == 'Mutect2_mseq' ) {
+  else if ( caller == 'Mutect2_multi_F' ) {
     vcf$fix %>% 
       dplyr::filter( FILTER == 'PASS' ) %>%
       inner_join(vcf$gt, by=c('ChromKey', 'POS')) %>%
