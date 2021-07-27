@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+data_dir  = "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/de-novo/data"#!/usr/bin/env Rscript
 # vim: syntax=R tabstop=2 expandtab
 # coding: utf-8
 #------------------------------------------------------------------------------
@@ -38,17 +38,28 @@ plot_dir <- file.path( 'plot', 'de-novo' )
 
 # connection to analysis database
 #-------------------------------------------------------------------------------
-db <- file.path( data_dir, 'analysis.db' )
-con <- DBI::dbConnect(RSQLite::SQLite(), db)
-df_rep <- tbl( con, 'replicates' ) %>% collect()
-df_mut <- tbl( con, 'mutations' ) %>% collect()
-df_mut_sample <- tbl( con, 'mutations_samples' ) %>% collect()
-df_mut_clone <- tbl( con, 'clones_mutations' ) %>% collect()
-df_prev <- tbl( con, 'clones_prev' ) %>% collect()
-df_caller <- tbl( con, 'callers' ) %>% collect()
-df_varcall <- tbl( con, 'varcalls' ) %>% collect()
-df_rc <- tbl( con, 'readcounts' ) %>% collect()
-df_snp <- tbl( con, 'snps' ) %>% collect()
+# db <- file.path( data_dir, 'analysis.db' )
+# con <- DBI::dbConnect(RSQLite::SQLite(), db)
+# df_rep <- tbl( con, 'replicates' ) %>% collect()
+# df_mut <- tbl( con, 'mutations' ) %>% collect()
+# df_mut_sample <- tbl( con, 'mutations_samples' ) %>% collect()
+# df_mut_clone <- tbl( con, 'clones_mutations' ) %>% collect()
+# df_prev <- tbl( con, 'clones_prev' ) %>% collect()
+# df_caller <- tbl( con, 'callers' ) %>% collect()
+# df_varcall <- tbl( con, 'varcalls' ) %>% collect()
+# df_rc <- tbl( con, 'readcounts' ) %>% collect()
+# df_snp <- tbl( con, 'snps' ) %>% collect()
+
+
+df_rep <- readRDS(paste0(data_dir, "/df_rep.rds"))
+df_mut <- readRDS(paste0(data_dir, "/df_mut.rds"))
+df_mut_sample <- readRDS(paste0(data_dir, "/df_mut_sample.rds"))
+df_mut_clone <- readRDS(paste0(data_dir, "/df_mut_clone.rds"))
+df_prev <- readRDS(paste0(data_dir, "/df_prev.rds"))
+df_caller <- readRDS(paste0(data_dir, "/df_caller.rds"))
+df_varcall <- readRDS(paste0(data_dir, "/df_varcall.rds"))
+df_rc <- readRDS(paste0(data_dir, "/df_rc.rds"))
+df_snp <- readRDS(paste0(data_dir, "/df_snp.rds"))
 
 # rename Mutect2 sub-modes
 # df_caller <- df_caller %>% 

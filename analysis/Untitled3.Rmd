@@ -1,0 +1,18 @@
+---
+title: "mdtest"
+author: "Laura Tomas"
+date: "10/8/2020"
+output: html_document
+params:
+  cell: foo
+  concentration: foo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+params$cell
+```
+
