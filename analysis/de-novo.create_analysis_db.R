@@ -4,17 +4,19 @@ require(RSQLite)
 require(yaml)
 require(vcfR)
 
-source('SRSV_create_analysis_db.util.R')
+source('de-novo.create_analysis_db.util.R')
 
 # connection to database
-db <- 'data/SRSV/analysis.db'
+db <- 'data/de-novo/analysis.db'
 con <- DBI::dbConnect(RSQLite::SQLite(), db)
 
 # path to simulations output
-sims_root <- "/home/uvi/be/hde/lustre/m-seq_varcall/sims"
+#sims_root <- "/home/uvi/be/hde/lustre/m-seq_varcall/sims"
+sims_root <- "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/sims"
 sims_reps <- dir( sims_root, include.dirs = F )
 # path to variant calling results
-data_root <- "/home/uvi/be/hde/lustre/m-seq_varcall/data"
+#data_root <- "/home/uvi/be/hde/lustre/m-seq_varcall/data"
+data_root <- "/mnt/netapp2/posadalab2/uvibehde/mseq-vc/de-novo/data"
 data_reps <- dir( data_root, include.dirs = F )
 
 #------------------------------------------------------------------------------
@@ -254,23 +256,23 @@ df_mut_sample <- tbl_mut_sample %>% collect()
 
 # specify for which tools to import data (will delete existing records first)
 do_import_for <- c(
-  # 'HaplotypeCaller',
-  # 'Bcftools',
-  # 'CaVEMan',
-  # 'MuTect1',
-  # 'Mutect2',
-  # 'NeuSomatic',
-  # 'Shimmer',
-  # 'SNooPer',
-  # 'SomaticSniper',
+  'HaplotypeCaller',
+  'Bcftools',
+  'CaVEMan',
+  'MuTect1',
+  'Mutect2',
+  'NeuSomatic',
+  'Shimmer',
+  'SNooPer',
+  'SomaticSniper',
   # 'Strelka1',
-  # 'Strelka2',
-  # 'VarDict',
-  # 'VarScan',
-  # 'MultiSNV',
-  # 'SNV-PPILP',
-  # 'MuClone',
-  'Mutect2_mseq'
+  'Strelka2',
+  'VarDict',
+  'VarScan',
+  'MultiSNV',
+  'SNV-PPILP',
+  'MuClone', 
+  'Mutect2_multi_F'
 )
 
 # loop over callers  
@@ -305,7 +307,7 @@ for ( caller in do_import_for ) {
                                  NeuSomatic = 'neusomatic.vcf',
                                  SNooPer = 'snooper.fix.vcf',
                                  SomaticSniper = 'somaticsniper.vcf',
-                                 Strelka1 = 'strelka1.fix.vcf',
+#                                 Strelka1 = 'strelka1.fix.vcf',
                                  Strelka2 = 'strelka2.fix.vcf',
                                  Shimmer = 'shimmer.vcf',
                                  VarDict = 'vardict.vcf',
@@ -313,7 +315,7 @@ for ( caller in do_import_for ) {
                                  MultiSNV = 'multisnv.vcf',
                                  `SNV-PPILP` = 'snv-ppilp.vcf',
                                  MuClone = 'muclone.vcf',
-                                 Mutect2_mseq = 'mutect2m.vcf'
+                                 Mutect2_multi_F = 'mutect2m.vcf'
                          ) )
     
     
@@ -323,12 +325,12 @@ for ( caller in do_import_for ) {
       
       vars <- getVariantCalls( fn_vcf, caller ) %>%
         mutate( name_caller = caller, name_rep = rep ) %>%
-        select( name_caller, id_rep, id_sample, chrom = CHROM, pos = POS )
+        select( name_caller, name_rep, id_sample, chrom = CHROM, pos = POS )
       df_vars_caller <- df_vars_caller %>% rbind( vars )
       
       vars_mseq <- getVariantCalls( fn_vcf, caller, mseq = TRUE ) %>%
         mutate( name_caller = caller, name_rep = rep ) %>%
-        select( name_caller, id_rep, id_sample, chrom = CHROM, pos = POS )
+        select( name_caller, name_rep, id_sample, chrom = CHROM, pos = POS )
       df_vars_caller_mseq <- df_vars_caller_mseq %>% rbind( vars_mseq )
     }
     
@@ -361,7 +363,7 @@ callers <- c(
   'MultiSNV',
   'SNV-PPILP',
   'MuClone',
-  'Mutect2_mseq'
+  'Mutect2_multi_F'
 )
 
 fn_callers <- sprintf( 'df_vars.%s.csv', tolower( callers ) )

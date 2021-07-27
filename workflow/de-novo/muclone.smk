@@ -3,13 +3,15 @@
 
 from glob import glob
 #BAMS_TUM = glob_wildcards("data/%s/{sample,R\d+\.bam}" % REPS)
-SAMPLES = ['R1', 'R2', 'R3', 'R4', 'R5']
+MUCLONE_SAMPLES = ['R1', 'R2', 'R3', 'R4', 'R5']
+if 'sid' in config:
+  MUCLONE_SAMPLES = config['sid'].split()
 
 rule muclone_tsv:
   input:
-    rc=["sim/%s.vars.csv" % x for x in SAMPLES]
+    rc=["sim/%s.vars.csv" % x for x in MUCLONE_SAMPLES]
   output:
-    tsv=["muclone/%s.tsv" % x for x in SAMPLES]
+    tsv=["muclone/%s.tsv" % x for x in MUCLONE_SAMPLES]
   threads: 1
   run:
     for i in range(len(input.rc)):
@@ -28,6 +30,7 @@ rule muclone_tsv:
 
 rule muclone_yaml:
   input:
+    # vcf="mutect2/{sample}.raw.vcf"
     vcf="mutect2/{sample}.raw.vcf"
   output:
     yml="muclone/{sample}.yaml"
@@ -53,7 +56,7 @@ rule muclone_pyclone2clust:
   input:
     clusters="pyclone/result.clusters.tsv"
   output:
-    ["muclone/tmp/%s_cluster2Phi.tsv" % x for x in SAMPLES]
+    ["muclone/tmp/%s_cluster2Phi.tsv" % x for x in MUCLONE_SAMPLES]
   threads: 1
   run:
     import pandas as pd
@@ -76,8 +79,8 @@ rule muclone_pyclone2clust:
 
 rule muclone_conf:
   input:
-    yaml=["muclone/%s.yaml" % x for x in SAMPLES],
-    tsv=["muclone/tmp/%s_cluster2Phi.tsv" % x for x in SAMPLES]
+    yaml=["muclone/%s.yaml" % x for x in MUCLONE_SAMPLES],
+    tsv=["muclone/tmp/%s_cluster2Phi.tsv" % x for x in MUCLONE_SAMPLES]
   output:
     cfg="muclone/config.yaml"
   run:
@@ -90,15 +93,16 @@ rule muclone_conf:
         'flat_cluster_files': "tmp/%s_cluster2Phi.tsv" % x,
         'tumour_content': { 'value': 1.0 },
         'error_rate': 0.01
-        } for x in SAMPLES}
+        } for x in MUCLONE_SAMPLES}
     }
     with open(output.cfg, 'wt') as f_out:
       f_out.write( yaml.dump(cfg) )
 
 rule muclone:
   input:
-    yml=["muclone/%s.yaml" % x for x in SAMPLES],
+    yml=["muclone/%s.yaml" % x for x in MUCLONE_SAMPLES],
     cfg="muclone/config.yaml",
+    # vcf="mutect2.vcf"
     vcf="mutect2.vcf"
   output: "muclone.vcf"
   log:    "log/muclone.log"
@@ -110,7 +114,7 @@ rule muclone:
     time (
     
     set +u
-    source activate {config[tools][muclone_dir]}/env
+    conda activate {config[tools][muclone_dir]}/env
     export PYTHONPATH="{config[tools][muclone_dir]}/src:$PYTHONPATH"
     set -u
 

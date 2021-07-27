@@ -249,7 +249,7 @@ plot_perf_freq_OLD <- function ( df )
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
   # format caller names for better plotting
-  df <- df %>% mutate( lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T) )
+  #df <- df %>% mutate( lbl = gsub("(?<=[a-z]{5}|-)([A-Z])", "\n\\1", df$caller, perl = T) )
   df <- df %>% 
     mutate(lbl = fct_recode(caller, 
                             'Haplotype\nCaller' = 'HaplotypeCaller',
@@ -849,7 +849,7 @@ plot_perf_min_internal <- function ( df )
     add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
     add_xy_position( x = 'caller', step.increase = 0 ) %>%
     mutate( y.position = y.position + 0.02 )
-  
+
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = caller, y = recall) ) + 
     theme_minimal() +

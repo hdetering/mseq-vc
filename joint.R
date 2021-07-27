@@ -61,9 +61,12 @@ callers = c(
 df_perf_dn <- readRDS( file.path(data_dn, 'df_perf_tumor.rds') ) %>%
   dplyr::filter( caller %in% callers )
 df_perf_si <- readRDS( file.path(data_si, 'df_perf_tumor.rds') )
+#w <- 6 # plotting width in inches
 p_perf_tum <- plot_perf_min( df_perf_dn, df_perf_si )
 ggsave( file.path( plot_dir, 'joint.performance.tumor.pdf'), plot = p_perf_tum, width = 12, height = 8)
 ggsave( file.path( plot_dir, 'joint.performance.tumor.png'), plot = p_perf_tum, width = 12, height = 8)
+# this gives a HORRIBLE result! (all elements way too large)
+#ggsave( file.path( plot_dir, 'joint.performance.tumor.tif'), plot = p_perf_tum, device = 'tiff', width = w, height = 2/3*w, dpi = 300)
 
 # Performance by sample
 #-------------------------------------------------------------------------------
