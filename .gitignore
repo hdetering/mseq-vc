@@ -112,4 +112,4 @@ venv.bak/
 .DS_Store
 mseq-vc.Rproj
 
-
+.Rhistory

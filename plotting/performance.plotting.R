@@ -20,7 +20,8 @@ plot_perf_min_OLD <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi_F'))
+    'Mutect2_multi_F',
+    'Mutect2_MOSS'))
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
 
   # subplots for grid layout
@@ -89,7 +90,8 @@ plot_perf_min_mean <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi_F'))
+    'Mutect2_multi_F',
+    'Mutect2_Moss', 'Mutect2_MOSS', 'Strelka2_MOSS'))
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
   # subplots for grid layout
@@ -151,7 +153,8 @@ plot_perf_min_sig <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller',
     'MultiSNV',
-    'Mutect2_multi_F'))
+    'Mutect2_multi_F',
+    'Mutect2_MOSS'))
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
 
   # reorder callers by overall F1 score
@@ -172,12 +175,12 @@ plot_perf_min_sig <- function ( df )
   #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
   #   add_xy_position( x = 'caller', step.increase = 0 ) %>%
   #   mutate( y.position = y.position + 0.02 )
-  gwc_f1_wilcox <- df %>%
-    wilcox_test( ., F1 ~ caller, comparisons = pairs ) %>%
-    adjust_pvalue( method = 'bonferroni' ) %>%
-    add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
-    add_xy_position( x = 'caller', step.increase = 0 ) %>%
-    mutate( y.position = y.position + 0.02 )
+  # gwc_f1_wilcox <- df %>%
+  #   wilcox_test( ., F1 ~ caller, comparisons = pairs ) %>%
+  #   adjust_pvalue( method = 'bonferroni' ) %>%
+  #   add_significance( p.col = 'p.adj', output.col = 'sig_sym' ) %>%
+  #   add_xy_position( x = 'caller', step.increase = 0 ) %>%
+  #   mutate( y.position = y.position + 0.02 )
 
   # subplots for grid layout
   p_rec <- ggplot( df, aes(x = caller, y = recall) ) +
@@ -207,7 +210,7 @@ plot_perf_min_sig <- function ( df )
     geom_boxplot( aes(fill = class) ) + ylim( 0, 1 ) +
     stat_summary( fun = 'mean', fill = 'white', shape = 22 ) +
     geom_point( data = df %>% group_by(caller) %>% dplyr::summarise(m = mean(F1, na.rm = T)) %>% dplyr::filter(m==max(m, na.rm = T)), aes(x = caller, y = m), color = 'gold', shape = 15) + 
-    stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
+    # stat_pvalue_manual( data = gwc_f1_wilcox, label = 'p.adj.signif', tip.length = .01, size = 2 ) +
     scale_y_continuous( expand = expansion(mult = c(0.00, 0.05)) ) +
     labs( x = '', fill = '' )  +
     theme( axis.text.x = element_text(angle = 45, hjust = 0.95) ) +
@@ -834,7 +837,8 @@ plot_perf_min_internal <- function ( df )
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi_F'))
+    'Mutect2_multi_F',
+    'Mutect2_MOSS'))
   df$class <- factor( df$class, levels = c('marginal', 'two-step', 'joint') )
   
   # reorder callers by overall F1 score

@@ -1,4 +1,6 @@
-data_dir  = "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/de-novo/data"#!/usr/bin/env Rscript
+data_dir  = "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/de-novo/data"
+
+#!/usr/bin/env Rscript
 # vim: syntax=R tabstop=2 expandtab
 # coding: utf-8
 #------------------------------------------------------------------------------
@@ -56,10 +58,116 @@ df_mut <- readRDS(paste0(data_dir, "/df_mut.rds"))
 df_mut_sample <- readRDS(paste0(data_dir, "/df_mut_sample.rds"))
 df_mut_clone <- readRDS(paste0(data_dir, "/df_mut_clone.rds"))
 df_prev <- readRDS(paste0(data_dir, "/df_prev.rds"))
-df_caller <- readRDS(paste0(data_dir, "/df_caller.rds"))
+df_caller <- readRDS(paste0(data_dir, "/df_caller.rds")) #%>% mutate(class = class.x) %>% select(id_caller, name_caller, class) %>% rbind(data.frame(id_caller = c(17,18), name_caller = c("Mutect2_MOSS", "Strelka2_MOSS"), class =c("joint", "joint")) )
 df_varcall <- readRDS(paste0(data_dir, "/df_varcall.rds"))
 df_rc <- readRDS(paste0(data_dir, "/df_rc.rds"))
 df_snp <- readRDS(paste0(data_dir, "/df_snp.rds"))
+df_af <- readRDS(paste0(data_dir, "/SRSV.AFs.rds"))
+
+### Adding MOSS
+
+df_caller = df_caller %>% mutate(class = class.x) %>% select(id_caller, name_caller, class) %>%rbind(data.frame(id_caller =c(7,17, 18), name_caller = c("Mutect2", "Mutect2_Moss", "Strelka2_Moss"), class = c("marginal", "joint", "joint")))
+
+
+vcfdir = "/Volumes/GoogleDrive/My\ Drive/PROJECTS/TestingVC_withTama/07_WORKDIR/VCFs_SRSV/"
+vcfheader= c("chrom", "pos", "Id", "ref", "alt", "Qual", "Filter", "Info", "Format_Structure" )
+
+tumors = list.files(vcfdir, pattern = "post_filter.vcf") %>% str_remove("\\..*") %>% unique()
+samples = paste0("R", seq(1:5))
+df_af_moss = data.frame(id_rep = as.integer(), id_sampel = as.character(), id_caller = as.integer(), crom = as.character(), pos = as.integer(), af = as.numeric())
+
+# Mutect2 + MOSS
+
+caller = "Mutect2_Moss"
+
+for (tumor in tumors){
+  vcf =read.table(paste(vcfdir, tumor,".All.-0.693.Mutect2MOSS.post_filter.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "ChineseSon.H", thissamples )
+  vcs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>%
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>%
+    filter(TCOUNT>0)  %>% # Variant present if at least one alternative read
+
+    separate(sample, c("sample", "tumor"), sep = "\\.") %>% 
+    inner_join(df_rep, by = c('tumor' = 'name_rep')) %>%
+    mutate(id_caller = 17) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  
+  afs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>% 
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>% 
+    filter(as.integer(TCOUNT)>0) %>% 
+    mutate(af = as.integer(TCOUNT)/as.integer(DP)) %>%
+    separate(sample, c("sample", "tumor"), sep = "\\.") %>% 
+    inner_join(df_rep, by = c('tumor' = 'name_rep')) %>%
+    mutate(id_caller = 17) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos, af   ) 
+    
+
+
+  df_varcall = rbind(df_varcall, vcs)
+  df_af_moss= rbind(df_af_moss, afs)
+  
+
+  
+}
+
+# Mutect2 + Strelka
+
+caller = "Mutect2_Strelka"
+
+
+for (tumor in tumors){
+  vcf =read.table(paste(vcfdir, tumor,".All.-0.693.Strelka2MOSS.post_filter.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "ChineseSon.H", thissamples )
+  vcs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>%
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>%
+    filter(TCOUNT>0)  %>% # Variant present if at least one alternative read
+    
+    separate(sample, c("sample", "tumor"), sep = "\\.") %>% 
+    inner_join(df_rep, by = c('tumor' = 'name_rep')) %>%
+    mutate(id_caller = 18) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  
+  afs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>% 
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>% 
+    filter(as.integer(TCOUNT)>0) %>% 
+    mutate(af = as.integer(TCOUNT)/as.integer(DP)) %>%
+    separate(sample, c("sample", "tumor"), sep = "\\.") %>% 
+    inner_join(df_rep, by = c('tumor' = 'name_rep')) %>%
+    mutate(id_caller = 18) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos, af   ) 
+  
+  
+  
+  df_varcall = rbind(df_varcall, vcs)
+  df_af_moss= rbind(df_af_moss, afs)
+  
+  
+  
+}
+
+saveRDS(df_varcall, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/Results_202111/denovo.df_varcall.rds")
+saveRDS(df_af_moss, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/Results_202111/denovo.df_af.moss.rds")
+saveRDS(df_caller, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/Results_202111/denovo.df_caller.rds")
+
+
 
 # rename Mutect2 sub-modes
 df_caller <- df_caller %>% 
@@ -85,12 +193,15 @@ callers <- tibble(
     'SNV-PPILP',
     'HaplotypeCaller', 
     'MultiSNV', 
-    'Mutect2_multi_F'
+    'Mutect2_multi_F',
+    'Mutect2_MOSS',
+    'Strelka2_MOSS'
   ),
-  class = c(rep('marginal', 11), rep('two-step', 2), rep('joint', 3))
+  class = c(rep('marginal', 11), rep('two-step', 2), rep('joint', 5))
 )
 df_caller <- df_caller %>%
-  inner_join( callers, by = 'name_caller' )
+  inner_join( callers, by = c('name_caller', 'class' ))
+
 #df_caller <- df_caller %>% 
 #  mutate(name_caller = replace(name_caller, name_caller == 'Mutect2', 'Mutect2_single'))
 # do not show these callers in main plots

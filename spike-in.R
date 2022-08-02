@@ -48,11 +48,15 @@ df_mut_sample <- readRDS( file.path(data_dir, 'RRSV.mutations_samples.rds') )
 df_mut_clone <- readRDS( file.path(data_dir, 'RRSV.clones_mutations.rds') )
 df_prev <- readRDS( file.path(data_dir, 'RRSV.clones_prev.rds') )
 df_caller <- readRDS( file.path(data_dir, 'RRSV.callers.rds') )
-df_varcall <- readRDS( file.path(data_dir, 'RRSV.varcalls.rds') ) %>% 
+df_varcall <- readRDS( file.path(data_dir, 'RRSV.varcalls.20211117.withMutectandStrelkaMOSS.rds') ) %>% 
   mutate(chrom = as.character(chrom), id_caller = as.integer(id_caller))
 df_rc <- readRDS( file.path(data_dir, 'RRSV.readcounts.rds') )
 df_snp <- readRDS( file.path(data_dir, 'RRSV.snps.rds') ) 
-df_af <- readRDS( file.path(data_dir, 'RRSV.AFs.rds') ) 
+df_af <- readRDS( file.path(data_dir, 'RRSV.AFs.rds') )
+
+
+# saveRDS(df_caller, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/Results_202111/rrsv.df_caller.rds")
+
 
 # determine status of variant calls for the per-sample performance 
 #   TP: true positives
@@ -100,7 +104,8 @@ df_perf_freq_agg <- df_perf_freq %>%
     avg_rec = mean(recall),   avg_pre = mean(precision),   avg_F1 = mean(F1))
 
 
-p_perf_sample <- plot_perf_min( df_perf_sample )
+# p_perf_sample <- plot_perf_min( df_perf_sample )
+p_perf_sample <- plot_perf_min_mean( df_perf_sample )
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.pdf'), plot = p_perf_sample, width = 12, height = 4)
 ggsave( file.path( plot_dir, 'spike-in.performance.sample.png'), plot = p_perf_sample, width = 12, height = 4)
 
@@ -157,8 +162,8 @@ ggsave( file.path( plot_dir, 'spike-in.performance.admix.mean.pdf'), plot = p_pe
 # convert PDF to PNG (R png device does not support fonts)
 # command works on Linux (MacOS not tested)
 system(paste('convert -density 300',
-  file.path(plot_dir, 'spike-in.performance.admix.mean.pdf'),
-  '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.mean.png')))
+             file.path(plot_dir, 'spike-in.performance.admix.mean.pdf'),
+             '-quality 90', file.path(plot_dir, 'spike-in.performance.admix.mean.png')))
 
 ggsave( file.path( plot_dir, 'spike-in.performance.admix.pdf'), plot = p_perf_admix, width = 8, height = 10)
 # convert PDF to PNG (R png device does not support fonts)
@@ -249,11 +254,11 @@ df_perf_pairs_agg <- df_perf_pairs %>% group_by( id_caller ) %>%
 df_perf_pairs_top <- df_perf_pairs %>%
   inner_join(
     df_perf_pairs %>% 
-    group_by( id_caller ) %>%
-    dplyr::summarise( mean_F1 = mean(F1, na.rm = T) ) %>% 
-    mutate( rank_mF1 = rank(desc(mean_F1)) ) %>%
-    dplyr::filter( rank_mF1 <= 10 ) %>% 
-    select( id_caller, rank_mF1 ),
+      group_by( id_caller ) %>%
+      dplyr::summarise( mean_F1 = mean(F1, na.rm = T) ) %>% 
+      mutate( rank_mF1 = rank(desc(mean_F1)) ) %>%
+      dplyr::filter( rank_mF1 <= 10 ) %>% 
+      select( id_caller, rank_mF1 ),
     by = c('id_caller')
   ) %>%
   mutate( group = 'paired' )
@@ -263,7 +268,7 @@ df_perf_pairs_plot <- df_perf_pairs_top %>%
   select( caller, id_rep, id_sample, recall, precision, F1, cvg, group ) %>%
   bind_rows( df_perf_single_top ) %>%
   mutate( group = fct_relevel(group, 'single', 'paired') )
-  
+
 p_perf <- plot_perf_pairs( df_perf_pairs_plot )
 ggsave( file.path( plot_dir, 'spike-in.performance.pairs.pdf'), plot = p_perf, width = 8, height = 10)
 ggsave( file.path( plot_dir, 'spike-in.performance.pairs.png'), plot = p_perf, width = 8, height = 10)
@@ -504,7 +509,7 @@ dev.off()
 df <- df_pres %>% select(-c(TRUE_somatic, TRUE_germline))
 n <- lbl_callers
 plot_upset( df, n )  
-  
+
 # plot FP variant calls in relation to germline vars
 df <- df_pres %>% dplyr::filter( type == 'FP' )
 lbl_callers <- setdiff(callers$name_caller, c('Strelka1'))
