@@ -1,0 +1,872 @@
+---
+title: "ChineseSon_MultisampleVcfParsing"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+# vcfdir = "/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/"
+vcfdir = "/Volumes/GoogleDrive/My Drive/PROJECTS/TestingVC_withTama/07_WORKDIR/vcfs/"
+
+vcfheader= c("chrom", "pos", "Id", "ref", "alt", "Qual", "Filter", "Info", "Format_Structure" )
+```
+
+To update the VCFs:
+
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.*.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.HaplotypeCaller.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.SNV-PPILP.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+
+For the NonPoN Mutects sample T1 (later I can remove these vcfs if we run all the samples, since I'd get the multi-sample vcf instead)
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/*Mutect2NoPoN.PASS.noindels.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/*Mutect1NoPoN.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+For Mutect2 multisample
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.Mutect2_multisample.PASS.noindels.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+New Muclone results:
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/ChineseSon.S?.R*.Muclone.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+New SNooPer results:
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.SNooPerGermres.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+New SNooPer results with CP>0.7
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.SNooPerGermres.70.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+Update SNV-PPILP results
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.SNV-PPILP.PASS.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+MultiSNV including LOW_QUAL variants  (Not used at the end)
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S?.R*.*.MultiSNV.PASS_and_lowqual.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+SNooPEr and Strelka2 corrected results (to overcome double tab instead of tab dot tab)
+
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/VAF/*Corrected*vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+
+Mutect2 + MOSS
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir//*.Mutect2MOSS.post_filter.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+```
+Mutect2 + MOSS with the whole VCF and tau = -0.693
+```
+scp uvibeltl@ft2.cesga.es:/mnt/netapp1/posadalab/Tama_Laura/TestingVC/ChineseSon/workdir/S*.All.-0.693.Mutect2MOSS.post_filter.vcf /Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/
+
+```
+
+
+```{r}
+replicate_names = paste("R", 1:10, sep ="")
+scenarios = paste("S", 1:3, sep ="")
+samples =paste("T", 1:5, sep ="")
+
+tumors =c()
+for (scenario in scenarios){
+  for (replicate in replicate_names){
+    tumors = c(tumors, paste(scenario, replicate,sep =  "."))
+  }
+}
+```
+
+```{r}
+varcalls = NA
+```
+
+
+# Caveman
+
+```{r}
+caller = "Caveman"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples))   %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)       %>%
+    ungroup() %>%
+    dplyr::filter(Format!="./.")  %>%
+    select(-c(Format)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2"))   %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")    %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep'))     %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="CaVEMan"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  if(class(varcalls)!="data.frame"){
+    varcalls = vcf
+  }else{
+    varcalls = rbind(varcalls, vcf)
+  }
+    
+}
+
+```
+
+
+# HaplotypeCaller
+
+```{r}
+caller = "HaplotypeCaller"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE)
+  # vcf = read.table(paste(vcfdir,caller,".",tumor,  ".filt.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":",  extra = "drop")%>%
+    dplyr::filter(GT!="./." & GT!="0/0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="HaplotypeCaller"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+
+# Mutect1
+
+```{r}
+caller = "Mutect1"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")%>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="MuTect1"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+
+# Mutect2
+11060718
+```{r}
+caller = "Mutect2"
+
+
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop") %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT != "././.") %>% # ././. Added 5/10/20
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Mutect2_single"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+
+
+# SNooPer
+
+
+```{r}
+caller = "SNooPer"  #### NOW USING THE GERMRES VERSION BY DEFAULT  
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  "GermResCorrected.PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader,  thissamples )
+  vcf2 = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples, Info)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>% 
+    separate(Format, c("GT"), ":", extra = "drop")%>% 
+    # dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%   # "." added 5/10/20. I'm adding dot when there's a double tab
+    mutate(set = str_remove(Info, ".*;set=")) %>%
+    mutate(sample_idx = str_remove(sample, ".S.*")) %>%
+    mutate(sample_idx = str_replace(sample_idx, "T", "variant")) %>%
+    mutate(set = if_else(set =="variant", "variant1", set )) %>%
+    mutate(set = str_replace(set, "variant-", "variant1-")) %>%
+    mutate(set = if_else(set =="Intersection", sample_idx, set)) %>%
+    filter(str_detect(set, sample_idx) ) %>%
+    select(-c(GT, set, sample_idx)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="SNooPer"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf2)
+  
+    
+}
+
+
+```
+# SNooPerGermres   DONT RUN
+
+
+```{r}
+caller = "SNooPerGermres"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  "Corrected.PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader,  thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":")%>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="SNooPerGermres"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+
+
+# SNooPerGermres70 DONT RUN
+
+
+```{r}
+caller = "SNooPerGermres.70"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader,  thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":")%>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="SNooPerGermres.70"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+# SomaticSniper
+
+```{r}
+caller = "SomaticSniper"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  
+  vcf2 = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt,Format_Structure , Info,RN, thissamples )) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples)) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop", remove = FALSE)   %>%
+    separate(RN, into = c("GT_healthy"), sep =":", extra = "drop", remove = FALSE) %>%
+    filter(GT_healthy == "0/0") %>%
+    separate(Info, into = c(NA, NA, NA, "set_field"), sep = ";", extra = "drop", remove = FALSE) %>% 
+    mutate(set = str_remove(set_field, "set=")) %>% 
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    filter(set == "Intersection" | str_detect(set, str_replace(sample, "T", "variant")) | (sample =="T1" & (set=="variant" | str_detect(set, "variant-"))) ) %>%
+    # dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    dplyr::filter(GT!="./." &  GT!=".") %>%
+    separate(Format, c(NA, NA, NA, NA, NA, NA, NA, NA, NA, "SS"), extra = "drop", sep= ":" ,remove = FALSE) %>%
+    filter(SS==2) %>%
+    select(-c(GT, SS)) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="SomaticSniper"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf2)
+  
+    
+}
+
+
+```
+
+
+
+
+# Strelka2
+
+```{r}
+caller = "Strelka2"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  "Corrected.PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Strelka2"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+# VarDict
+
+
+```{r}
+caller = "VarDict"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf2 = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples, Info)) %>% 
+    mutate(status = str_match(Info, "STATUS=[a-z,A-Z]*")) %>% 
+    mutate(status = str_remove(status, "STATUS="))%>%
+    mutate(status = str_remove(status, ";")) %>% 
+    mutate(type = str_match(Info, "TYPE=[a-z,A-Z]*")) %>%
+    mutate(type = str_remove(type, "TYPE="))%>%
+    mutate(type = str_remove(type, ";")) %>% 
+    filter(type =="SNV") %>% 
+    filter(status %in% c("LikelySomatic", "StrongSomatic")) %>%
+    select(-c(type, status)) %>%  
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="VarDict"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf2)
+  
+    
+}
+```
+
+
+
+
+# Shimmer
+
+
+```{r}
+caller = "Shimmer"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", "RN2", "RN3", "RN4", "RN5", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".")   %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Shimmer"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+
+# MultiSNV
+
+```{r}
+caller = "MultiSNV"
+for (tumor in tumors){
+  # vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+    vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS_and_lowqual.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf2 = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt,Format_Structure, thissamples)) %>%
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    filter(Format != "./.") %>%
+    separate(Format, c("first_format", "second_format", "third_format", "fourth_format"), sep = ":", extra = "drop", remove = FALSE) %>% 
+    mutate(SS = case_when(Format_Structure == "A:GQ:SS:BCOUNT:DP" ~ fourth_format,# Still 4th since Format_Structure is malformed
+                          Format_Structure == "GT:A:GQ:SS:BCOUNT:DP" ~ fourth_format))  %>%
+    filter(SS==2) %>%
+    # separate(Format, c("GT"), ":", extra = "drop") %>%
+    # dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".")
+    # select(-c(GT)) %>%
+    select(-c(Format_Structure, SS, Format)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="MultiSNV"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf2)
+  
+}
+```
+
+
+# SNV-PPILP
+
+```{r}
+caller = "SNV-PPILP"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="SNV-PPILP"), "id_caller"])   %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+# Muclone
+
+```{r}
+caller = "Muclone"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, "ChineseSon.",tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="MuClone"), "id_caller"])  %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+# Neusomatic
+
+```{r}
+caller = "Neusomatic"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="NeuSomatic"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+
+# VarScan
+
+```{r}
+caller = "VarScan"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, thissamples , "RN")
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="VarScan"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+
+
+# Bcftools
+
+```{r}
+caller = "bcftools"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE, sep = "\t")
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    filter(chrom=="21") %>%
+    tidyr::gather(key = "sample", value ="Format", thissamples) %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":", extra = "drop")   %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!=".") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Bcftools"), "id_caller"]) %>%
+    select(id_rep, id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+```
+
+
+
+
+
+
+
+
+
+
+# Mutect2 multisample
+
+```{r}
+caller = "Mutect2_multi_F"
+for (tumor in tumors){
+  vcf =read.table(paste(vcfdir, tumor,".Mutect2_multisample.PASS.noindels.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup()   %>%
+    separate(Format, c("GT", "AD"), ":", extra = "drop") %>%
+    separate(AD, c("AD_ref", "AD_alt"), ",") %>%
+    filter(AD_alt>0)  %>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!="0|0")   %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Mutect2_multi_F"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcf)
+  
+    
+}
+
+
+```
+
+# Mutect2 without PON
+
+```{r}
+
+varcallspon = varcalls
+caller = "Mutect2NoPoN"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, "ChineseSon.T1.",tumor,".",caller,  ".PASS.noindels.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(c("T1"), tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "RN", thissamples )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":")%>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = "special_Mutect2NoPon" )%>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcallspon = rbind(varcallspon, vcf)
+  
+    
+}
+
+
+```
+
+# Mutect1 without PON
+
+
+Some vcf files have first the healthy and then the tumor, and others the other way.
+
+```{r}
+
+reps_with_first_the_tumor= data.frame(id_rep =c(1,13,2,29,5,8,17,30,9,15,18,21,24,27)) %>%
+  inner_join(replicates)
+caller = "Mutect1NoPoN"
+for (tumor in tumors){
+  vcf = read.table(paste(vcfdir, "ChineseSon.T1.",tumor,".",caller,  ".PASS.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(c("T1"), tumor, sep = ".")
+  if(tumor %in% reps_with_first_the_tumor$name_rep ){
+    thissampleswithhealthy = c(thissamples, "RN")
+  }else{
+    thissampleswithhealthy = c("RN", thissamples)
+  }
+  colnames(vcf) = c(vcfheader, thissampleswithhealthy )
+  vcf = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, thissamples)) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup() %>%
+    separate(Format, c("GT"), ":")%>%
+    dplyr::filter(GT!="./." & GT!="0/0" & GT!="0") %>%
+    select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = "special_Mutect1NoPon" )%>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcallspon = rbind(varcallspon, vcf)
+
+    
+}
+
+```
+
+# Mutect2 + MOSS
+
+```{r}
+
+df_af_moss = data.frame(id_rep = as.integer(), id_sampel = as.character(), id_caller = as.integer(), crom = as.character(), pos = as.integer(), af = as.numeric())
+
+
+caller = "Mutect2_Moss"
+for (tumor in tumors){
+  vcf =read.table(paste(vcfdir, tumor,".All.-0.693.Mutect2MOSS.withbamout.post_filter.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "ChineseSon.H", thissamples )
+  vcfs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>%
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>%
+    filter(TCOUNT>0)  %>% # Variant present if at least one alternative read
+    # dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!="0|0")   %>%
+    # select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Mutect2_MOSS"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  varcalls = rbind(varcalls, vcfs)
+  
+   afs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>%
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>% 
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>% 
+    filter(as.integer(TCOUNT)>0) %>% 
+    mutate(af = as.integer(TCOUNT)/as.integer(DP)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Mutect2_MOSS"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos, af   ) 
+ 
+   df_af_moss= rbind(df_af_moss, afs)
+   
+  
+    
+}
+
+
+```
+
+# Strelka2 + MOSS
+
+```{r}
+
+
+
+caller = "Strelka2_Moss"
+for (tumor in tumors){
+  vcf =read.table(paste(vcfdir, tumor,".All.-0.693.Strelka2MOSS.post_filter.vcf", sep = ""), stringsAsFactors = FALSE)
+  thissamples = paste(samples, tumor, sep = ".")
+  colnames(vcf) = c(vcfheader, "ChineseSon.H", thissamples )
+  vcfs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", thissamples)     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>%
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>%
+    filter(TCOUNT>0)  %>% # Variant present if at least one alternative read
+    # dplyr::filter(GT!="./." & GT!="0/0" & GT!="0" & GT!="0|0")   %>%
+    # select(-c(GT)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Strelka2_MOSS"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos  )
+  
+  
+  varcalls = rbind(varcalls, vcfs)
+  
+  
+    afs = vcf %>% 
+    dplyr::select(c(chrom, pos, ref, alt, Filter,all_of(thissamples))) %>% 
+    tidyr::gather(key = "sample", value ="Format", all_of(thissamples))     %>%
+    ungroup()   %>%
+    filter(Filter == "PASS") %>% select(-c(Filter)) %>% 
+    separate(Format, c("DP", "TCOUNT"), ":", extra = "drop") %>% 
+    filter(as.integer(TCOUNT)>0) %>% 
+    mutate(af = as.integer(TCOUNT)/as.integer(DP)) %>%
+    separate(sample, c("sample", "tumor1", "tumor2")) %>%
+    unite("tumor", c(tumor1, tumor2), sep = ".")   %>%
+    inner_join(replicates, by = c('tumor' = 'name_rep')) %>% 
+    mutate(id_caller = callers[which(callers$name_caller=="Strelka2_MOSS"), "id_caller"]) %>%
+    select(id_rep , id_sample = sample, id_caller, chrom, pos, af   ) 
+    
+       
+    df_af_moss= rbind(df_af_moss, afs)
+  
+    
+}
+
+
+
+
+   
+  
+
+  
+
+
+
+```
+
+
+# Saving results to file
+
+```{r}
+varcalls = varcalls %>% filter(id_caller!="special_Mutect1NoPon" & id_caller!="special_Mutect2NoPon") %>% mutate(chrom = as.character(chrom))
+# saveRDS(varcalls, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results//RRSV.varcalls.rds")
+
+# saveRDS(varcallspon, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.varcallspon.rds")
+# 
+# varcallspon = readRDS("/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.varcallspon.rds")
+# saveRDS(varcalls, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results//RRSV.varcalls.20210928.withMutectMOSS.rds")
+
+# saveRDS(varcalls, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results//RRSV.varcalls.20210928.withMutectMOSS.All.-0693.rds")
+saveRDS(varcalls, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results//RRSV.varcalls.20210928.withMutectMOSSBamout.All.-0693.rds")
+
+
+
+saveRDS(df_af_moss, "/Volumes/GoogleDrive/My Drive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results//RRSV.df_af_moss.rds")
+
+
+```

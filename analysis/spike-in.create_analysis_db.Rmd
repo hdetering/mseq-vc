@@ -1,0 +1,431 @@
+
+
+I will adapt my simulations data and the results to Harry's data structure. 
+
+
+```{r}
+library(tidyverse)
+
+```
+
+
+# callers
+
+```{r}
+callers = data.frame(id_caller = seq(1,16),
+                     name_caller = c("HaplotypeCaller", "CaVEMan", "MuTect1", "Mutect2_single", "SNooPer", "SomaticSniper", "Strelka2", "VarDict", "Shimmer", "MultiSNV", "SNV-PPILP", "MuClone", "NeuSomatic", "VarScan", "Bcftools", "Mutect2_ms"),
+                     class = c("general", "tumor-normal","tumor-normal","tumor-normal", "tumor-normal", "tumor-normal", "tumor-normal", "tumor-normal", "tumor-normal", "multi-sample", "multi-sample", "multi-sample", "tumor-normal", "tumor-normal", "general", "multi-sample"), stringsAsFactors = FALSE)
+
+
+# saveRDS(callers, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.callers.rds")
+# callers = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.callers.rds")
+
+```
+
+
+```{r}
+
+df_caller <- data.frame(id_caller = seq(1,17),
+                     name_caller = c("HaplotypeCaller", "CaVEMan", "MuTect1", "Mutect2_single", "SNooPer", "SomaticSniper", "Strelka2", "VarDict", "Shimmer", "MultiSNV", "SNV-PPILP", "MuClone", "NeuSomatic", "VarScan", "Bcftools", "Mutect2_multi_F", "Mutect2_MOSS"), stringsAsFactors = FALSE) 
+
+
+
+
+callers <- tibble(
+  name_caller = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan', 
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F',
+    'MuClone', 
+    'SNV-PPILP',
+    'Mutect2_MOSS'
+  ),
+  class = c(rep('marginal', 11), rep('joint', 3), rep('two-step', 2), 'joint')
+)
+callers <- df_caller %>%
+  inner_join( callers, by = 'name_caller' )
+
+callers$name_caller = factor(callers$name_caller, levels =c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan', 
+     'MuClone',
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F',
+    'Mutect2_MOSS'
+  ))
+
+saveRDS(callers, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.callers.rds")
+# callers = readRDS("/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.callers.rds")
+```
+
+Adding trials with SNooPer
+
+```{r}
+
+df_caller <- data.frame(id_caller = seq(1,18),
+                     name_caller = c("HaplotypeCaller", "CaVEMan", "MuTect1", "Mutect2_single", "SNooPer", "SomaticSniper", "Strelka2", "VarDict", "Shimmer", "MultiSNV", "SNV-PPILP", "MuClone", "NeuSomatic", "VarScan", "Bcftools", "Mutect2_multi_F", "SNooPerGermres", 'SNooPerGermres.70'), stringsAsFactors = FALSE) 
+
+
+
+
+callers <- tibble(
+  name_caller = c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan', 
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F',
+    'MuClone', 
+    'SNV-PPILP',
+    'SNooPerGermres',
+    'SNooPerGermres.70'
+  ),
+  class = c(rep('marginal', 11), rep('joint', 3), rep('two-step', 2), rep('marginal',2))
+)
+callers <- df_caller %>%
+  inner_join( callers, by = 'name_caller' )
+
+callers$name_caller = factor(callers$name_caller, levels =c(
+    'Bcftools', 
+    'CaVEMan', 
+    'MuTect1', 
+    'Mutect2_single', 
+    'NeuSomatic', 
+    'Shimmer', 
+    'SNooPer', 
+    'SomaticSniper', 
+    'Strelka2', 
+    'VarDict', 
+    'VarScan', 
+     'MuClone',
+    'SNV-PPILP',
+    'HaplotypeCaller', 
+    'MultiSNV', 
+    'Mutect2_multi_F',
+    'SNooPerGermres',
+    'SNooPerGermres.70'
+  ))
+
+saveRDS(callers, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.callers.SNooPerTest.rds")
+
+```
+
+
+# replicates
+
+```{r}
+
+regions = paste("T", seq(1,5), sep = "")
+reps = paste("R", seq(1,10), sep ="")
+scenarios = paste("S", seq(1,3), sep = "")
+
+replicates = expand.grid( scenarios, reps) %>% 
+  mutate(ttype = if_else(Var1 == "S1", "low", if_else(Var1=="S2", "medium", "high"))) %>%
+  rowid_to_column("id_rep") %>%
+  unite(name_rep, Var1, Var2, sep = ".") %>%
+  mutate(nclones = 7,
+         nsamples = 5,
+         cvg = 50)
+  
+saveRDS(replicates, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.replicates.rds")
+replicates = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.replicates.rds")
+
+```
+
+
+
+# mutations
+
+
+
+```{r}
+mutationsandclones = NA
+alleles = c("ChineseMum", "ChineseDad")
+clones = paste("C", seq(1,7), sep ="")
+            
+for (region in regions){
+  for (rep in reps){
+    for(scenario in scenarios){
+      for(allele in alleles){
+        mutmatrix = read.table(paste("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/MutationsToIntroduce/Mutations2introduce.", allele,".", region, ".", scenario, ".", rep, ".matrix",sep =""), stringsAsFactors = FALSE, header = FALSE)  %>% 
+          mutate(id_rep = replicates[which(replicates$name==paste( scenario, rep,sep =  ".")),"id_rep"])
+      if(class(mutationsandclones)=="data.frame"){
+        mutationsandclones = rbind(mutationsandclones, mutmatrix)
+      }else{
+        mutationsandclones = mutmatrix
+      }
+      }
+    }
+  }
+}
+
+
+colnames(mutationsandclones) = c("pos", "alt", "trinuc",clones , "id_rep")
+
+mutationsandclones = mutationsandclones %>% 
+  group_by(id_rep) %>%
+  distinct() %>%
+  rowid_to_column("id_mut") %>%
+  separate(trinuc, c(NA, "ref", NA),  sep =c(1,2,3)) %>%
+  mutate(chrom= "21")
+
+mutations = mutationsandclones %>%
+  select(c(id_rep, id_mut, chrom, pos, ref, alt))
+
+saveRDS(mutations, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.mutations.rds")
+mutations = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.mutations.rds")
+
+```
+
+
+# clones_prev
+
+```{r}
+clonesprevbyscenario = data.frame(scenario = c(rep("S1",5), rep("S2", 5), rep("S3", 5)), id_sample = c(regions, regions, regions), 
+                                  C1 = c(1,0,0,1,0,0.8,0,0.5,0,0,0.25,0.2,0.2,0.15,0.25),
+                                  C2 = c(0,0.3,0.8,0,0,0.2,0.1,0,0,0.4,0.2,0.25,0,0.2,0.2),
+                                  C3 = c(0,0,0,0,0.6, 0,0,0,0.5,0,0.2,0.2,0.2,0.25,0.2),
+                                  C4 = c(0,0.7,0,0,0,0,0.55,0,0,0.1,0.1,0.1,0.1,0.15,0.1),
+                                  C5 = c(0,0,0.2,0,0,0,0.35,0.5,0,0,0.1,0.1,0.1,0.1,0.1),
+                                  C6 = c(0,0,0,0,0.1,0,0,0,0.4,0,0.1,0.1,0.25,0.1,0.1),
+                                  C7 = c(0,0,0,0,0.3,0,0,0,0.1,0.5,0.05,0.05,0.15,0.05,0.05),
+                                  stringsAsFactors = FALSE) 
+
+
+clones_prev = replicates %>% 
+  separate(name_rep, c(NA, "scenario", NA),sep =  c(0,2)) %>% 
+  select(id_rep, scenario) %>% 
+  full_join(clonesprevbyscenario) %>%
+  gather(key = "id_clone", value = "prev", C1:C7) %>%
+  select(c(id_rep, id_sample, id_clone,prev))
+  
+saveRDS(clones_prev, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.clones_prev.rds")
+clones_prev = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.clones_prev.rds")
+
+```
+
+
+# clones_mutations
+
+
+```{r}
+clones_mutations = mutationsandclones %>%
+  gather(key = "id_clone", value = "is_present", C1:C7) %>%
+  select(id_rep, id_mut, id_clone, is_present)
+
+saveRDS(clones_mutations, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.clones_mutations.rds")
+clones_mutations = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.clones_mutations.rds")
+
+```
+
+
+
+# mutations_samples
+
+
+```{r}
+mutations_samples <- mutations %>% 
+  inner_join( clones_mutations, by = c("id_rep", "id_mut") ) %>% 
+  inner_join( clones_prev, by = c("id_rep", "id_clone") ) %>% 
+  select( id_rep, id_sample, id_mut, id_clone, prev, is_present ) %>%
+  group_by( id_rep, id_sample, id_mut ) %>%
+  summarise( vaf_exp = 0.5*sum(is_present*prev) ) %>%
+  ungroup() %>%
+  mutate( is_present = (vaf_exp > 0.0) )
+
+
+saveRDS(mutations_samples, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.mutations_samples.rds")
+mutations_samples = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.mutations_samples.rds")
+
+# mutations_samples %>% group_by(id_rep) %>% filter(vaf_exp>0) %>%summarise(n_distinct(id_mut))
+```
+
+
+# varcalls
+
+
+```{r}
+
+varcalls = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.varcalls.rds")
+
+```
+
+
+SCR-004
+
+```{r}
+varcalls$chrom = as.character(varcalls$chrom)
+```
+
+
+
+
+# readcounts
+
+
+```{r}
+
+# Old version
+
+# postocount = unique(sort(c(varcalls$pos, mutations$pos)))
+# write(postocount, "/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/PosToCountAlleles", ncolumns = 1)
+
+
+# New version 2021.11.22
+
+postocount = rbind(rbind(df_varcall  %>% select(chrom, pos) ,
+      df_af %>% separate(chrom_pos, into = c("chrom","pos")) %>% select(chrom, pos) ),df_mut%>% ungroup() %>%select(chrom, pos)) %>% arrange(as.integer(pos)) %>% mutate(mut = paste0(chrom, ":", pos,"-", pos )) %>% select(mut) %>% unique() 
+
+write_csv(postocount, col_names = FALSE, file = "PosToCountAlleles_20211122_Interval.list")
+
+
+```
+
+
+
+```{r}
+
+readcounts = NA
+reps=replicates
+for (rep in reps){
+  for (scenario in scenarios){
+    for (region in regions){
+      cal = read.table(paste("/Volumes/GoogleDrive/My Drive/PROJECTS//TestingVC_withTama/07_WORKDIR/CollectAllelicCounts/ChineseSon.", region, ".", scenario, ".", rep, ".bam.CAL", sep =""), stringsAsFactors = FALSE, header = TRUE, comment.char = "@") %>%
+        mutate(name_rep = paste(scenario, rep, sep="."),
+               id_sample = region) %>%
+        inner_join(replicates) %>%
+        rename(chrom = CONTIG,
+               pos = POSITION,
+               ref = REF_NUCLEOTIDE,
+               alt = ALT_NUCLEOTIDE,
+               rc_ref = REF_COUNT,
+               rc_alt = ALT_COUNT) %>%
+        mutate(chrom = as.character(chrom)) %>%
+        select(c(id_rep, id_sample, chrom, pos, ref, alt, rc_ref, rc_alt))
+       if(class(readcounts)!="data.frame"){
+         readcounts=cal
+       }else{
+         readcounts = rbind(readcounts, cal)
+       }        
+    }
+  }
+}
+
+# saveRDS(readcounts, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.readcounts2.rds")
+
+saveRDS(readcounts, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.readcounts.20212211.rds")
+
+# readcounts = readRDS( "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.readcounts.rds")
+# 
+# readcounts %>%
+#   group_by(id_rep, id_sample) %>%
+#   summarise(n())
+```
+
+
+
+
+
+
+
+# Additional data
+
+
+## SNPs
+
+SNPs called by HaplotypeCaller in the 300x ChineseSon bam
+
+
+```{r}
+
+snps = read.table("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/vcfs/ChineseSon.chr21.HaplotypeCaller.vcf", stringsAsFactors = FALSE) 
+  
+colnames(snps) = c("chrom", "pos", "Id", "ref", "alt", "Qual", "Filter", "Info", "Format_Structure" , "Format_info")
+snps_extended = snps %>% 
+  separate(Format_info, c("GT", "AD", "DP", "GQ", "PL"), sep =":") %>%
+  separate(AD, c("AD_ref", "AD_alt"), sep = ",")
+
+snps = snps %>% select(c(chrom, pos, ref, alt)) %>%
+  mutate(chrom = as.character(chrom)) %>% rowid_to_column("id_mut") %>% 
+  mutate(id_mut = paste("g", id_mut, sep =""))
+
+saveRDS(snps, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.snps.rds")
+snps = readRDS("/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.snps.rds")
+```
+
+
+## Healthy sample read counts
+
+
+50x healthy
+```{r}
+healthy_readcounts = read.table(paste("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/CollectAllelicCounts/ChineseSon.H.bam.CAL", sep =""), stringsAsFactors = FALSE, header = TRUE, comment.char = "@") %>%
+        rename(chrom = CONTIG,
+               pos = POSITION,
+               ref = REF_NUCLEOTIDE,
+               alt = ALT_NUCLEOTIDE,
+               rc_ref_healthy = REF_COUNT,
+               rc_alt_healthy = ALT_COUNT) %>%
+        mutate(chrom = as.character(chrom)) %>%
+        select(c(chrom, pos, rc_ref_healthy, rc_alt_healthy))
+
+
+```
+
+
+
+300x super healthy
+
+```{r}
+superhealthy_readcounts = read.table(paste("/Users/laura/GoogleDrive/PROJECTS/PROYECTOS/TestingVC_withTama/07_WORKDIR/CollectAllelicCounts/ChineseSon.chr21.bam.CAL", sep =""), stringsAsFactors = FALSE, header = TRUE, comment.char = "@") %>%
+        rename(chrom = CONTIG,
+               pos = POSITION,
+               ref = REF_NUCLEOTIDE,
+               alt = ALT_NUCLEOTIDE,
+               rc_ref_superhealthy = REF_COUNT,
+               rc_alt_superhealthy = ALT_COUNT) %>%
+        mutate(chrom = as.character(chrom)) %>%
+        select(c(chrom, pos, rc_ref_superhealthy, rc_alt_superhealthy))
+
+
+```
+
+Both
+
+```{r}
+bothhealthy_readcounts = inner_join(healthy_readcounts, superhealthy_readcounts)
+saveRDS(bothhealthy_readcounts, "/Users/laura/GoogleDrive/LAB FOLDERS/M-seq Variant Calling Benchmarking/RRSV/Results/RRSV.healthyreadcounts.rds")
+
+```
+
